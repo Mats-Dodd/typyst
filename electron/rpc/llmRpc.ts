@@ -5,6 +5,7 @@ import {createElectronSideBirpc} from "../utils/createElectronSideBirpc.ts";
 import {llmFunctions, llmState} from "../state/llmState.ts";
 import type {RenderedFunctions} from "../../src/rpc/llmRpc.ts";
 
+const DEFAULT_MODEL = "hf_mradermacher_Llama-3.2-3B-Instruct.Q8_0.gguf";
 const modelDirectoryPath = path.join(process.cwd(), "models");
 
 export class ElectronLlmRpc {
@@ -12,42 +13,29 @@ export class ElectronLlmRpc {
 
     public readonly functions = {
         async selectModelFileAndLoad() {
-            const res = await dialog.showOpenDialog({
-                message: "Select a model file",
-                title: "Select a model file",
-                filters: [
-                    {name: "Model file", extensions: ["gguf"]}
-                ],
-                buttonLabel: "Open",
-                defaultPath: await pathExists(modelDirectoryPath)
-                    ? modelDirectoryPath
-                    : undefined,
-                properties: ["openFile"]
-            });
-
-            if (!res.canceled && res.filePaths.length > 0) {
-                llmState.state = {
-                    ...llmState.state,
-                    selectedModelFilePath: path.resolve(res.filePaths[0]!),
-                    chatSession: {
-                        loaded: false,
-                        generatingResult: false,
-                        simplifiedChat: [],
-                        draftPrompt: {
-                            prompt: llmState.state.chatSession.draftPrompt.prompt,
-                            completion: ""
-                        }
+            const modelPath = path.join(modelDirectoryPath, DEFAULT_MODEL);
+            
+            llmState.state = {
+                ...llmState.state,
+                selectedModelFilePath: path.resolve(modelPath),
+                chatSession: {
+                    loaded: false,
+                    generatingResult: false,
+                    simplifiedChat: [],
+                    draftPrompt: {
+                        prompt: llmState.state.chatSession.draftPrompt.prompt,
+                        completion: ""
                     }
-                };
+                }
+            };
 
-                if (!llmState.state.llama.loaded)
-                    await llmFunctions.loadLlama();
+            if (!llmState.state.llama.loaded)
+                await llmFunctions.loadLlama();
 
-                await llmFunctions.loadModel(llmState.state.selectedModelFilePath!);
-                await llmFunctions.createContext();
-                await llmFunctions.createContextSequence();
-                await llmFunctions.chatSession.createChatSession();
-            }
+            await llmFunctions.loadModel(llmState.state.selectedModelFilePath!);
+            await llmFunctions.createContext();
+            await llmFunctions.createContextSequence();
+            await llmFunctions.chatSession.createChatSession();
         },
         getState() {
             return llmState.state;
@@ -65,6 +53,8 @@ export class ElectronLlmRpc {
 
         llmState.createChangeListener(this.sendCurrentLlmState);
         this.sendCurrentLlmState();
+
+        void this.functions.selectModelFileAndLoad();
     }
 
     public sendCurrentLlmState() {
