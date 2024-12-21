@@ -1,0 +1,65 @@
+{
+  "name": "endstate",
+  "private": true,
+  "version": "0.0.0",
+  "main": "./dist-electron/index.js",
+  "type": "module",
+  "homepage": "https://github.com/withcatai/node-llama-cpp",
+  "author": {
+    "name": "Author name",
+    "email": "email@example.com"
+  },
+  "scripts": {
+    "postinstall": "npm run models:pull",
+    "models:pull": "node-llama-cpp pull --dir ./models \"hf:mradermacher/Llama-3.2-3B-Instruct-GGUF/Llama-3.2-3B-Instruct.Q8_0.gguf\" ",
+    "start": "vite dev",
+    "start:build": "electron ./dist-electron",
+    "prebuild": "rimraf ./dist ./dist-electron ./release",
+    "build": "tsc && vite build && electron-builder --config ./electron-builder.ts",
+    "lint": "npm run lint:eslint",
+    "lint:eslint": "eslint --report-unused-disable-directives .",
+    "format": "npm run lint:eslint -- --fix",
+    "clean": "rm -rf ./node_modules ./dist ./dist-electron ./release ./models"
+  },
+  "dependencies": {
+    "birpc": "^0.2.19",
+    "classnames": "^2.5.1",
+    "highlight.js": "^11.10.0",
+    "lifecycle-utils": "^1.7.0",
+    "markdown-it": "^14.1.0",
+    "node-llama-cpp": "^3.3.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "semver": "^7.6.3"
+  },
+  "devDependencies": {
+    "@stylistic/eslint-plugin": "^2.11.0",
+    "@types/markdown-it": "^14.1.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/semver": "^7.5.8",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "eslint": "^9.16.0",
+    "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsdoc": "^50.6.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.16.0",
+    "vite": "^6.0.1",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6",
+    "zx": "^8.2.4"
+  },
+  "overrides": {
+    "electron-builder": {
+      "read-config-file": {
+        "config-file-ts": ">=0.2.8-rc1"
+      }
+    }
+  }
+}
