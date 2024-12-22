@@ -3,13 +3,13 @@ import { EditorProvider } from '@tiptap/react'
 import { MenuBar } from './MenuBar'
 import { ErrorOverlay } from './ErrorOverlay'
 import { extensions } from './extensions'
-import { INITIAL_CONTENT } from './constants'
-import { useEditorState } from './hooks/useEditorState'
-import { useEditorEvents } from './hooks/useEditorEvents'
+import { INITIAL_CONTENT } from '../../constants/constants'
+import { useEditorState } from '../../hooks/useEditorState'
+import { useEditorEvents } from '../../hooks/useEditorEvents'
 import { electronLlmRpc } from '../../../rpc/llmRpc'
-import { extractContexts } from './utils/textProcessing'
+import { extractContexts } from '../../utils/textProcessing'
 
-import './Editor.css'
+import '../../styles/Editor.css'
 
 export function Editor() {
   const {

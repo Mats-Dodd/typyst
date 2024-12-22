@@ -1,5 +1,5 @@
 import {ElectronFunctions} from "../../electron/rpc/llmRpc.ts";
-import {createRendererSideBirpc} from "../utils/createRendererSideBirpc.ts";
+import {createRendererSideBirpc} from "./createRendererSideBirpc.ts";
 
 const renderedFunctions = {} as const;
 
