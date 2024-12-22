@@ -12,39 +12,21 @@
         flex-direction: row;
         align-self: start;
         background-color: var(--panel-background-color);
-        border-radius: 12px;
-        backdrop-filter: blur(8px);
-        box-shadow: var(--panel-box-shadow);
-        overflow: clip;
-        isolation: isolate;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
         color: var(--panel-text-color);
         z-index: 10;
 
         > button {
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            border: none;
+            border-radius: 0;
+            border-right: 1px solid var(--border-color);
+            margin: 0;
             padding: 8px 12px;
-            margin: 8px;
-            background-color: var(--panel-button-background-color);
-            color: var(--panel-text-color);
-            fill: var(--panel-text-color);
 
-            + button {
-                margin-inline-start: 0px;
-            }
-
-            &:hover,
-            &:focus,
-            &:focus-visible {
-                border-color: var(--panel-button-hover-border-color);
-            }
-
-            > .icon {
-                width: 20px;
-                height: 20px;
+            &:last-child {
+                border-right: none;
             }
         }
     }

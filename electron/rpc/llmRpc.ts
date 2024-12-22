@@ -1,64 +1,23 @@
-import path from "node:path";
-import fs from "node:fs/promises";
-import {BrowserWindow, dialog} from "electron";
+import {BrowserWindow} from "electron";
 import {createElectronSideBirpc} from "../utils/createElectronSideBirpc.ts";
-import {llmFunctions, llmState} from "../state/llmState.ts";
 import type {RenderedFunctions} from "../../src/rpc/llmRpc.ts";
-
-const DEFAULT_MODEL = "hf_mradermacher_Llama-3.2-3B-Instruct.Q8_0.gguf";
-const modelDirectoryPath = path.join(process.cwd(), "models");
 
 export class ElectronLlmRpc {
     public readonly rendererLlmRpc: ReturnType<typeof createElectronSideBirpc<RenderedFunctions, typeof this.functions>>;
 
     public readonly functions = {
-        async selectModelFileAndLoad() {
-            const modelPath = path.join(modelDirectoryPath, DEFAULT_MODEL);
-            
-            llmState.state = {
-                ...llmState.state,
-                selectedModelFilePath: path.resolve(modelPath),
-                chatSession: {
-                    loaded: false,
-                    generatingResult: false,
-                    simplifiedChat: [],
-                    draftPrompt: {
-                        prompt: llmState.state.chatSession.draftPrompt.prompt,
-                        completion: ""
-                    }
-                }
-            };
-
-            if (!llmState.state.llama.loaded)
-                await llmFunctions.loadLlama();
-
-            await llmFunctions.loadModel(llmState.state.selectedModelFilePath!);
-            await llmFunctions.createContext();
-            await llmFunctions.createContextSequence();
-            await llmFunctions.chatSession.createChatSession();
-        },
-        getState() {
-            return llmState.state;
-        },
-        setDraftPrompt: llmFunctions.chatSession.setDraftPrompt,
-        prompt: llmFunctions.chatSession.prompt,
-        stopActivePrompt: llmFunctions.chatSession.stopActivePrompt,
-        resetChatHistory: llmFunctions.chatSession.resetChatHistory
+        autocomplete() {
+            return "my name is";
+        }
     } as const;
 
     public constructor(window: BrowserWindow) {
-        this.rendererLlmRpc = createElectronSideBirpc<RenderedFunctions, typeof this.functions>("llmRpc", "llmRpc", window, this.functions);
-
-        this.sendCurrentLlmState = this.sendCurrentLlmState.bind(this);
-
-        llmState.createChangeListener(this.sendCurrentLlmState);
-        this.sendCurrentLlmState();
-
-        void this.functions.selectModelFileAndLoad();
-    }
-
-    public sendCurrentLlmState() {
-        this.rendererLlmRpc.updateState(llmState.state);
+        this.rendererLlmRpc = createElectronSideBirpc<RenderedFunctions, typeof this.functions>(
+            "llmRpc", 
+            "llmRpc", 
+            window, 
+            this.functions
+        );
     }
 }
 
@@ -66,13 +25,4 @@ export type ElectronFunctions = typeof ElectronLlmRpc.prototype.functions;
 
 export function registerLlmRpc(window: BrowserWindow) {
     new ElectronLlmRpc(window);
-}
-
-async function pathExists(path: string) {
-    try {
-        await fs.access(path);
-        return true;
-    } catch {
-        return false;
-    }
 }

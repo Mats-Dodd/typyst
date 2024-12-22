@@ -1,0 +1,29 @@
+.control-group {
+    padding: 10px 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.button-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.button-group button {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    background: var(--button-background);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.button-group button:hover {
+    background: var(--button-hover-background);
+}
+
+.button-group button.is-active {
+    background: var(--button-active-background);
+    color: var(--button-active-color);
+} 
