@@ -1,6 +1,6 @@
 import React from "react";
 import {useCurrentEditor} from "@tiptap/react";
-import "./MenuBar.css";
+import "../../styles/MenuBar.css";
 
 export function MenuBar() {
     const {editor} = useCurrentEditor();

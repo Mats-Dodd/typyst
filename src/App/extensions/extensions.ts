@@ -1,7 +1,7 @@
 import Color from "@tiptap/extension-color";
 import TextStyle from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
-import {PredictionExtension} from "./PredictionExtension";
+import {PredictionExtension} from "./predictions/PredictionExtension";
 
 export const extensions = [
     Color,

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { EditorProvider } from '@tiptap/react'
 import { MenuBar } from './MenuBar'
 import { ErrorOverlay } from './ErrorOverlay'
-import { extensions } from './extensions'
+import { extensions } from '../../extensions/extensions'
 import { INITIAL_CONTENT } from '../../constants/constants'
 import { useEditorState } from '../../hooks/useEditorState'
 import { useEditorEvents } from '../../hooks/useEditorEvents'
@@ -61,16 +61,31 @@ export function Editor() {
     }
 
     timeoutRef.current = setTimeout(async () => {
-      const context = extractContexts(contextText, cursorPosition)
+      const { previousContext, currentSentence, followingContext } = extractContexts(contextText, cursorPosition)
+      // console.log("Previous Context:", previousContext)
+      // console.log("Current Sentence:", currentSentence)
+      // console.log("Following Context:", followingContext)
+  
       try {
-        const result = await electronLlmRpc.autocomplete()
-        setPrediction(result)
-        ;(window as any).currentPrediction = result
-        setError(null)
+        const response = await electronLlmRpc.autocomplete({ previousContext, currentSentence, followingContext })
+        
+        if (response.error) {
+          setError(response.error);
+          setPrediction('');
+          (window as any).currentPrediction = '';
+          return;
+        }
+        
+        if (response.text) {
+          setPrediction(response.text);
+          (window as any).currentPrediction = response.text;
+          setError(null);
+        }
       } catch (err) {
-        setError(String(err))
-        setPrediction('')
-        ;(window as any).currentPrediction = ''
+        console.error("Autocomplete error:", err);
+        setError("Failed to communicate with autocomplete service");
+        setPrediction('');
+        (window as any).currentPrediction = '';
       }
     }, 500)
   }

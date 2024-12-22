@@ -1,5 +1,5 @@
 import React from "react";
-import "./ErrorOverlay.css";
+import "../../styles/ErrorOverlay.css";
 
 type ErrorOverlayProps = {
     error: string | null | undefined;

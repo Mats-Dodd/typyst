@@ -34,6 +34,6 @@ interface EditorContext {
 }
 
 interface PredictionResponse {
-    prediction: string;
+    text?: string;
     error?: string;
 }
