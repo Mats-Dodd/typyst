@@ -1,18 +1,18 @@
 .control-group {
-    padding: 0;
+    padding: 28px 28px 4px 28px;
     margin-bottom: 4px;
     border-bottom: 1px solid var(--border-color);
     background: var(--background-color);
     position: relative;
     overflow: visible;
-    padding-bottom: 4px;
-    margin-left: -20px;
-    margin-right: -20px;
-    padding-left: 20px;
-    padding-right: 20px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    -webkit-app-region: drag;
+}
+
+.control-group button {
+    -webkit-app-region: no-drag;
 }
 
 .button-group {
