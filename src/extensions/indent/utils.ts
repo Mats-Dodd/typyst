@@ -1,6 +1,6 @@
 import { Editor } from '@tiptap/core'
 import { Transaction } from '@tiptap/pm/state'
-import { TextSelection, AllSelection } from '@tiptap/pm/state'
+import { TextSelection, AllSelection, EditorState } from '@tiptap/pm/state'
     
 export const IndentProps = {
   max: 7,
@@ -64,7 +64,7 @@ function setNodeIndentMarkup(tr: Transaction, pos: number, delta: number): Trans
 }
 
 export function createIndentCommand({ delta, types }: { delta: number, types: string[] }) {
-  return ({ state, dispatch, editor }) => {
+  return ({ state, dispatch, editor }: { state: EditorState, dispatch: ((tr: Transaction) => void) | undefined, editor: Editor }) => {
     const { selection } = state
     let { tr } = state
     tr = tr.setSelection(selection)

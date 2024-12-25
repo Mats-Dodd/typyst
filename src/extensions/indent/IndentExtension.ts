@@ -34,11 +34,11 @@ export const IndentExtension = Extension.create<IndentOptions>({
         attributes: {
           indent: {
             default: 0,
-            parseHTML: (element) => {
+            parseHTML: (element: HTMLElement) => {
               const indentAttr = element.dataset.indent
               return (indentAttr ? Number.parseInt(indentAttr, 10) : 0) || 0
             },
-            renderHTML: (attributes) => {
+            renderHTML: (attributes: Record<string, any>) => {
               if (!attributes.indent) return {}
               return { 'data-indent': attributes.indent }
             },
