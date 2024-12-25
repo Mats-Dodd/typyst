@@ -14,6 +14,8 @@ export interface EditorState {
   setError: (error: string | null) => void
   editorRef: MutableRefObject<Editor | null>
   timeoutRef: MutableRefObject<NodeJS.Timeout | null>
+  showRawOutput: boolean
+  setShowRawOutput: (show: boolean) => void
 }
 
 export interface AutocompleteResponse {

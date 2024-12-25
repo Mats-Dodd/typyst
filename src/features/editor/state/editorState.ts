@@ -20,6 +20,7 @@ interface EditorProviderProps {
 export function EditorProvider({ children }: EditorProviderProps) {
   const [prediction, setPrediction] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [showRawOutput, setShowRawOutput] = useState(false)
   const editorRef = useRef<Editor | null>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -30,7 +31,9 @@ export function EditorProvider({ children }: EditorProviderProps) {
       error,
       setError,
       editorRef,
-      timeoutRef
+      timeoutRef,
+      showRawOutput,
+      setShowRawOutput
     },
     children
   })

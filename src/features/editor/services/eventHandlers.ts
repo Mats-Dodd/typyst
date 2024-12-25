@@ -10,17 +10,21 @@ export const handleTabKey = (
   prediction: string,
   setPrediction: (pred: string) => void
 ): boolean => {
-  if (!prediction) return false
-
   const { state } = editor
   const { tr } = state
   const { selection } = tr
-  
-  tr.insertText(prediction, selection.from)
+
+  if (prediction) {
+    tr.insertText(prediction, selection.from)
+    editor.view.dispatch(tr)
+    setPrediction("")
+    ;(window as any).currentPrediction = ""
+    return true
+  }
+
+  // Handle indentation when there's no prediction
+  tr.insertText('\t', selection.from)
   editor.view.dispatch(tr)
-  setPrediction("")
-  ;(window as any).currentPrediction = ""
-  
   return true
 }
 

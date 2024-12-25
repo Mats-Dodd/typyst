@@ -1,29 +1,151 @@
 .control-group {
-    padding: 10px 0;
-    margin-bottom: 20px;
+    padding: 28px 28px 4px 28px;
+    margin-bottom: 4px;
     border-bottom: 1px solid var(--border-color);
+    background: var(--background-color);
+    position: relative;
+    overflow: visible;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    -webkit-app-region: drag;
+}
+
+.control-group button {
+    -webkit-app-region: no-drag;
 }
 
 .button-group {
     display: flex;
-    gap: 8px;
+    gap: 2px;
     flex-wrap: wrap;
+    align-items: center;
+    position: relative;
+    overflow: visible;
 }
 
-.button-group button {
-    padding: 6px 12px;
-    border: 1px solid var(--border-color);
-    background: var(--button-background);
+.theme-toggle {
+    margin-left: auto;
+}
+
+.menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: 1px solid transparent;
+    background: transparent;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    color: var(--text-color);
+    transition: all 0.2s ease;
+    width: 28px;
+    height: 28px;
+    position: relative;
 }
 
-.button-group button:hover {
-    background: var(--button-hover-background);
+.menu-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
-.button-group button.is-active {
-    background: var(--button-active-background);
-    color: var(--button-active-color);
+.menu-button:disabled:hover {
+    background: transparent;
+    border-color: transparent;
+}
+
+.menu-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.menu-button:hover {
+    background: var(--hover-background, rgba(0, 0, 0, 0.05));
+    border-color: var(--border-color);
+}
+
+.menu-button.is-active {
+    background: var(--active-background, rgba(0, 0, 0, 0.1));
+    border-color: var(--border-color);
+    color: var(--primary-color, #000);
+}
+
+.menu-button::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    background: white;
+    color: #333;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 2000;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.menu-button:hover::after {
+    opacity: 1;
+    visibility: visible;
+    bottom: -35px;
+}
+
+.button-group > .menu-button:nth-child(1)::after,
+.button-group > .menu-button:nth-child(2)::after {
+    bottom: auto;
+    top: 100%;
+    margin-top: 8px;
+}
+
+.button-group > .menu-button:nth-child(1):hover::after,
+.button-group > .menu-button:nth-child(2):hover::after {
+    bottom: auto;
+    top: 100%;
+    margin-top: 8px;
+}
+
+.menu-dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 4px;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 4px;
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+    z-index: 1500;
+    min-width: max-content;
+}
+
+.dropdown-menu .menu-button {
+    border-radius: 2px;
+}
+
+.dropdown-menu .menu-button:hover::after {
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.separator {
+    width: 1px;
+    height: 20px;
+    background-color: var(--border-color);
+    margin: 0 2px;
 } 

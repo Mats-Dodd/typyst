@@ -33,7 +33,12 @@ function createWindow() {
             preload: path.join(__dirname, "preload.mjs")
         },
         width: 1400,
-        height: 700
+        height: 700,
+        frame: false,
+        titleBarStyle: 'hiddenInset',
+        backgroundColor: '#ffffff',
+        minWidth: 800,
+        minHeight: 600
     });
     registerLlmRpc(win);
 
