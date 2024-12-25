@@ -1,4 +1,4 @@
-import { electronLlmRpc } from '../../rpc/llmRpc'
+import { electronLlmRpc } from '../rpc/llmRpc'
 
 interface AutocompleteParams {
   previousContext: string;

@@ -1,12 +1,12 @@
-import React from "react";
-import "../../styles/ErrorOverlay.css";
+import React from "react"
+import "../../../styles/ErrorOverlay.css"
 
 type ErrorOverlayProps = {
-    error: string | null | undefined;
-};
+    error: string | null | undefined
+}
 
 export function ErrorOverlay({error}: ErrorOverlayProps) {
-    if (!error) return null;
+    if (!error) return null
 
     return (
         <div className="error-overlay">
@@ -15,5 +15,5 @@ export function ErrorOverlay({error}: ErrorOverlayProps) {
                 <p>{error}</p>
             </div>
         </div>
-    );
+    )
 } 

@@ -1,12 +1,12 @@
-import React from "react";
-import {useCurrentEditor} from "@tiptap/react";
-import "../../styles/MenuBar.css";
+import React from "react"
+import { useCurrentEditor } from "@tiptap/react"
+import "../../../styles/MenuBar.css"
 
 export function MenuBar() {
-    const {editor} = useCurrentEditor();
+    const { editor } = useCurrentEditor()
 
     if (!editor)
-        return null;
+        return null
 
     return (
         <div className="control-group">
@@ -43,5 +43,5 @@ export function MenuBar() {
                 </button>
             </div>
         </div>
-    );
+    )
 } 

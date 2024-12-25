@@ -1,0 +1,22 @@
+import { Editor } from '@tiptap/core'
+import { MutableRefObject } from 'react'
+
+export interface EditorContext {
+  previousContext: string
+  currentSentence: string
+  followingContext: string
+}
+
+export interface EditorState {
+  prediction: string
+  setPrediction: (prediction: string) => void
+  error: string | null
+  setError: (error: string | null) => void
+  editorRef: MutableRefObject<Editor | null>
+  timeoutRef: MutableRefObject<NodeJS.Timeout | null>
+}
+
+export interface AutocompleteResponse {
+  text?: string
+  error?: string
+} 

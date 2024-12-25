@@ -1,7 +1,8 @@
 import React from 'react'
+import "../../../styles/Editor.css"
 
 interface RawContentPreviewProps {
-  content: string;
+  content: string
 }
 
 export function RawContentPreview({ content }: RawContentPreviewProps) {

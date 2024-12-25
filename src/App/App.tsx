@@ -1,6 +1,6 @@
-import {Editor} from "./components/Editor/Editor";
+import {Editor} from "../features/editor/components/Editor";
 
-import "./styles/App.css";
+import "../styles/App.css";
 
 export function App() {
     return (
