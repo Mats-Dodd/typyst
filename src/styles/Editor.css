@@ -1,3 +1,19 @@
+:root[data-theme="light"] {
+    --background-color: #ffffff;
+    --text-color: #333333;
+    --border-color: #e0e0e0;
+    --hover-background: rgba(0, 0, 0, 0.05);
+    --active-background: rgba(0, 0, 0, 0.1);
+}
+
+:root[data-theme="dark"] {
+    --background-color: #1e1e1e;
+    --text-color: #e0e0e0;
+    --border-color: #404040;
+    --hover-background: rgba(255, 255, 255, 0.1);
+    --active-background: rgba(255, 255, 255, 0.15);
+}
+
 .editor-wrapper {
     display: flex;
     flex-direction: column;
@@ -8,6 +24,10 @@
     padding: 20px;
     box-sizing: border-box;
     text-align: left;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--background-color);
+    color: var(--text-color);
 }
 
 .ProseMirror {

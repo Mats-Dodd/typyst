@@ -9,6 +9,7 @@ import { MenuBar } from '../components/MenuBar'
 import { ErrorOverlay } from '../components/ErrorOverlay'
 import { RawContentPreview } from '../components/RawContentPreview'
 import { EditorView } from 'prosemirror-view'
+import { ThemeProvider } from '../../theme/themeContext'
 
 import '../../../styles/Editor.css'
 
@@ -62,10 +63,12 @@ function EditorContent(): JSX.Element {
 
 export function Editor(): JSX.Element {
   return (
-    <EditorProvider>
-      <div className="editor-wrapper">
-        <EditorContent />
-      </div>
-    </EditorProvider>
+    <ThemeProvider>
+      <EditorProvider>
+        <div className="editor-wrapper">
+          <EditorContent />
+        </div>
+      </EditorProvider>
+    </ThemeProvider>
   )
 } 
