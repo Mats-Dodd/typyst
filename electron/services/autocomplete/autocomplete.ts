@@ -4,7 +4,6 @@ import { getLlama, LlamaChatSession } from "node-llama-cpp";
 import fs from 'fs/promises';
 import { EventEmitter } from 'events';
 
-// Singleton to maintain chat session
 let chatSession: LlamaChatSession | null = null;
 let currentRequestId: string | null = null;
 const requestEmitter = new EventEmitter();
@@ -82,18 +81,37 @@ export async function generateCompletion(context: EditorContext): Promise<Predic
         }
 
         const prompt = `
-Previous context: ${previousContext}
-Incomplete sentence: ${currentSentence}
-Following context: ${followingContext}
-<instructions>
-<instruction>
-Complete the current sentence naturally. Only provide the completion portion, nothing else. 
-</instruction>
-<instruction>
-Do not include any other text or instructions in your response.
-</instruction>
-</instructions>
-`;
+        <instructions>
+        <instruction>
+        You are an expert writing assistant
+        <instruction>
+        <instruction>
+        Complete the incomplete sentence in the <incomplete-sentence> tag.  Use the sentances from <previous-context> and <following-context> to help you complete the sentence.  
+        </instruction>
+        <instruction>
+        Do not include any other text or instructions in your response.
+        </instruction>
+        <instruction>
+        Include punctuation (! or ? or .) when a sentance should end.
+        </instruction>
+        <instruction>
+        Write short, sharp and concise sentences.
+        </instruction>
+        <instruction>
+        Start your message from where the user left off.  Sometimes you will have to finish a word. 
+        </instruction>
+        <instruction>
+        Do not include ... in your response.
+        </instruction>
+        </instructions>
+
+        <previous-context> ${previousContext} <previoues-context>
+        <incomplete-sentence> ${currentSentence} <incomplete-sentence>
+        <following-context> ${followingContext} <following-context>
+
+
+        `;
+        console.log("PROMPT:", prompt);
         
         const repeatPenalty = {
                 lastTokens: 24,
@@ -104,12 +122,11 @@ Do not include any other text or instructions in your response.
             }
         
         const completionPromise = session.prompt(prompt, {
-            maxTokens: 50,
+            maxTokens: 8,
             temperature: 0.7,
             topP: 0.9,
             repeatPenalty,
         });
-
 
         const completion = await Promise.race([
             completionPromise,
@@ -120,12 +137,13 @@ Do not include any other text or instructions in your response.
             })
         ]) as string;
 
+        console.log("COMPLETION:", completion);
+
         if (currentRequestId !== requestId) {
             return { text: '' };
         }
 
         const result = typeof completion === 'string' ? completion.trim() : completion;
-        console.log("RESULT:", result);
         
         return { text: result };
 
