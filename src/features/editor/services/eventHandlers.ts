@@ -3,6 +3,7 @@ import { extractContexts } from './textProcessingService'
 import { isCursorAtEnd, hasWordsBetween, hasWordsAfter } from './cursorService'
 import { MutableRefObject } from 'react'
 import { LlmService } from '../../../services/LlmService'
+import { cleanCompletion, cleanSpaces } from './predictionService'
 
 export const handleTabKey = (
   editor: Editor,
@@ -67,7 +68,17 @@ export const handleEditorUpdate = async (
   timeoutRef.current = setTimeout(async () => {
     const contexts = extractContexts(contextText, cursorPosition)
     const response = await LlmService.getAutocompletion(contexts)
+
     
+    if (!response.text) {
+      clearPrediction(setPrediction)
+      return
+    }
+    console.log("response", response)
+    const cleanedResponse = cleanCompletion(contextText, response.text)
+    console.log("cleanedResponse", cleanedResponse)
+    const cleanedResponseWithSpaces = cleanSpaces(cleanedResponse, cleanedResponse)
+    console.log("cleanedResponseWithSpaces", cleanedResponseWithSpaces)
     if (response.error) {
       setError(response.error)
       clearPrediction(setPrediction)
@@ -75,8 +86,8 @@ export const handleEditorUpdate = async (
     }
     
     if (response.text) {
-      setPrediction(response.text)
-      ;(window as any).currentPrediction = response.text
+      setPrediction(cleanedResponse)
+      ;(window as any).currentPrediction = cleanedResponse
       setError(null)
     }
   }, 500)
