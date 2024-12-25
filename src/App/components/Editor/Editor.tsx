@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { EditorProvider } from '@tiptap/react'
 import { MenuBar } from './MenuBar'
 import { ErrorOverlay } from './ErrorOverlay'
@@ -12,6 +12,7 @@ import { extractContexts } from '../../utils/textProcessing'
 import '../../styles/Editor.css'
 
 export function Editor() {
+  const [rawContent, setRawContent] = useState('')
   const {
     prediction,
     setPrediction,
@@ -37,6 +38,9 @@ export function Editor() {
     editorRef.current = editor
     const state = editor.state
     const { from } = state.selection
+
+    // Update raw content
+    setRawContent(JSON.stringify(editor.getJSON(), null, 2))
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -103,6 +107,10 @@ export function Editor() {
       >
         <ErrorOverlay error={error} />
       </EditorProvider>
+      <div className="raw-content">
+        <h3>Raw Content</h3>
+        <pre>{rawContent}</pre>
+      </div>
     </div>
   )
 } 
