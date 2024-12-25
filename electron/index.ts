@@ -32,10 +32,25 @@ function createWindow() {
         webPreferences: {
             preload: path.join(__dirname, "preload.mjs")
         },
-        width: 1000,
-        height: 700
+        width: 1400,
+        height: 700,
+        frame: false,
+        titleBarStyle: 'hiddenInset',
+        backgroundColor: '#ffffff',
+        minWidth: 800,
+        minHeight: 600
     });
     registerLlmRpc(win);
+
+    // Test active push message to Renderer-process.
+    win.webContents.on("did-finish-load", () => {
+        win?.webContents.send("main-process-message", (new Date()).toLocaleString());
+        
+        // Open DevTools docked to the right side during development
+        if (VITE_DEV_SERVER_URL && win) {
+            win.webContents.openDevTools({ mode: 'right' });
+        }
+    });
 
     // open external links in the default browser
     win.webContents.setWindowOpenHandler(({url}) => {
@@ -44,11 +59,6 @@ function createWindow() {
 
         void shell.openExternal(url);
         return {action: "deny"};
-    });
-
-    // Test active push message to Renderer-process.
-    win.webContents.on("did-finish-load", () => {
-        win?.webContents.send("main-process-message", (new Date()).toLocaleString());
     });
 
     if (VITE_DEV_SERVER_URL)

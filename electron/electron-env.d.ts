@@ -23,5 +23,17 @@ declare namespace NodeJS {
 
 // Used in Renderer process, expose in `preload.ts`
 interface Window {
-    ipcRenderer: import("electron").IpcRenderer
+    ipcRenderer: import("electron").IpcRenderer,
+    currentPrediction?: string
+}
+
+interface EditorContext {
+    previousContext: string;
+    currentSentence: string;
+    followingContext: string;
+}
+
+interface PredictionResponse {
+    text?: string;
+    error?: string;
 }

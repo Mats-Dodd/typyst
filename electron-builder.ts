@@ -2,10 +2,10 @@ import path from "node:path";
 import {$} from "zx";
 import type {Configuration} from "electron-builder";
 
-const appId = "node-llama-cpp.electron.example";
-const productName = "node-llama-cpp Electron example";
-const executableName = "node-llama-cpp-electron-example";
-const appxIdentityName = "node.llama.cpp.electron.example";
+const appId = "typyst";
+const productName = "typyst";
+const executableName = "typyst";
+const appxIdentityName = "typyst";
 
 /**
  * @see - https://www.electron.build/configuration/configuration
