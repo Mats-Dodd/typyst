@@ -28,24 +28,9 @@ export function findSentenceContainingCursor(text: string, cursorPosition: numbe
 }
 
 export function extractContexts(text: string, cursorPosition: number): EditorContext {
-  const [sentenceStart, sentenceEnd] = findSentenceContainingCursor(text, cursorPosition);
-
-  let currentSentence = text.slice(sentenceStart, sentenceEnd);
-  currentSentence = currentSentence.replace(/\s+/g, " ").trim();
-
-  const textBeforeSentence = text.slice(0, sentenceStart);
-  const wordsBefore = textBeforeSentence.split(/\s+/);
-  const previousWords = wordsBefore.length > 500
-    ? wordsBefore.slice(wordsBefore.length - 500)
-    : wordsBefore;
-  const previousContext = previousWords.join(" ").trim();
-
-  const textAfterSentence = text.slice(sentenceEnd);
-  const followingContext = textAfterSentence.slice(0, 500).trim();
-
+  const textBeforeCursor = text.slice(0, cursorPosition).trim();
+  
   return {
-    previousContext,
-    currentSentence,
-    followingContext
+    textBeforeCursor
   };
 } 

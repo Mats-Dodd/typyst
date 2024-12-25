@@ -78,11 +78,11 @@ export const handleEditorUpdate = async (
       clearPrediction(setPrediction)
       return
     }
-    console.log("response", response)
+    // console.log("response", response)
     const cleanedResponse = cleanCompletion(contextText, response.text)
-    console.log("cleanedResponse", cleanedResponse)
+    // console.log("cleanedResponse", cleanedResponse)
     const cleanedResponseWithSpaces = cleanSpaces(cleanedResponse, cleanedResponse)
-    console.log("cleanedResponseWithSpaces", cleanedResponseWithSpaces)
+    // console.log("cleanedResponseWithSpaces", cleanedResponseWithSpaces)
     if (response.error) {
       setError(response.error)
       clearPrediction(setPrediction)
