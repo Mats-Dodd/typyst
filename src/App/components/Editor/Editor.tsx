@@ -100,28 +100,22 @@ function EditorContent() {
     }    
 
     if (editor.state.tr.docChanged) {
-      console.log('Document changed, clearing prediction')
       clearPrediction()
       return
     }
 
     if (isCursorAtEnd(state)) {
       if (!hasWordsBetween(state)) {
-        
-        console.log('Cursor at end, and now new sentence detected, not showing prediction')
         clearPrediction()
         return
       }
     }
 
     if (hasWordsAfter(state)) {
-      console.log('Words after cursor detected, not showing prediction')
       clearPrediction()
       return
     }
-
-    console.log('Proceeding with autocompletion...')
-
+    
     const docSize = state.doc.content.size
     const startPos = Math.max(0, from - 1000)
     const endPos = Math.min(docSize, from + 1000)
