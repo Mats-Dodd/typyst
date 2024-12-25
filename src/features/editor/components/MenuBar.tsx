@@ -14,15 +14,19 @@ import {
     BiUndo,
     BiRedo,
     BiSun,
-    BiMoon
+    BiMoon,
+    BiData,
+    BiCodeAlt
 } from "react-icons/bi"
 import { useTheme } from "../../theme/themeContext"
+import { useEditorState } from "../state/editorState"
 import "../../../styles/MenuBar.css"
 
 export function MenuBar() {
     const { editor } = useCurrentEditor()
     const [showAlignMenu, setShowAlignMenu] = useState(false)
     const { theme, toggleTheme } = useTheme()
+    const { showRawOutput, setShowRawOutput } = useEditorState()
 
     if (!editor)
         return null
@@ -117,6 +121,22 @@ export function MenuBar() {
                         </div>
                     )}
                 </div>
+                <div className="separator" />
+                <button
+                    onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                    className={`menu-button ${editor.isActive('codeBlock') ? "is-active" : ""}`}
+                    data-tooltip="Code Block"
+                >
+                    <BiCodeAlt />
+                </button>
+                <div className="separator" />
+                <button
+                    onClick={() => setShowRawOutput(!showRawOutput)}
+                    className={`menu-button ${showRawOutput ? "is-active" : ""}`}
+                    data-tooltip="Toggle Raw Output"
+                >
+                    <BiData />
+                </button>
             </div>
             <button
                 onClick={toggleTheme}

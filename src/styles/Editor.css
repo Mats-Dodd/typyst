@@ -4,6 +4,8 @@
     --border-color: #e0e0e0;
     --hover-background: rgba(0, 0, 0, 0.05);
     --active-background: rgba(0, 0, 0, 0.1);
+    --code-block-background: #1e1e1e;
+    --code-block-text: #e0e0e0;
 }
 
 :root[data-theme="dark"] {
@@ -12,6 +14,8 @@
     --border-color: #404040;
     --hover-background: rgba(255, 255, 255, 0.1);
     --active-background: rgba(255, 255, 255, 0.15);
+    --code-block-background: #000000;
+    --code-block-text: #e0e0e0;
 }
 
 .editor-wrapper {
@@ -82,4 +86,13 @@
     overflow-x: auto;
     font-family: monospace;
     font-size: 14px;
-} 
+}
+
+/* Indentation styles */
+[data-indent="1"] { padding-left: 2em; }
+[data-indent="2"] { padding-left: 4em; }
+[data-indent="3"] { padding-left: 6em; }
+[data-indent="4"] { padding-left: 8em; }
+[data-indent="5"] { padding-left: 10em; }
+[data-indent="6"] { padding-left: 12em; }
+[data-indent="7"] { padding-left: 14em; } 

@@ -12,6 +12,7 @@ import { EditorView } from 'prosemirror-view'
 import { ThemeProvider } from '../../theme/themeContext'
 
 import '../../../styles/Editor.css'
+import '../../../styles/CodeBlock.css'
 
 function EditorContent(): JSX.Element {
   const [rawContent, setRawContent] = useState('')
@@ -21,7 +22,8 @@ function EditorContent(): JSX.Element {
     error,
     setError,
     editorRef,
-    timeoutRef
+    timeoutRef,
+    showRawOutput
   } = useEditorState()
 
   useEffect(() => {
@@ -30,9 +32,13 @@ function EditorContent(): JSX.Element {
   }, [setPrediction])
 
   const handleKeyDown = (view: EditorView, event: KeyboardEvent): boolean => {
-    if (event.key === "Tab" && prediction && editorRef.current) {
+    if (event.key === "Tab") {
       event.preventDefault()
-      return handleTabKey(editorRef.current, prediction, setPrediction)
+      if (prediction && editorRef.current) {
+        return handleTabKey(editorRef.current, prediction, setPrediction)
+      }
+      // Let the IndentExtension handle the tab when there's no prediction
+      return false
     }
     return false
   }
@@ -56,7 +62,7 @@ function EditorContent(): JSX.Element {
       >
         <ErrorOverlay error={error} />
       </TiptapProvider>
-      <RawContentPreview content={rawContent} />
+      {showRawOutput && <RawContentPreview content={rawContent} />}
     </>
   )
 }
