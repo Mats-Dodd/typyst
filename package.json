@@ -53,6 +53,8 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@types/semver": "^7.5.8",
+    "@types/tar": "^6.1.10",
+    "@types/unzipper": "^0.10.10",
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8",
@@ -63,17 +65,15 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
     "rimraf": "^6.0.1",
+    "tar": "^6.2.0",
+    "tsx": "^4.7.0",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.16.0",
+    "unzipper": "^0.10.14",
     "vite": "^6.0.1",
     "vite-plugin-electron": "^0.29.0",
     "vite-plugin-electron-renderer": "^0.14.6",
-    "zx": "^8.2.4",
-    "unzipper": "^0.10.14",
-    "tar": "^6.2.0",
-    "tsx": "^4.7.0",
-    "@types/unzipper": "^0.10.9",
-    "@types/tar": "^6.1.10"
+    "zx": "^8.2.4"
   },
   "overrides": {
     "electron-builder": {
