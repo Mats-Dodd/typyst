@@ -101,12 +101,12 @@
 .editor-container {
   display: flex;
   width: 100%;
-  height: calc(100vh - 65px); /* Account for MenuBar height */
+  height: calc(100vh - 61px); /* Adjusted for new MenuBar height (28px + 2px + 2px + 28px + 1px border) */
   background: var(--background-color);
   position: relative;
   overflow: hidden;
-  margin-top: 64px; /* Adjust to account for MenuBar height minus its bottom border */
-  border-top: 1px solid var(--border-color); /* Add top border to align with MenuBar bottom border */
+  margin-top: 60px; /* Adjusted to match new MenuBar height minus border */
+  border-top: 1px solid var(--border-color);
 }
 
 .editor-main {
