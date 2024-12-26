@@ -52,6 +52,15 @@ function EditorContent(): JSX.Element {
     return () => window.removeEventListener('keydown', keydownHandler)
   }, [])
 
+  useEffect(() => {
+    // Disable spellcheck when editor is available
+    if (editorRef.current) {
+      editorRef.current.view.dom.setAttribute("spellcheck", "false")
+      editorRef.current.view.dom.setAttribute("autocomplete", "off")
+      editorRef.current.view.dom.setAttribute("autocapitalize", "off")
+    }
+  }, [editorRef.current])
+
   const handleKeyDown = (view: EditorView, event: KeyboardEvent): boolean => {
     if (event.key === "Tab") {
       event.preventDefault()
