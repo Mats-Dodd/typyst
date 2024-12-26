@@ -1,4 +1,5 @@
 import {ipcRenderer, contextBridge} from "electron";
+import type { ValeAPI } from "./types/vale";
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld("ipcRenderer", {
@@ -27,5 +28,15 @@ contextBridge.exposeInMainWorld('fs', {
     },
     readFile: (path: string) => {
         return ipcRenderer.invoke('read-file', path);
+    }
+});
+
+// Expose Vale API
+contextBridge.exposeInMainWorld('vale', {
+    lint: (htmlContent: string) => {
+        return ipcRenderer.invoke('vale:lint', htmlContent);
+    },
+    getVersion: () => {
+        return ipcRenderer.invoke('vale:version');
     }
 });

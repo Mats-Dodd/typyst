@@ -3,18 +3,13 @@ import { ProcessedValeAlert, ValeAlert } from '../types/vale'
 
 export async function loadValeResults(editor: Editor): Promise<ProcessedValeAlert[]> {
   try {
-    const result = await window.fs.readFile('.tmp/editor/output.json')
-    if (!result.error && result.content) {
-      try {
-        const valeData = JSON.parse(result.content)
-        const alerts = valeData['initial-html.html'] || []
-        return processValeAlerts(alerts, editor)
-      } catch (parseError) {
-        console.error('Error parsing Vale JSON:', parseError)
-        return []
-      }
-    }
-    return []
+    const html = editor.getHTML()
+    const valeResponse = await window.vale.lint(html)
+    console.log('Vale Response:', valeResponse)
+    
+    // Vale returns results with the filename as the key, but we only care about the alerts
+    const alerts = Object.values(valeResponse)[0] || []
+    return processValeAlerts(alerts, editor)
   } catch (err) {
     console.error('Failed to load Vale results:', err)
     return []
