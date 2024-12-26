@@ -20,4 +20,17 @@ export function registerFileSystemRpc() {
             };
         }
     });
+
+    ipcMain.handle('read-file', async (_event, filePath: string) => {
+        try {
+            const content = await fs.readFile(filePath, 'utf-8');
+            return { content };
+        } catch (error) {
+            console.error('Error reading file:', error);
+            return { 
+                content: '',
+                error: error instanceof Error ? error.message : String(error)
+            };
+        }
+    });
 } 

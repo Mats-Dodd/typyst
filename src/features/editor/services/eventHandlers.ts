@@ -80,16 +80,16 @@ export const handleEditorUpdate = async (
     console.log("response", response)
 
     const cleanedResponse = cleanCompletion(contextText, response.text)
-    console.log("cleanedResponse", cleanedResponse)
+    // console.log("cleanedResponse", cleanedResponse)
 
     const firstSentence = cutToFirstSentence(cleanedResponse)
-    console.log("firstSentence", firstSentence)
+    // console.log("firstSentence", firstSentence)
 
     const capitalizedResponse = handleSentenceCapitalization(contextText, firstSentence)
-    console.log("capitalizedResponse", capitalizedResponse)
+    // console.log("capitalizedResponse", capitalizedResponse)
 
     const cleanedResponseWithSpaces = cleanSpaces(cleanedResponse, capitalizedResponse)
-    console.log("cleanedResponseWithSpaces", cleanedResponseWithSpaces)
+    // console.log("cleanedResponseWithSpaces", cleanedResponseWithSpaces)
 
     if (response.error) {
       setError(response.error)

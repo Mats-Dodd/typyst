@@ -24,5 +24,8 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
 contextBridge.exposeInMainWorld('fs', {
     writeFile: (path: string, content: string) => {
         return ipcRenderer.invoke('write-file', path, content);
+    },
+    readFile: (path: string) => {
+        return ipcRenderer.invoke('read-file', path);
     }
 });
