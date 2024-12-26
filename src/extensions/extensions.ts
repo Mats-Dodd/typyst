@@ -5,6 +5,8 @@ import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { all, createLowlight } from 'lowlight'
 import {PredictionExtension} from "./predictions/PredictionExtension";
 import { IndentExtension } from './indent/IndentExtension';
+import Document from '@tiptap/extension-document'
+import Paragraph from '@tiptap/extension-paragraph'
 
 import css from 'highlight.js/lib/languages/css'
 import js from 'highlight.js/lib/languages/javascript'
@@ -20,6 +22,7 @@ lowlight.register('css', css)
 lowlight.register('js', js)
 lowlight.register('ts', ts)
 lowlight.register('python', python)
+
 export const extensions = [
     TextStyle,
     StarterKit.configure({
@@ -37,5 +40,8 @@ export const extensions = [
         lowlight,
     }),
     IndentExtension,
-    PredictionExtension
+    PredictionExtension,
+    Document,
+    Paragraph,
+    Text
 ]; 

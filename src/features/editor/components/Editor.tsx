@@ -14,8 +14,17 @@ import { ThemeProvider } from '../../theme/themeContext'
 import '../../../styles/Editor.css'
 import '../../../styles/CodeBlock.css'
 
+declare global {
+  interface Window {
+    fs: {
+      writeFile(path: string, content: string): Promise<{ success: boolean; error?: string }>;
+    }
+  }
+}
+
 function EditorContent(): JSX.Element {
   const [rawContent, setRawContent] = useState('')
+  const [isFirstRender, setIsFirstRender] = useState(true)
   const {
     prediction,
     setPrediction,
@@ -45,6 +54,17 @@ function EditorContent(): JSX.Element {
 
   const onUpdate = async ({ editor }: { editor: TiptapEditor }): Promise<void> => {
     editorRef.current = editor
+    const html = editor.getHTML()
+    console.log('Editor HTML:', html)
+    
+    if (isFirstRender) {
+      const result = await window.fs.writeFile('.tmp/editor/initial-html.html', html)
+      if (!result.success) {
+        console.error('Failed to save initial HTML:', result.error)
+      }
+      setIsFirstRender(false)
+    }
+    
     setRawContent(JSON.stringify(editor.getJSON(), null, 2))
     await handleEditorUpdate(editor, setPrediction, setError, timeoutRef)
   }

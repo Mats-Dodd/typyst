@@ -18,7 +18,11 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
         const [channel, ...omit] = args;
         return ipcRenderer.invoke(channel, ...omit);
     }
+});
 
-    // You can expose other APIs you need here
-    // ...
+// Expose typed versions of common operations
+contextBridge.exposeInMainWorld('fs', {
+    writeFile: (path: string, content: string) => {
+        return ipcRenderer.invoke('write-file', path, content);
+    }
 });
