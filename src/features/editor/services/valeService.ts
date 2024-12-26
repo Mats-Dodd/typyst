@@ -1,15 +1,26 @@
 import { Editor } from '@tiptap/core'
 import { ProcessedValeAlert, ValeAlert } from '../types/vale'
 
+export function getHighlightedText(alerts: ProcessedValeAlert[]): string[] {
+  return alerts
+    .filter(alert => ['warning', 'error'].includes(alert.Severity.toLowerCase()))
+    .map(alert => alert.Match)
+}
+
 export async function loadValeResults(editor: Editor): Promise<ProcessedValeAlert[]> {
   try {
     const html = editor.getHTML()
     const valeResponse = await window.vale.lint(html)
-    console.log('Vale Response:', valeResponse)
+    // console.log('Vale Response:', valeResponse)
     
     // Vale returns results with the filename as the key, but we only care about the alerts
     const alerts = Object.values(valeResponse)[0] || []
-    return processValeAlerts(alerts, editor)
+    const processedAlerts = processValeAlerts(alerts, editor)
+    
+    // Add this line to log the highlighted text
+    // console.log('Highlighted Text:', getHighlightedText(processedAlerts))
+    
+    return processedAlerts
   } catch (err) {
     console.error('Failed to load Vale results:', err)
     return []

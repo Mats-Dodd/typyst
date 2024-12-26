@@ -7,6 +7,10 @@ import {PredictionExtension} from "./predictions/PredictionExtension";
 import { IndentExtension } from './indent/IndentExtension';
 import Document from '@tiptap/extension-document'
 import Paragraph from '@tiptap/extension-paragraph'
+import Underline from '@tiptap/extension-underline'
+import { Extension } from '@tiptap/core'
+import { Plugin, PluginKey } from 'prosemirror-state'
+import { Decoration, DecorationSet } from 'prosemirror-view'
 
 import css from 'highlight.js/lib/languages/css'
 import js from 'highlight.js/lib/languages/javascript'
@@ -22,6 +26,47 @@ lowlight.register('css', css)
 lowlight.register('js', js)
 lowlight.register('ts', ts)
 lowlight.register('python', python)
+
+const ValeHighlightExtension = Extension.create({
+  name: 'valeHighlight',
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('valeHighlight'),
+        props: {
+          decorations: (state) => {
+            const { doc } = state;
+            const decorations: Decoration[] = [];
+            const highlightedTexts = (window as any).currentValeHighlights || [];
+
+            if (highlightedTexts.length === 0) return DecorationSet.empty;
+
+            doc.descendants((node, pos) => {
+              if (node.isText) {
+                const text = node.text || '';
+                highlightedTexts.forEach((highlight: string) => {
+                  let index = text.indexOf(highlight);
+                  while (index !== -1) {
+                    decorations.push(
+                      Decoration.inline(pos + index, pos + index + highlight.length, {
+                        class: 'vale-highlight',
+                        style: 'text-decoration: underline; text-decoration-style: wavy; text-decoration-color: red;'
+                      })
+                    );
+                    index = text.indexOf(highlight, index + 1);
+                  }
+                });
+              }
+            });
+
+            return DecorationSet.create(doc, decorations);
+          }
+        }
+      })
+    ];
+  }
+});
 
 export const extensions = [
     TextStyle,
@@ -43,5 +88,6 @@ export const extensions = [
     PredictionExtension,
     Document,
     Paragraph,
-    Text
+    Underline,
+    ValeHighlightExtension,
 ]; 

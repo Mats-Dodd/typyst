@@ -11,7 +11,7 @@ import { RawContentPreview } from '../components/RawContentPreview'
 import { EditorView } from 'prosemirror-view'
 import { ThemeProvider } from '../../theme/themeContext'
 import { ValeSidebar } from './ValeSidebar'
-import { loadValeResults } from '../services/valeService'
+import { loadValeResults, getHighlightedText } from '../services/valeService'
 import { ProcessedValeAlert } from '../types/vale'
 
 import '../../../styles/Editor.css'
@@ -90,6 +90,9 @@ function EditorContent(): JSX.Element {
     if (editorRef.current) {
       const alerts = await loadValeResults(editorRef.current)
       setValeAlerts(alerts)
+      const highlightedText = getHighlightedText(alerts)
+      ;(window as any).currentValeHighlights = highlightedText
+      editor.view.dispatch(editor.state.tr)  // Force a re-render to update decorations
     }
   }
 
