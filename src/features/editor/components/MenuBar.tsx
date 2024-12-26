@@ -19,14 +19,17 @@ import {
     BiCodeAlt
 } from "react-icons/bi"
 import { useTheme } from "../../theme/themeContext"
-import { useEditorState } from "../state/editorState"
 import "../../../styles/MenuBar.css"
 
-export function MenuBar() {
+interface MenuBarProps {
+    showRawOutput: boolean
+    setShowRawOutput: (show: boolean) => void
+}
+
+export function MenuBar({ showRawOutput, setShowRawOutput }: MenuBarProps) {
     const { editor } = useCurrentEditor()
     const [showAlignMenu, setShowAlignMenu] = useState(false)
     const { theme, toggleTheme } = useTheme()
-    const { showRawOutput, setShowRawOutput } = useEditorState()
 
     if (!editor)
         return null

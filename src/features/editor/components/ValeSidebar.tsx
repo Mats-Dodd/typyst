@@ -4,7 +4,7 @@ import { BiX } from 'react-icons/bi'
 
 interface ValeSidebarProps {
   alerts: ValeAlert[]
-  onClose?: () => void
+  onClose?: (show: boolean | ((prev: boolean) => boolean)) => void
   ignoredWarnings: boolean
   setIgnoredWarnings: (ignored: boolean) => void
   ignoredErrors: boolean
@@ -35,7 +35,7 @@ export function ValeSidebar({
         <div className="vale-sidebar-header">
           <h3>Writing Suggestions</h3>
           {onClose && (
-            <button onClick={onClose} className="vale-close-button" title="Close Sidebar">
+            <button onClick={() => onClose(false)} className="vale-close-button" title="Close Sidebar">
               <BiX />
             </button>
           )}
