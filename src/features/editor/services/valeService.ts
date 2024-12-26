@@ -1,24 +1,39 @@
 import { Editor } from '@tiptap/core'
 import { ProcessedValeAlert, ValeAlert } from '../types/vale'
 
-export function getHighlightedText(alerts: ProcessedValeAlert[]): string[] {
-  return alerts
-    .filter(alert => ['warning', 'error'].includes(alert.Severity.toLowerCase()))
+export function getHighlightedText(
+  alerts: ProcessedValeAlert[], 
+  ignoredWarnings: boolean = false,
+  ignoredErrors: boolean = false
+): string[] {
+  console.log("getHighlightedText called with:", { 
+    alertCount: alerts.length, 
+    ignoredWarnings, 
+    ignoredErrors 
+  })
+  
+  const highlightedText = alerts
+    .filter(alert => {
+      const severity = alert.Severity.toLowerCase()
+      if (severity === 'warning' && ignoredWarnings) return false
+      if (severity === 'error' && ignoredErrors) return false
+      return ['warning', 'error'].includes(severity)
+    })
     .map(alert => alert.Match)
+
+  console.log("Returning highlighted text:", highlightedText)
+  return highlightedText
 }
 
 export async function loadValeResults(editor: Editor): Promise<ProcessedValeAlert[]> {
   try {
     const html = editor.getHTML()
     const valeResponse = await window.vale.lint(html)
-    // console.log('Vale Response:', valeResponse)
     
     // Vale returns results with the filename as the key, but we only care about the alerts
     const alerts = Object.values(valeResponse)[0] || []
     const processedAlerts = processValeAlerts(alerts, editor)
-    
-    // Add this line to log the highlighted text
-    // console.log('Highlighted Text:', getHighlightedText(processedAlerts))
+    console.log('Highlighted Text:', getHighlightedText(processedAlerts))
     
     return processedAlerts
   } catch (err) {

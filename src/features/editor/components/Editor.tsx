@@ -31,6 +31,8 @@ function EditorContent(): JSX.Element {
   const [isFirstRender, setIsFirstRender] = useState(true)
   const [valeAlerts, setValeAlerts] = useState<ProcessedValeAlert[]>([])
   const [showSidebar, setShowSidebar] = useState(true)
+  const [ignoredWarnings, setIgnoredWarnings] = useState(false)
+  const [ignoredErrors, setIgnoredErrors] = useState(false)
   const {
     prediction,
     setPrediction,
@@ -61,6 +63,15 @@ function EditorContent(): JSX.Element {
     }
   }, [editorRef.current])
 
+  // Add effect to update decorations when ignore states change
+  useEffect(() => {
+    if (editorRef.current && valeAlerts.length > 0) {
+      const highlightedText = getHighlightedText(valeAlerts, ignoredWarnings, ignoredErrors)
+      ;(window as any).currentValeHighlights = highlightedText
+      editorRef.current.view.dispatch(editorRef.current.state.tr)  // Force a re-render to update decorations
+    }
+  }, [ignoredWarnings, ignoredErrors, valeAlerts])
+
   const handleKeyDown = (view: EditorView, event: KeyboardEvent): boolean => {
     if (event.key === "Tab") {
       event.preventDefault()
@@ -90,7 +101,7 @@ function EditorContent(): JSX.Element {
     if (editorRef.current) {
       const alerts = await loadValeResults(editorRef.current)
       setValeAlerts(alerts)
-      const highlightedText = getHighlightedText(alerts)
+      const highlightedText = getHighlightedText(alerts, ignoredWarnings, ignoredErrors)
       ;(window as any).currentValeHighlights = highlightedText
       editor.view.dispatch(editor.state.tr)  // Force a re-render to update decorations
     }
@@ -114,7 +125,14 @@ function EditorContent(): JSX.Element {
       </div>
       {showSidebar && (
         <div className="editor-sidebar">
-          <ValeSidebar alerts={valeAlerts} onClose={() => setShowSidebar(false)} />
+          <ValeSidebar 
+            alerts={valeAlerts} 
+            onClose={() => setShowSidebar(false)} 
+            ignoredWarnings={ignoredWarnings}
+            setIgnoredWarnings={setIgnoredWarnings}
+            ignoredErrors={ignoredErrors}
+            setIgnoredErrors={setIgnoredErrors}
+          />
         </div>
       )}
     </div>

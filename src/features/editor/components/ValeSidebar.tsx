@@ -5,9 +5,30 @@ import { BiX } from 'react-icons/bi'
 interface ValeSidebarProps {
   alerts: ValeAlert[]
   onClose?: () => void
+  ignoredWarnings: boolean
+  setIgnoredWarnings: (ignored: boolean) => void
+  ignoredErrors: boolean
+  setIgnoredErrors: (ignored: boolean) => void
 }
 
-export function ValeSidebar({ alerts, onClose }: ValeSidebarProps): JSX.Element {
+export function ValeSidebar({ 
+  alerts, 
+  onClose,
+  ignoredWarnings,
+  setIgnoredWarnings,
+  ignoredErrors,
+  setIgnoredErrors 
+}: ValeSidebarProps): JSX.Element {
+  const filteredAlerts = alerts.filter(alert => {
+    const severity = alert.Severity.toLowerCase()
+    if (severity === 'warning' && ignoredWarnings) return false
+    if (severity === 'error' && ignoredErrors) return false
+    return true
+  })
+
+  const warningCount = alerts.filter(alert => alert.Severity.toLowerCase() === 'warning').length
+  const errorCount = alerts.filter(alert => alert.Severity.toLowerCase() === 'error').length
+
   return (
     <div className="vale-sidebar">
       <div className="vale-sidebar-header-sticky">
@@ -19,9 +40,27 @@ export function ValeSidebar({ alerts, onClose }: ValeSidebarProps): JSX.Element 
             </button>
           )}
         </div>
+        <div className="vale-ignore-buttons">
+          {warningCount > 0 && (
+            <button 
+              onClick={() => setIgnoredWarnings(!ignoredWarnings)}
+              className={`vale-ignore-button warning ${ignoredWarnings ? 'ignored' : ''}`}
+            >
+              {ignoredWarnings ? 'Show' : 'Ignore'} Warnings ({warningCount})
+            </button>
+          )}
+          {errorCount > 0 && (
+            <button 
+              onClick={() => setIgnoredErrors(!ignoredErrors)}
+              className={`vale-ignore-button error ${ignoredErrors ? 'ignored' : ''}`}
+            >
+              {ignoredErrors ? 'Show' : 'Ignore'} Errors ({errorCount})
+            </button>
+          )}
+        </div>
       </div>
       <div className="vale-sidebar-content">
-        {alerts.map((alert, index) => (
+        {filteredAlerts.map((alert, index) => (
           <div
             key={index}
             className={`vale-alert vale-${alert.Severity.toLowerCase()}`}
@@ -41,12 +80,12 @@ export function ValeSidebar({ alerts, onClose }: ValeSidebarProps): JSX.Element 
             )}
           </div>
         ))}
-        {alerts.length === 0 && (
+        {filteredAlerts.length === 0 && (
           <div className="vale-empty">
-            No writing suggestions
+            {alerts.length === 0 ? 'No writing suggestions' : 'All alerts are ignored'}
           </div>
         )}
       </div>
     </div>
   )
-} 
+}

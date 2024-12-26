@@ -46,15 +46,20 @@ const ValeHighlightExtension = Extension.create({
               if (node.isText) {
                 const text = node.text || '';
                 highlightedTexts.forEach((highlight: string) => {
-                  let index = text.indexOf(highlight);
-                  while (index !== -1) {
+                  // Escape special regex characters but keep spaces
+                  const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                  let index = 0;
+                  while (true) {
+                    index = text.indexOf(highlight, index);
+                    if (index === -1) break;
+                    
                     decorations.push(
                       Decoration.inline(pos + index, pos + index + highlight.length, {
                         class: 'vale-highlight',
                         style: 'text-decoration: underline; text-decoration-style: wavy; text-decoration-color: red;'
                       })
                     );
-                    index = text.indexOf(highlight, index + 1);
+                    index += highlight.length;
                   }
                 });
               }
