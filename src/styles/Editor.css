@@ -23,7 +23,7 @@
     flex-direction: column;
     height: 100%;
     width: 100%;
-    margin: 0;
+    margin: 0 auto;
     padding: 0;
     box-sizing: border-box;
     text-align: left;
@@ -34,6 +34,9 @@
 .ProseMirror {
     flex: 1;
     padding: 20px;
+    max-width: 60ch;
+    margin: 0 auto;
+    width: 100%;
     background: var(--background-color);
     outline: none;
     font-family: inherit;
