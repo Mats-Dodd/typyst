@@ -44,6 +44,7 @@
     line-height: 1.5;
     text-align: left;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .ProseMirror p {
@@ -100,8 +101,12 @@
 .editor-container {
   display: flex;
   width: 100%;
-  height: 100%;
+  height: calc(100vh - 65px); /* Account for MenuBar height */
   background: var(--background-color);
+  position: relative;
+  overflow: hidden;
+  margin-top: 64px; /* Adjust to account for MenuBar height minus its bottom border */
+  border-top: 1px solid var(--border-color); /* Add top border to align with MenuBar bottom border */
 }
 
 .editor-main {
@@ -110,6 +115,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .editor-sidebar {
@@ -117,11 +123,21 @@
   height: 100%;
   border-left: 1px solid var(--border-color);
   background: var(--background-color);
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Remove the pseudo-element since we don't need it anymore */
+.editor-sidebar::before {
+  display: none;
 }
 
 .vale-sidebar {
   padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .vale-sidebar h3 {

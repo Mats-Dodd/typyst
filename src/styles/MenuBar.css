@@ -1,9 +1,12 @@
 .control-group {
     padding: 28px 28px 4px 28px;
     margin-bottom: 4px;
-    border-bottom: 1px solid var(--border-color);
     background: var(--background-color);
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
     overflow: visible;
     display: flex;
     justify-content: space-between;
