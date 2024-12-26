@@ -134,22 +134,22 @@
 }
 
 .vale-sidebar {
-  padding: 16px;
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 .vale-sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .vale-sidebar-header h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-color);
   opacity: 0.8;
@@ -159,8 +159,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   padding: 4px;
   border: none;
   background: transparent;
@@ -177,8 +177,8 @@
 }
 
 .vale-close-button svg {
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
 }
 
 /* Remove the old h3 styles since they're now in .vale-sidebar-header h3 */
@@ -188,12 +188,12 @@
 
 .vale-alert {
   background: var(--background-color);
-  padding: 12px;
+  padding: 8px;
   border-radius: 4px;
   font-size: 12px;
   line-height: 1.4;
   border-left: 3px solid;
-  margin: 0 0 12px 0;
+  margin: 0 0 8px 0;
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -281,4 +281,19 @@
 
 .vale-suggestion {
   border-left-color: #00C851;
+}
+
+.vale-sidebar-header-sticky {
+  position: sticky;
+  top: 0;
+  background: var(--background-color);
+  backdrop-filter: blur(8px);
+  z-index: 10;
+  padding: 8px 12px;
+}
+
+.vale-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
 } 
