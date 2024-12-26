@@ -1,9 +1,9 @@
 import { Editor } from '@tiptap/core'
-import { extractContexts } from './textProcessingService'
+import { extractContexts } from './editorTextProcessingService'
 import { isCursorAtEnd, hasWordsBetween, hasWordsAfter } from './cursorService'
 import { MutableRefObject } from 'react'
 import { LlmService } from '../../../services/LlmService'
-import { cleanCompletion, cleanSpaces } from './predictionService'
+import { cleanCompletion, cleanSpaces, cutToFirstSentence, handleSentenceCapitalization } from './predictionService'
 
 export const handleTabKey = (
   editor: Editor,
@@ -22,7 +22,6 @@ export const handleTabKey = (
     return true
   }
 
-  // Handle indentation when there's no prediction
   tr.insertText('\t', selection.from)
   editor.view.dispatch(tr)
   return true
@@ -79,10 +78,19 @@ export const handleEditorUpdate = async (
       return
     }
     console.log("response", response)
+
     const cleanedResponse = cleanCompletion(contextText, response.text)
     console.log("cleanedResponse", cleanedResponse)
-    const cleanedResponseWithSpaces = cleanSpaces(cleanedResponse, cleanedResponse)
+
+    const firstSentence = cutToFirstSentence(cleanedResponse)
+    console.log("firstSentence", firstSentence)
+
+    const capitalizedResponse = handleSentenceCapitalization(contextText, firstSentence)
+    console.log("capitalizedResponse", capitalizedResponse)
+
+    const cleanedResponseWithSpaces = cleanSpaces(cleanedResponse, capitalizedResponse)
     console.log("cleanedResponseWithSpaces", cleanedResponseWithSpaces)
+
     if (response.error) {
       setError(response.error)
       clearPrediction(setPrediction)
@@ -90,8 +98,8 @@ export const handleEditorUpdate = async (
     }
     
     if (response.text) {
-      setPrediction(cleanedResponse)
-      ;(window as any).currentPrediction = cleanedResponse
+      setPrediction(capitalizedResponse)
+      ;(window as any).currentPrediction = capitalizedResponse
       setError(null)
     }
   }, 500)

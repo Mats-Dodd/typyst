@@ -26,3 +26,38 @@ export function cleanSpaces(current: string, prediction: string): string {
   }
   return prediction;
   }
+
+export function handleSentenceCapitalization(current: string, prediction: string | undefined): string {
+  if (!current || !prediction) {
+    return '';
+  }
+
+  const sentenceDelimiters = ['!', '?', '.'];
+  const lastChar = current[current.length - 1];
+  const isEndOfSentence = sentenceDelimiters.includes(lastChar as string);
+
+  if (isEndOfSentence) {
+    // Capitalize first letter if it's end of sentence
+    return prediction.charAt(0).toUpperCase() + prediction.slice(1);
+  } else {
+    // Ensure first letter is lowercase if not end of sentence
+    return prediction.charAt(0).toLowerCase() + prediction.slice(1);
+  }
+}
+
+export function cutToFirstSentence(prediction: string): string {
+  if (!prediction) {
+    return '';
+  }
+
+  const sentenceDelimiters = ['!', '?', '.'];
+  const firstDelimiterIndex = Math.min(
+    ...sentenceDelimiters
+      .map(delimiter => prediction.indexOf(delimiter))
+      .filter(index => index !== -1)
+  );
+
+  return firstDelimiterIndex === Infinity 
+    ? prediction 
+    : prediction.slice(0, firstDelimiterIndex + 1);
+}

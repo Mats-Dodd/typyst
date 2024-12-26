@@ -2,6 +2,8 @@ import {BrowserWindow} from "electron";
 import {createElectronSideBirpc} from "../utils/createElectronSideBirpc.ts";
 import type {RenderedFunctions} from "../../src/rpc/llmRpc.ts";
 import {generateCompletion} from "../services/autocomplete/autocomplete.ts";
+import { EditorContext } from "../../src/features/editor/types";
+import { PredictionResponse } from "../services/autocomplete/autocomplete";
 
 export class ElectronLlmRpc {
     public readonly rendererLlmRpc: ReturnType<typeof createElectronSideBirpc<RenderedFunctions, typeof this.functions>>;

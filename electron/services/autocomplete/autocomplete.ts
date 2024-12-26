@@ -1,171 +1,44 @@
-import { fileURLToPath } from "url";
 import path from "path";
-import { getLlama, LlamaChatSession } from "node-llama-cpp";
+import { getLlama, LlamaCompletion } from "node-llama-cpp";
 import fs from 'fs/promises';
-import { EventEmitter } from 'events';
+import { MODEL_NAME } from "../../constants/constants";
+import { EditorContext } from "../../../src/features/editor/types";
 
-let chatSession: LlamaChatSession | null = null;
-let currentRequestId: string | null = null;
-const requestEmitter = new EventEmitter();
-
-type PredictionResponse = {
+export type PredictionResponse = {
     text?: string;
     error?: string;
 };
 
-async function initializeChatSession() {
-    if (chatSession) return chatSession;
 
+export async function generateCompletion(editorContext: EditorContext): Promise<PredictionResponse> {
+    const { textBeforeCursor } = editorContext;
+    const llama = await getLlama();
+    const modelPath = path.resolve(process.env.APP_ROOT || '', 'models', MODEL_NAME);
+    
     try {
-        console.log("Initializing new chat session");
-        const llama = await getLlama();
-        
-        const modelPath = path.join(process.env.APP_ROOT || '',
-             'models',
-             'hf_mradermacher_Llama-3.2-3B-Instruct.Q8_0.gguf');
-        
-        try {
-            await fs.access(modelPath);
-        } catch {
-            throw new Error(`Model file not found at: ${modelPath}`);
-        }
-                
-        const model = await llama.loadModel({
-            modelPath,
-        });
-        
-        
-        const context = await model.createContext();
-        chatSession = new LlamaChatSession({
-            contextSequence: context.getSequence()
-        });
-
-        return chatSession;
-
+        await fs.access(modelPath);
     } catch (error) {
-        console.error("Error in initializeChatSession:", {
-            error,
-            name: error instanceof Error ? error.name : 'Unknown',
-            message: error instanceof Error ? error.message : 'Unknown error',
-            stack: error instanceof Error ? error.stack : 'No stack trace'
-        });
-        
-        throw new Error(
-            error instanceof Error 
-                ? `Session Init Error: ${error.name} - ${error.message}` 
-                : `Session Init Error: ${String(error)}`
-        );
+        return { error: `Model file not found at ${modelPath}` };
     }
-}
 
-export async function generateCompletion(context: EditorContext): Promise<PredictionResponse> {
-    const { previousContext, currentSentence, followingContext } = context;
-    console.log("Previous Context:", previousContext);
-    console.log("Current Sentence:", currentSentence);
-    console.log("Following Context:", followingContext);
-    const requestId = Date.now().toString();
-    
-    if (currentRequestId) {
-        requestEmitter.emit(`cancel-${currentRequestId}`);
-    }
-    
-    currentRequestId = requestId;
+    const model = await llama.loadModel({
+        modelPath: modelPath
+    });
+    const context = await model.createContext();
+    const completion = new LlamaCompletion({
+        contextSequence: context.getSequence()
+    });
 
     try {
-        const session = await initializeChatSession();
-        const initialChatHistory = session.getChatHistory();
-        session.setChatHistory(initialChatHistory);
-
-        if (!session) {
-            return { error: "Failed to initialize chat session" };
-        }
-
-        const prompt = `
-        <instructions>
-        <instruction>
-        You are an expert writing assistant
-        <instruction>
-        <instruction>
-        Complete the incomplete sentence in the <incomplete-sentence> tag.  Use the sentances from <previous-context> and <following-context> to help you complete the sentence.  
-        </instruction>
-        <instruction>
-        Do not include any other text or instructions in your response.
-        </instruction>
-        <instruction>
-        Include punctuation (! or ? or .) when a sentance should end.
-        </instruction>
-        <instruction>
-        Write short, sharp and concise sentences.
-        </instruction>
-        <instruction>
-        Start your message from where the user left off.  Sometimes you will have to finish a word. 
-        </instruction>
-        <instruction>
-        Do not include ... in your response.
-        </instruction>
-        </instructions>
-
-        <previous-context> ${previousContext} <previoues-context>
-        <incomplete-sentence> ${currentSentence} <incomplete-sentence>
-        <following-context> ${followingContext} <following-context>
-
-
-        `;
-        console.log("PROMPT:", prompt);
-        
-        const repeatPenalty = {
-                lastTokens: 24,
-                penalty: 1.12,
-                penalizeNewLine: true,
-                frequencyPenalty: 0.02,
-                presencePenalty: 0.02,
-            }
-        
-        const completionPromise = session.prompt(prompt, {
+        console.log('Input context:', textBeforeCursor);
+        const output = await completion.generateCompletion(textBeforeCursor, {
             maxTokens: 8,
-            temperature: 0.7,
+            temperature: 0.5,
             topP: 0.9,
-            repeatPenalty,
         });
-
-        const completion = await Promise.race([
-            completionPromise,
-            new Promise((_, reject) => {
-                requestEmitter.once(`cancel-${requestId}`, () => {
-                    reject(new Error('Request cancelled'));
-                });
-            })
-        ]) as string;
-
-        console.log("COMPLETION:", completion);
-
-        if (currentRequestId !== requestId) {
-            return { text: '' };
-        }
-
-        const result = typeof completion === 'string' ? completion.trim() : completion;
-        
-        return { text: result };
-
+        console.log('Generated output:', output);
+        return { text: output };
     } catch (error) {
-        if (error instanceof Error && error.message === 'Request cancelled') {
-            return { text: '' };
-        }
-
-        console.error("Completion error:", {
-            error,
-            context,
-            errorType: error instanceof Error ? error.name : 'Unknown'
-        });
-        
-        return { 
-            error: error instanceof Error 
-                ? `LLM Error: ${error.name} - ${error.message}` 
-                : `LLM Error: ${String(error)}`
-        };
-    } finally {
-        if (currentRequestId === requestId) {
-            currentRequestId = null;
-        }
+        return { error: "Failed to generate completion" };
     }
 }

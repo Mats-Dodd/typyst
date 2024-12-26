@@ -2,9 +2,7 @@ import { Editor } from '@tiptap/core'
 import { MutableRefObject } from 'react'
 
 export interface EditorContext {
-  previousContext: string
-  currentSentence: string
-  followingContext: string
+  textBeforeCursor: string
 }
 
 export interface EditorState {

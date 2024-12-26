@@ -1,10 +1,5 @@
 import { electronLlmRpc } from '../rpc/llmRpc'
-
-interface AutocompleteParams {
-  previousContext: string;
-  currentSentence: string;
-  followingContext: string;
-}
+import { EditorContext } from '../features/editor/types'
 
 interface AutocompleteResponse {
   text?: string;
@@ -12,7 +7,7 @@ interface AutocompleteResponse {
 }
 
 export class LlmService {
-  static async getAutocompletion(params: AutocompleteParams): Promise<AutocompleteResponse> {
+  static async getAutocompletion(params: EditorContext): Promise<AutocompleteResponse> {
     try {
       const response = await electronLlmRpc.autocomplete(params)
       return response
