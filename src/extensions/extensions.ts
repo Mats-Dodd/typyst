@@ -46,20 +46,25 @@ const ValeHighlightExtension = Extension.create({
               if (node.isText) {
                 const text = node.text || '';
                 highlightedTexts.forEach((highlight: string) => {
-                  // Escape special regex characters but keep spaces
-                  const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                   let index = 0;
                   while (true) {
                     index = text.indexOf(highlight, index);
                     if (index === -1) break;
+
+                    // Check the character after the match to ensure exact matching
+                    const charAfter = text[index + highlight.length] || '';
+                    const matchedText = text.slice(index, index + highlight.length);
                     
-                    decorations.push(
-                      Decoration.inline(pos + index, pos + index + highlight.length, {
-                        class: 'vale-highlight',
-                        style: 'text-decoration: underline; text-decoration-style: wavy; text-decoration-color: red;'
-                      })
-                    );
-                    index += highlight.length;
+                    // Only create decoration if it's an exact match and the next character isn't a letter
+                    if (matchedText === highlight && !/[a-zA-Z]/.test(charAfter)) {
+                      decorations.push(
+                        Decoration.inline(pos + index, pos + index + highlight.length, {
+                          class: 'vale-highlight',
+                          style: 'text-decoration: underline; text-decoration-style: wavy; text-decoration-color: red;'
+                        })
+                      );
+                    }
+                    index += 1; // Move by 1 to catch overlapping matches
                   }
                 });
               }

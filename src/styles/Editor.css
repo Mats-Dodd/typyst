@@ -272,15 +272,15 @@
 }
 
 .vale-error {
-  border-left-color: #ff4444;
+  border-left-color: var(--border-color);
 }
 
 .vale-warning {
-  border-left-color: #ffbb33;
+  border-left-color: var(--border-color);
 }
 
 .vale-suggestion {
-  border-left-color: #00C851;
+  border-left-color: var(--border-color);
 }
 
 .vale-sidebar-header-sticky {
@@ -317,19 +317,19 @@
 }
 
 .vale-ignore-button.warning {
-  border-color: #ffbb33;
+  border-color: var(--border-color);
 }
 
 .vale-ignore-button.error {
-  border-color: #ff4444;
+  border-color: var(--border-color);
 }
 
 .vale-ignore-button.warning:hover {
-  background: #ffbb3320;
+  background: var(--hover-background);
 }
 
 .vale-ignore-button.error:hover {
-  background: #ff444420;
+  background: var(--hover-background);
 }
 
 .vale-ignore-button.ignored {

@@ -6,11 +6,11 @@ export function getHighlightedText(
   ignoredWarnings: boolean = false,
   ignoredErrors: boolean = false
 ): string[] {
-  console.log("getHighlightedText called with:", { 
-    alertCount: alerts.length, 
-    ignoredWarnings, 
-    ignoredErrors 
-  })
+  console.log("Raw alerts:", alerts.map(a => ({
+    match: JSON.stringify(a.Match),
+    severity: a.Severity,
+    message: a.Message
+  })));
   
   const highlightedText = alerts
     .filter(alert => {
@@ -21,7 +21,7 @@ export function getHighlightedText(
     })
     .map(alert => alert.Match)
 
-  console.log("Returning highlighted text:", highlightedText)
+  console.log("Exact highlighted text to match:", highlightedText.map(t => JSON.stringify(t)));
   return highlightedText
 }
 
