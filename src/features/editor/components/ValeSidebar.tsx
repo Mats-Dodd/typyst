@@ -1,14 +1,23 @@
 import React from 'react'
 import { ValeAlert } from '../types/vale'
+import { BiX } from 'react-icons/bi'
 
 interface ValeSidebarProps {
   alerts: ValeAlert[]
+  onClose?: () => void
 }
 
-export function ValeSidebar({ alerts }: ValeSidebarProps): JSX.Element {
+export function ValeSidebar({ alerts, onClose }: ValeSidebarProps): JSX.Element {
   return (
     <div className="vale-sidebar">
-      <h3>Writing Suggestions</h3>
+      <div className="vale-sidebar-header">
+        <h3>Writing Suggestions</h3>
+        {onClose && (
+          <button onClick={onClose} className="vale-close-button" title="Close Sidebar">
+            <BiX />
+          </button>
+        )}
+      </div>
       {alerts.map((alert, index) => (
         <div
           key={index}

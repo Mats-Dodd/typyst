@@ -4,7 +4,7 @@ import type { Editor as TiptapEditor } from '@tiptap/core'
 import { extensions } from '../../../extensions/extensions'
 import { INITIAL_CONTENT } from '../constants/constants'
 import { useEditorState, EditorProvider } from '../state/editorState'
-import { handleEditorUpdate, handleTabKey, clearPrediction } from '../services/eventHandlers'
+import { handleEditorUpdate, handleTabKey, clearPrediction, handleSidebarShortcut } from '../services/eventHandlers'
 import { MenuBar } from '../components/MenuBar'
 import { ErrorOverlay } from '../components/ErrorOverlay'
 import { RawContentPreview } from '../components/RawContentPreview'
@@ -30,6 +30,7 @@ function EditorContent(): JSX.Element {
   const [rawContent, setRawContent] = useState('')
   const [isFirstRender, setIsFirstRender] = useState(true)
   const [valeAlerts, setValeAlerts] = useState<ProcessedValeAlert[]>([])
+  const [showSidebar, setShowSidebar] = useState(true)
   const {
     prediction,
     setPrediction,
@@ -44,6 +45,12 @@ function EditorContent(): JSX.Element {
     window.addEventListener('clearPrediction', () => clearPrediction(setPrediction))
     return () => window.removeEventListener('clearPrediction', () => clearPrediction(setPrediction))
   }, [setPrediction])
+
+  useEffect(() => {
+    const keydownHandler = (e: KeyboardEvent) => handleSidebarShortcut(e, setShowSidebar)
+    window.addEventListener('keydown', keydownHandler)
+    return () => window.removeEventListener('keydown', keydownHandler)
+  }, [])
 
   const handleKeyDown = (view: EditorView, event: KeyboardEvent): boolean => {
     if (event.key === "Tab") {
@@ -93,9 +100,11 @@ function EditorContent(): JSX.Element {
         </TiptapProvider>
         {showRawOutput && <RawContentPreview content={rawContent} />}
       </div>
-      <div className="editor-sidebar">
-        <ValeSidebar alerts={valeAlerts} />
-      </div>
+      {showSidebar && (
+        <div className="editor-sidebar">
+          <ValeSidebar alerts={valeAlerts} onClose={() => setShowSidebar(false)} />
+        </div>
+      )}
     </div>
   )
 }

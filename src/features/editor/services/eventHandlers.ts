@@ -5,6 +5,17 @@ import { MutableRefObject } from 'react'
 import { LlmService } from '../../../services/LlmService'
 import { cleanCompletion, cleanSpaces, cutToFirstSentence, handleSentenceCapitalization } from './predictionService'
 
+export const handleSidebarShortcut = (
+  e: KeyboardEvent,
+  setShowSidebar: (show: boolean | ((prev: boolean) => boolean)) => void
+): void => {
+  // Check for Cmd+Shift+J (Mac) or Ctrl+Shift+J (Windows/Linux)
+  if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'j') {
+    e.preventDefault()
+    setShowSidebar(prev => !prev)
+  }
+}
+
 export const handleTabKey = (
   editor: Editor,
   prediction: string,

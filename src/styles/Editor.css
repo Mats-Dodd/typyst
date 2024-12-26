@@ -140,12 +140,50 @@
   overflow-x: hidden;
 }
 
-.vale-sidebar h3 {
-  margin: 0 0 16px 0;
+.vale-sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.vale-sidebar-header h3 {
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
   color: var(--text-color);
   opacity: 0.8;
+}
+
+.vale-close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  opacity: 0.6;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.vale-close-button:hover {
+  opacity: 1;
+  background: var(--hover-background);
+}
+
+.vale-close-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Remove the old h3 styles since they're now in .vale-sidebar-header h3 */
+.vale-sidebar > h3 {
+  display: none;
 }
 
 .vale-alert {
