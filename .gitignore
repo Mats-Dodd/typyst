@@ -19,3 +19,6 @@ vale/bin/
 # Keep Vale config and styles
 !vale/config/
 !vale/styles/
+
+/files
+/files/

@@ -60,14 +60,14 @@ export function FileSelector({ onFileSelect }: FileSelectorProps): JSX.Element {
 
   return (
     <div className="file-selector">
-      <p>Select a file to begin editing</p>
+      {/* <p>Select a file to begin editing</p> */}
       <div className="file-input-wrapper">
         <div className="button-stack">
           <button onClick={handleClick} className="file-input-button">
-            Choose File
+            Existing File
           </button>
           <button onClick={handleNewDocument} className="file-input-button">
-            New Document
+            Blank Slate
           </button>
           <input
             ref={fileInputRef}
