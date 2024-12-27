@@ -1,5 +1,5 @@
 import React from 'react'
-import { convertMdToJson } from '../services/fileSystemService'
+import { convertMdToJson, convertDocxToJson } from '../services/fileSystemService'
 
 interface FileSelectorProps {
   onFileSelect: (content: any) => void;
@@ -12,19 +12,28 @@ export function FileSelector({ onFileSelect }: FileSelectorProps): JSX.Element {
     const file = event.target.files?.[0];
     if (!file) return;
     
-    if (!file.name.endsWith('.md')) {
-      alert('Please select a Markdown (.md) file');
+    const isMarkdown = file.name.endsWith('.md');
+    const isDocx = file.name.endsWith('.docx');
+
+    if (!isMarkdown && !isDocx) {
+      alert('Please select either a Markdown (.md) or Word (.docx) file');
       return;
     }
 
     try {
-      const text = await file.text();
-      const jsonContent = await convertMdToJson(text);
+      let jsonContent: string;
+      if (isMarkdown) {
+        const text = await file.text();
+        jsonContent = await convertMdToJson(text);
+      } else {
+        const buffer = await file.arrayBuffer();
+        jsonContent = await convertDocxToJson(buffer);
+      }
       const parsedContent = JSON.parse(jsonContent);
       onFileSelect(parsedContent);
     } catch (error) {
       console.error('Error processing file:', error);
-      alert('Error processing the markdown file. Please try again.');
+      alert('Error processing the file. Please try again.');
     }
   };
 
@@ -57,7 +66,7 @@ export function FileSelector({ onFileSelect }: FileSelectorProps): JSX.Element {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".md"
+            accept=".md,.docx"
             onChange={handleFileChange}
             className="file-input-hidden"
           />

@@ -12,4 +12,16 @@ declare global {
   }
 }
 
+declare module 'mammoth' {
+  interface ConversionResult {
+    value: string;
+    messages: any[];
+  }
+
+  type Input = ArrayBuffer | { arrayBuffer: ArrayBuffer } | { path: string };
+
+  function convertToHtml(input: Input): Promise<ConversionResult>;
+  export { convertToHtml, ConversionResult };
+}
+
 export {} 
