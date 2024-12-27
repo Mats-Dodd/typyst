@@ -16,20 +16,64 @@ import {
     BiSun,
     BiMoon,
     BiData,
-    BiCodeAlt
+    BiCodeAlt,
+    BiSave
 } from "react-icons/bi"
 import { useTheme } from "../../theme/themeContext"
 import "../../../styles/MenuBar.css"
+import { convertJsonToMd, convertJsonToDocx } from "../services/fileSystemService"
 
 interface MenuBarProps {
     showRawOutput: boolean
     setShowRawOutput: (show: boolean) => void
+    currentFilePath?: string
+    onSave?: () => void
 }
 
-export function MenuBar({ showRawOutput, setShowRawOutput }: MenuBarProps) {
+export function MenuBar({ showRawOutput, setShowRawOutput, currentFilePath, onSave }: MenuBarProps) {
     const { editor } = useCurrentEditor()
     const [showAlignMenu, setShowAlignMenu] = useState(false)
     const { theme, toggleTheme } = useTheme()
+
+    const handleSave = async () => {
+        console.log('Save triggered, currentFilePath:', currentFilePath);
+        if (!editor || !currentFilePath) {
+            console.log('Cannot save - editor or file path missing:', { editor: !!editor, currentFilePath });
+            return;
+        }
+        
+        try {
+            const isDocx = currentFilePath.endsWith('.docx');
+            
+            if (isDocx) {
+                const docxBlob = await convertJsonToDocx(editor.getJSON());
+                const buffer = await docxBlob.arrayBuffer();
+                console.log('Converted to DOCX, attempting to save to:', currentFilePath);
+                const result = await window.fs.writeBuffer(currentFilePath, buffer);
+                
+                if (!result.success) {
+                    console.error('Failed to save DOCX file:', result.error);
+                    alert('Failed to save file. Please try again.');
+                } else {
+                    console.log('DOCX file saved successfully');
+                }
+            } else {
+                const markdown = await convertJsonToMd(editor.getJSON());
+                console.log('Converted to markdown, attempting to save to:', currentFilePath);
+                const result = await window.fs.writeFile(currentFilePath, markdown);
+                
+                if (!result.success) {
+                    console.error('Failed to save file:', result.error);
+                    alert('Failed to save file. Please try again.');
+                } else {
+                    console.log('File saved successfully');
+                }
+            }
+        } catch (error) {
+            console.error('Error saving file:', error);
+            alert('Error saving file. Please try again.');
+        }
+    }
 
     if (!editor)
         return null
@@ -49,6 +93,15 @@ export function MenuBar({ showRawOutput, setShowRawOutput }: MenuBarProps) {
     return (
         <div className="control-group">
             <div className="button-group">
+                <button
+                    onClick={handleSave}
+                    className="menu-button"
+                    disabled={!currentFilePath}
+                    data-tooltip="Save (⌘S)"
+                >
+                    <BiSave />
+                </button>
+                <div className="separator" />
                 <button
                     onClick={() => editor.chain().focus().undo().run()}
                     disabled={!editor.can().undo()}

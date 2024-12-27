@@ -5,7 +5,6 @@ import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { all, createLowlight } from 'lowlight'
 import {PredictionExtension} from "./predictions/PredictionExtension";
 import { IndentExtension } from './indent/IndentExtension';
-import Document from '@tiptap/extension-document'
 import Paragraph from '@tiptap/extension-paragraph'
 import Underline from '@tiptap/extension-underline'
 import { Extension } from '@tiptap/core'
@@ -84,7 +83,9 @@ export const extensions = [
         heading: {
             levels: [1, 2, 3],
         },
-        codeBlock: false, // disable the default code block to use lowlight instead
+        codeBlock: false, // disable the default code block to use lowlight instead,
+        paragraph: false,
+        doc: false,
     }),
     TextAlign.configure({
         types: ['heading', 'paragraph'],
@@ -96,7 +97,6 @@ export const extensions = [
     }),
     IndentExtension,
     PredictionExtension,
-    Document,
     Paragraph,
     Underline,
     ValeHighlightExtension,
