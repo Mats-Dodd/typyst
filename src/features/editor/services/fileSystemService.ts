@@ -61,6 +61,40 @@ export async function convertJsonToDocx(json: JSONContent): Promise<Blob> {
     return await Packer.toBlob(doc)
 }
 
+export async function renameFile(oldPath: string, newPath: string, content: JSONContent): Promise<boolean> {
+    try {
+        // First write the content to the new path
+        const isDocx = newPath.endsWith('.docx')
+        let result
+        
+        if (isDocx) {
+            const docxBlob = await convertJsonToDocx(content)
+            const buffer = await docxBlob.arrayBuffer()
+            result = await window.fs.writeBuffer(newPath, buffer)
+        } else {
+            const markdown = await convertJsonToMd(content)
+            result = await window.fs.writeFile(newPath, markdown)
+        }
+
+        if (!result.success) {
+            console.error('Failed to write to new path:', result.error)
+            return false
+        }
+
+        // Then delete the old file
+        const deleteResult = await window.fs.deleteFile(oldPath)
+        if (!deleteResult.success) {
+            console.error('Failed to delete old file:', deleteResult.error)
+            // Even if delete fails, we still return true since the content is saved in the new location
+        }
+
+        return true
+    } catch (error) {
+        console.error('Error renaming file:', error)
+        return false
+    }
+}
+
 function parseHtmlToDocxElements(html: string): Paragraph[] {
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')

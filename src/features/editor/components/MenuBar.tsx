@@ -21,24 +21,90 @@ import {
 } from "react-icons/bi"
 import { useTheme } from "../../theme/themeContext"
 import "../../../styles/MenuBar.css"
-import { convertJsonToMd, convertJsonToDocx } from "../services/fileSystemService"
+import { convertJsonToMd, convertJsonToDocx, renameFile } from "../services/fileSystemService"
 
 interface MenuBarProps {
     showRawOutput: boolean
     setShowRawOutput: (show: boolean) => void
     currentFilePath?: string
     onSave?: () => void
+    onFileNameChange?: (newPath: string) => void
 }
 
-export function MenuBar({ showRawOutput, setShowRawOutput, currentFilePath, onSave }: MenuBarProps) {
+export function MenuBar({ showRawOutput, setShowRawOutput, currentFilePath, onSave, onFileNameChange }: MenuBarProps) {
     const { editor } = useCurrentEditor()
     const [showAlignMenu, setShowAlignMenu] = useState(false)
+    const [isEditingFileName, setIsEditingFileName] = useState(false)
+    const [editedFileName, setEditedFileName] = useState("")
     const { theme, toggleTheme } = useTheme()
 
+    const getFileName = (filePath: string) => {
+        const parts = filePath.split(/[/\\]/)
+        const fullName = parts[parts.length - 1] || ''
+        // Remove the extension
+        return fullName.replace(/\.[^/.]+$/, '')
+    }
+
+    const getFileExtension = (filePath: string) => {
+        const match = filePath.match(/\.[^/.]+$/)
+        return match ? match[0] : ''
+    }
+
+    const getDirectory = (filePath: string) => {
+        const lastSlashIndex = filePath.lastIndexOf('/')
+        if (lastSlashIndex === -1) {
+            const lastBackslashIndex = filePath.lastIndexOf('\\')
+            return lastBackslashIndex === -1 ? '' : filePath.slice(0, lastBackslashIndex)
+        }
+        return filePath.slice(0, lastSlashIndex)
+    }
+
+    const displayFileName = currentFilePath ? getFileName(currentFilePath) : "Untitled"
+
+    const handleFileNameClick = () => {
+        if (currentFilePath) {
+            const fileName = getFileName(currentFilePath)
+            if (fileName) {
+                setEditedFileName(fileName)
+                setIsEditingFileName(true)
+            }
+        }
+    }
+
+    const handleFileNameSubmit = async () => {
+        if (currentFilePath && editedFileName && onFileNameChange && editor) {
+            const directory = getDirectory(currentFilePath)
+            const extension = getFileExtension(currentFilePath)
+            const newPath = directory 
+                ? `${directory}/${editedFileName}${extension}`
+                : `${editedFileName}${extension}`
+            
+            try {
+                const success = await renameFile(currentFilePath, newPath, editor.getJSON())
+                if (success) {
+                    onFileNameChange(newPath)
+                } else {
+                    alert('Failed to rename file. Please try again.')
+                }
+            } catch (error) {
+                console.error('Error renaming file:', error)
+                alert('Error renaming file. Please try again.')
+            }
+        }
+        setIsEditingFileName(false)
+    }
+
+    const handleFileNameKeyDown = async (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault() // Prevent default to avoid potential form submission
+            await handleFileNameSubmit()
+        } else if (e.key === 'Escape') {
+            setIsEditingFileName(false)
+        }
+    }
+
     const handleSave = async () => {
-        console.log('Save triggered, currentFilePath:', currentFilePath);
         if (!editor || !currentFilePath) {
-            console.log('Cannot save - editor or file path missing:', { editor: !!editor, currentFilePath });
             return;
         }
         
@@ -48,25 +114,19 @@ export function MenuBar({ showRawOutput, setShowRawOutput, currentFilePath, onSa
             if (isDocx) {
                 const docxBlob = await convertJsonToDocx(editor.getJSON());
                 const buffer = await docxBlob.arrayBuffer();
-                console.log('Converted to DOCX, attempting to save to:', currentFilePath);
                 const result = await window.fs.writeBuffer(currentFilePath, buffer);
                 
                 if (!result.success) {
                     console.error('Failed to save DOCX file:', result.error);
                     alert('Failed to save file. Please try again.');
-                } else {
-                    console.log('DOCX file saved successfully');
                 }
             } else {
                 const markdown = await convertJsonToMd(editor.getJSON());
-                console.log('Converted to markdown, attempting to save to:', currentFilePath);
                 const result = await window.fs.writeFile(currentFilePath, markdown);
                 
                 if (!result.success) {
                     console.error('Failed to save file:', result.error);
                     alert('Failed to save file. Please try again.');
-                } else {
-                    console.log('File saved successfully');
                 }
             }
         } catch (error) {
@@ -193,6 +253,27 @@ export function MenuBar({ showRawOutput, setShowRawOutput, currentFilePath, onSa
                 >
                     <BiData />
                 </button>
+            </div>
+            <div className="file-name-container">
+                {isEditingFileName ? (
+                    <input
+                        type="text"
+                        className="file-name-input"
+                        value={editedFileName}
+                        onChange={(e) => setEditedFileName(e.target.value)}
+                        onBlur={handleFileNameSubmit}
+                        onKeyDown={handleFileNameKeyDown}
+                        autoFocus
+                    />
+                ) : (
+                    <div 
+                        className="file-name-display"
+                        onClick={handleFileNameClick}
+                        title="Click to rename"
+                    >
+                        {displayFileName}
+                    </div>
+                )}
             </div>
             <button
                 onClick={toggleTheme}

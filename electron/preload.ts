@@ -23,14 +23,17 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
 
 // Expose typed versions of common operations
 contextBridge.exposeInMainWorld('fs', {
-    writeFile: (path: string, content: string) => {
-        return ipcRenderer.invoke('write-file', path, content);
+    writeFile: async (path: string, content: string) => {
+        return await ipcRenderer.invoke('write-file', path, content);
     },
-    writeBuffer: (path: string, buffer: Buffer) => {
-        return ipcRenderer.invoke('write-buffer', path, buffer);
+    writeBuffer: async (path: string, buffer: ArrayBuffer) => {
+        return await ipcRenderer.invoke('write-buffer', path, buffer);
     },
-    readFile: (path: string) => {
-        return ipcRenderer.invoke('read-file', path);
+    readFile: async (path: string) => {
+        return await ipcRenderer.invoke('read-file', path);
+    },
+    deleteFile: async (path: string) => {
+        return await ipcRenderer.invoke('delete-file', path);
     }
 });
 

@@ -11,7 +11,7 @@ import { useEditorCore } from '../hooks/useEditorCore'
 import { useValeState } from '../hooks/useValeState'
 import { useEditorShortcuts } from '../hooks/useEditorShortcuts'
 import { useEditorSpellcheck } from '../hooks/useEditorSpellcheck'
-import { convertJsonToMd } from '../services/fileSystemService'
+import { convertJsonToMd, convertJsonToDocx, renameFile } from '../services/fileSystemService'
 
 export function EditorContent(): JSX.Element {
   const [content, setContent] = useState<any>(null);
@@ -84,6 +84,10 @@ export function EditorContent(): JSX.Element {
     setCurrentFilePath(filePath);
   };
 
+  const handleFileNameChange = (newPath: string) => {
+    setCurrentFilePath(newPath)
+  }
+
   if (!content) {
     return <FileSelector onFileSelect={handleFileSelect} />;
   }
@@ -97,6 +101,7 @@ export function EditorContent(): JSX.Element {
             setShowRawOutput={setShowRawOutput} 
             currentFilePath={currentFilePath}
             onSave={handleSave}
+            onFileNameChange={handleFileNameChange}
           />}
           extensions={extensions}
           content={content}
