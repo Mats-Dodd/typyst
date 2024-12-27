@@ -52,4 +52,17 @@ export function registerFileSystemRpc() {
             };
         }
     });
+
+    ipcMain.handle('delete-file', async (_event, filePath: string) => {
+        try {
+            await fs.unlink(filePath);
+            return { success: true };
+        } catch (error) {
+            console.error('Error deleting file:', error);
+            return { 
+                success: false, 
+                error: error instanceof Error ? error.message : String(error)
+            };
+        }
+    });
 } 
