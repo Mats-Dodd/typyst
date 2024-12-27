@@ -16,7 +16,7 @@ export interface ValeState {
 
 export function useValeState(editor: Editor | null): ValeState {
   const [valeAlerts, setValeAlerts] = useState<ProcessedValeAlert[]>([])
-  const [showSidebar, _setShowSidebar] = useState(true)
+  const [showSidebar, _setShowSidebar] = useState(false)
   const [ignoredWarnings, setIgnoredWarnings] = useState(false)
   const [ignoredErrors, setIgnoredErrors] = useState(false)
 

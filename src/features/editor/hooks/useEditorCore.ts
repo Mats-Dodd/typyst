@@ -35,10 +35,17 @@ export function useEditorCore(): EditorCoreState {
     const html = editor.getHTML()
     
     if (isFirstRender) {
-      const result = await window.fs.writeFile('.tmp/editor/initial-html.html', html)
-      if (!result.success) {
-        console.error('Failed to save initial HTML:', result.error)
+      const htmlResult = await window.fs.writeFile('files/content.html', html)
+      if (!htmlResult.success) {
+        console.error('Failed to save HTML content:', htmlResult.error)
       }
+
+      const text = editor.getText()
+      const textResult = await window.fs.writeFile('files/content.txt', text)
+      if (!textResult.success) {
+        console.error('Failed to save text content:', textResult.error)
+      }
+
       setIsFirstRender(false)
     }
     

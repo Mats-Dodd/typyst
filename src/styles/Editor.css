@@ -335,4 +335,60 @@
 .vale-ignore-button.ignored {
   background: var(--hover-background);
   opacity: 0.7;
+}
+
+.file-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+  padding: 2rem;
+  background: var(--background-color);
+}
+
+.file-selector h2 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.file-selector p {
+  margin-bottom: 2rem;
+  color: var(--text-color);
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.file-input-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.file-input-button {
+  padding: 12px 24px;
+  font-size: 1rem;
+  color: var(--background-color);
+  background: var(--text-color);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.file-input-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.file-input-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.file-input-hidden {
+  display: none;
 } 

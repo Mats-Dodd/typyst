@@ -6,11 +6,6 @@ export function getHighlightedText(
   ignoredWarnings: boolean = false,
   ignoredErrors: boolean = false
 ): string[] {
-  console.log("Raw alerts:", alerts.map(a => ({
-    match: JSON.stringify(a.Match),
-    severity: a.Severity,
-    message: a.Message
-  })));
   
   const highlightedText = alerts
     .filter(alert => {
@@ -21,7 +16,6 @@ export function getHighlightedText(
     })
     .map(alert => alert.Match)
 
-  console.log("Exact highlighted text to match:", highlightedText.map(t => JSON.stringify(t)));
   return highlightedText
 }
 
@@ -33,7 +27,6 @@ export async function loadValeResults(editor: Editor): Promise<ProcessedValeAler
     // Vale returns results with the filename as the key, but we only care about the alerts
     const alerts = Object.values(valeResponse)[0] || []
     const processedAlerts = processValeAlerts(alerts, editor)
-    console.log('Highlighted Text:', getHighlightedText(processedAlerts))
     
     return processedAlerts
   } catch (err) {

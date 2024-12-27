@@ -84,7 +84,9 @@ export const extensions = [
         heading: {
             levels: [1, 2, 3],
         },
-        codeBlock: false, // disable the default code block to use lowlight instead
+        codeBlock: false, // disable the default code block to use lowlight instead,
+        paragraph: false,
+        doc: false,
     }),
     TextAlign.configure({
         types: ['heading', 'paragraph'],
