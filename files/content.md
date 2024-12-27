@@ -1,35 +1,47 @@
-# Markdown Showcase Document
+Markdown Showcase Document
+==========================
 
-## Text Formatting
+Text Formatting 2 Do you know who i am? I know for a fact that I
+----------------------------------------------------------------
 
-This is **bold text** and this is *italicized text*. You can also use ~~strikethrough~~ and `inline code`.
+This is **bold text** and this is _italicized text_. You can also use strikethrough and `inline code`.
 
-## Lists
+Lists
+-----
 
 ### Unordered List
-- Item 1
-- Item 2
-  - Nested item 2.1
-  - Nested item 2.2
-- Item 3
+
+*   Item 1
+    
+*   Item 2
+    
+    *   Nested item 2.1
+        
+    *   Nested item 2.2
+        
+*   Item 3
+    
 
 ### Ordered List
-1. First item
-2. Second item
-3. Third item
 
-## Tables
+1.  First item
+    
+2.  Second item
+    
+3.  Third item
+    
 
-| Feature | Description | Support |
-|---------|-------------|---------|
-| Tables | Organize data | ✅ |
-| Links | External references | ✅ |
-| Images | Visual content | ✅ |
+Tables
+------
 
-## Blockquotes
+Feature Description Support Tables Organize data ✅ Links External references ✅ Images Visual content ✅
 
-> This is a blockquote
-> It can span multiple lines
->> And can be nested
+Blockquotes
+-----------
 
-## Code Blocks
+> This is a blockquote It can span multiple lines
+> 
+> > And can be nested
+
+Code Blocks
+-----------

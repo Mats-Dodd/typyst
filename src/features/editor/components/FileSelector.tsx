@@ -2,7 +2,7 @@ import React from 'react'
 import { convertMdToJson, convertDocxToJson } from '../services/fileSystemService'
 
 interface FileSelectorProps {
-  onFileSelect: (content: any) => void;
+  onFileSelect: (content: any, filePath?: string) => void;
 }
 
 export function FileSelector({ onFileSelect }: FileSelectorProps): JSX.Element {
@@ -21,7 +21,13 @@ export function FileSelector({ onFileSelect }: FileSelectorProps): JSX.Element {
     }
 
     try {
+      console.log('Selected file:', file);
       let jsonContent: string;
+      
+      // Use the file name as the path for now
+      const filePath = `files/${file.name}`;
+      console.log('Using file path:', filePath);
+
       if (isMarkdown) {
         const text = await file.text();
         jsonContent = await convertMdToJson(text);
@@ -30,7 +36,7 @@ export function FileSelector({ onFileSelect }: FileSelectorProps): JSX.Element {
         jsonContent = await convertDocxToJson(buffer);
       }
       const parsedContent = JSON.parse(jsonContent);
-      onFileSelect(parsedContent);
+      onFileSelect(parsedContent, filePath);
     } catch (error) {
       console.error('Error processing file:', error);
       alert('Error processing the file. Please try again.');

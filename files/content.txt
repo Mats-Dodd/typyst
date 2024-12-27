@@ -1,1 +1,65 @@
-D
+Markdown Showcase Document
+
+Text Formatting 
+
+This is bold text and this is italicized text. You can also use strikethrough and inline code.
+
+Lists
+
+Unordered List
+
+
+
+
+
+Item 1
+
+
+
+Item 2
+
+
+
+
+
+Nested item 2.1
+
+
+
+Nested item 2.2
+
+
+
+Item 3
+
+Ordered List
+
+
+
+
+
+First item
+
+
+
+Second item
+
+
+
+Third item
+
+Tables
+
+Feature Description Support Tables Organize data ✅ Links External references ✅ Images Visual content ✅
+
+Blockquotes
+
+
+
+This is a blockquote It can span multiple lines
+
+
+
+And can be nested
+
+Code Blocks
