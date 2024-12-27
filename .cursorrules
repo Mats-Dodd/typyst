@@ -1,5 +1,5 @@
 Project Overview:
-Typyst is a modern, desktop-based text editor application built using Electron and React, focusing on providing advanced writing assistance and suggestions.
+Typyst is a modern, desktop-based text editor application built using Electron and React, focusing on providing advanced writing assistance and suggestions. The application features a clean, modular architecture with clear separation of concerns between the main process and renderer components.
 
 Technical Stack:
 - Frontend: React with TypeScript
@@ -8,6 +8,8 @@ Technical Stack:
 - Build Tools: Vite
 - Writing Assistant: Vale
 - AI Integration: LLama
+- State Management: React Hooks
+- Styling: CSS Modules
 
 Architecture:
 1. /electron
@@ -27,29 +29,23 @@ Architecture:
 
    - RPC (Remote Procedure Call) System:
      * fileSystemRpc.ts: File operations handler
+       - Markdown file processing
+       - File system access
+       - Content conversion utilities
      * llmRpc.ts: LLama model integration
+       - AI-powered suggestions
+       - Context-aware completions
      * Bidirectional communication using birpc
 
    - Services:
      * vale/: Writing assistance service
        - Style checking integration
        - Real-time linting
+       - Custom rule management
      * autocomplete/: Text completion service
        - AI-powered suggestions
        - Context-aware completions
-
-   - Directory Structure:
-     * /types: TypeScript type definitions
-     * /constants: Shared configuration
-     * /utils: Helper functions
-     * /rpc: Communication handlers
-     * /services: Core backend services
-
-   - Security Features:
-     * Sandboxed renderer process
-     * Controlled API exposure
-     * Secure file system access
-     * Protected IPC channels
+       - Prediction management
 
 2. /src
    - Application Architecture:
@@ -57,6 +53,7 @@ Architecture:
        - React initialization
        - Root component mounting
        - IPC bridge setup
+       - Global style injection
      
      * /app: Core Application Setup
        - App.tsx: Root component
@@ -68,7 +65,16 @@ Architecture:
      * /features: Core Application Features
        - editor/: Main Editor Implementation
          * components/: React Components
-           - Editor.tsx: Main editor component
+           - Editor.tsx: Main editor wrapper
+             * Theme provider integration
+             * Global layout management
+           - EditorContent.tsx: Core editor functionality
+             * TipTap integration
+             * Content management
+             * Feature coordination
+           - FileSelector.tsx: File handling
+             * Markdown file processing
+             * File input management
            - MenuBar.tsx: Toolbar and controls
            - ValeSidebar.tsx: Writing suggestions panel
            - ErrorOverlay.tsx: Error display
@@ -79,6 +85,7 @@ Architecture:
            - useEditorShortcuts.ts: Keyboard interactions
            - useEditorSpellcheck.ts: Spellcheck integration
          * services/: Feature-specific Logic
+           - fileSystemService.ts: File operations
            - valeService.ts: Vale integration
            - eventHandlers.ts: Editor event management
          * types/: Feature-specific Types
@@ -112,16 +119,6 @@ Architecture:
        - Editor.css: Editor-specific styles
        - MenuBar.css: Toolbar styles
        - Theme variables
-     
-     * /rpc: Frontend RPC Handlers
-       - Electron IPC communication
-       - Type-safe RPC clients
-       - Service interfaces
-
-   - Development Infrastructure:
-     * vite-env.d.ts: Vite environment types
-     * Environment configuration
-     * Build optimizations
 
 Key Features:
 1. Rich Text Editing
@@ -129,27 +126,40 @@ Key Features:
    - Advanced text formatting
    - Code block highlighting
    - Custom extensions
+   - Real-time content updates
 
 2. Writing Assistance
    - Vale integration for style checking
    - Real-time writing suggestions
    - Customizable rules and style guides
-   - Suggestion sidebar
+   - Interactive suggestion sidebar
+   - Warning/error management
+   - Ignorable warnings system
 
-3. Theme Support
+3. File Management
+   - Markdown file support
+   - File selection interface
+   - Content conversion utilities
+   - Error handling
+
+4. Theme Support
    - Theme system
    - Customizable styling
+   - Dark/light mode support
 
-4. Advanced Editor Features
+5. Advanced Editor Features
    - Keyboard shortcuts
    - Spellchecking
    - Raw content preview
    - Error handling
+   - Sidebar management
 
 Core Components:
 1. Editor Component
-   - Central application piece
-   - Editor state and interactions
+   - Modular architecture:
+     * Editor.tsx: Theme and layout wrapper
+     * EditorContent.tsx: Core functionality
+     * FileSelector.tsx: File handling
    - Feature integration through hooks:
      * useEditorCore
      * useValeState
@@ -159,27 +169,35 @@ Core Components:
 2. MenuBar
    - Editing tools and controls
    - Feature toggles
+   - Raw output toggle
 
 3. ValeSidebar
    - Writing suggestions display
    - Warning/error management
    - Interactive feedback
+   - Ignorable warnings system
 
 Technical Features:
 1. RPC System
    - birpc for Electron-React communication
    - Structured service architecture
+   - Type-safe interfaces
 
 2. AI Integration
    - LLama model integration
    - AI-powered writing assistance
+   - Context-aware suggestions
 
 3. Extension System
    - Modular editor extensions
    - Custom TipTap extensions
+   - ProseMirror plugins
 
 Development:
 - Modern development tooling
+- TypeScript for type safety
 - Linting and formatting
 - Automated setup scripts
 - Cross-platform support
+- Modular component architecture
+- Hook-based state management
