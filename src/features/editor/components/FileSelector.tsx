@@ -21,12 +21,9 @@ export function FileSelector({ onFileSelect }: FileSelectorProps): JSX.Element {
     }
 
     try {
-      console.log('Selected file:', file);
       let jsonContent: string;
-      
       // Use the file name as the path for now
       const filePath = `files/${file.name}`;
-      console.log('Using file path:', filePath);
 
       if (isMarkdown) {
         const text = await file.text();
