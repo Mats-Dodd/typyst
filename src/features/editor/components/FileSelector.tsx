@@ -32,20 +32,36 @@ export function FileSelector({ onFileSelect }: FileSelectorProps): JSX.Element {
     fileInputRef.current?.click();
   };
 
+  const handleNewDocument = () => {
+    const blankDocument = {
+      type: 'doc',
+      content: [{
+        type: 'paragraph',
+        content: []
+      }]
+    };
+    onFileSelect(blankDocument);
+  };
+
   return (
     <div className="file-selector">
       <p>Select a file to begin editing</p>
       <div className="file-input-wrapper">
-        <button onClick={handleClick} className="file-input-button">
-          Choose File
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".md"
-          onChange={handleFileChange}
-          className="file-input-hidden"
-        />
+        <div className="button-stack">
+          <button onClick={handleClick} className="file-input-button">
+            Choose File
+          </button>
+          <button onClick={handleNewDocument} className="file-input-button">
+            New Document
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".md"
+            onChange={handleFileChange}
+            className="file-input-hidden"
+          />
+        </div>
       </div>
     </div>
   );

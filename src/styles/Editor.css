@@ -394,4 +394,10 @@
 
 .file-input-hidden {
     display: none;
+}
+
+.button-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 } 
