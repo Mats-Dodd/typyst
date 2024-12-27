@@ -39,6 +39,7 @@
     "@types/uuid": "^10.0.0",
     "birpc": "^0.2.19",
     "classnames": "^2.5.1",
+    "docx": "^9.1.0",
     "highlight.js": "^11.10.0",
     "lifecycle-utils": "^1.7.0",
     "lowlight": "^3.3.0",

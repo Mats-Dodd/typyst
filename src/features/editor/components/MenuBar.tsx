@@ -21,7 +21,7 @@ import {
 } from "react-icons/bi"
 import { useTheme } from "../../theme/themeContext"
 import "../../../styles/MenuBar.css"
-import { convertJsonToMd } from "../services/fileSystemService"
+import { convertJsonToMd, convertJsonToDocx } from "../services/fileSystemService"
 
 interface MenuBarProps {
     showRawOutput: boolean
@@ -43,19 +43,35 @@ export function MenuBar({ showRawOutput, setShowRawOutput, currentFilePath, onSa
         }
         
         try {
-            const markdown = await convertJsonToMd(editor.getJSON())
-            console.log('Converted to markdown, attempting to save to:', currentFilePath);
-            const result = await window.fs.writeFile(currentFilePath, markdown)
+            const isDocx = currentFilePath.endsWith('.docx');
             
-            if (!result.success) {
-                console.error('Failed to save file:', result.error)
-                alert('Failed to save file. Please try again.')
+            if (isDocx) {
+                const docxBlob = await convertJsonToDocx(editor.getJSON());
+                const buffer = await docxBlob.arrayBuffer();
+                console.log('Converted to DOCX, attempting to save to:', currentFilePath);
+                const result = await window.fs.writeBuffer(currentFilePath, buffer);
+                
+                if (!result.success) {
+                    console.error('Failed to save DOCX file:', result.error);
+                    alert('Failed to save file. Please try again.');
+                } else {
+                    console.log('DOCX file saved successfully');
+                }
             } else {
-                console.log('File saved successfully');
+                const markdown = await convertJsonToMd(editor.getJSON());
+                console.log('Converted to markdown, attempting to save to:', currentFilePath);
+                const result = await window.fs.writeFile(currentFilePath, markdown);
+                
+                if (!result.success) {
+                    console.error('Failed to save file:', result.error);
+                    alert('Failed to save file. Please try again.');
+                } else {
+                    console.log('File saved successfully');
+                }
             }
         } catch (error) {
-            console.error('Error saving file:', error)
-            alert('Error saving file. Please try again.')
+            console.error('Error saving file:', error);
+            alert('Error saving file. Please try again.');
         }
     }
 
