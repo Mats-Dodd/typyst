@@ -21,14 +21,15 @@
 .editor-wrapper {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 100vh;
     width: 100%;
-    margin: 0 auto;
+    margin: 0;
     padding: 0;
     box-sizing: border-box;
     text-align: left;
     background: var(--background-color);
     color: var(--text-color);
+    overflow: hidden;
 }
 
 .ProseMirror {
@@ -43,8 +44,7 @@
     font-size: inherit;
     line-height: 1.5;
     text-align: left;
-    overflow-y: auto;
-    overflow-x: hidden;
+    min-height: 100%;
 }
 
 .ProseMirror p {
@@ -66,10 +66,12 @@
 }
 
 .raw-content {
-    margin-top: 20px;
+    margin: 20px;
     padding: 20px;
     background-color: #f5f5f5;
     border-radius: 4px;
+    overflow-y: auto;
+    max-height: 50vh;
 }
 
 .raw-content h3 {
@@ -99,296 +101,297 @@
 [data-indent="7"] { padding-left: 14em; }
 
 .editor-container {
-  display: flex;
-  width: 100%;
-  height: calc(100vh - 61px); /* Adjusted for new MenuBar height (28px + 2px + 2px + 28px + 1px border) */
-  background: var(--background-color);
-  position: relative;
-  overflow: hidden;
-  margin-top: 60px; /* Adjusted to match new MenuBar height minus border */
-  border-top: 1px solid var(--border-color);
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 61px);
+    background: var(--background-color);
+    position: relative;
+    overflow: hidden;
+    margin-top: 60px;
+    border-top: 1px solid var(--border-color);
 }
 
 .editor-main {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .editor-sidebar {
-  width: 300px;
-  height: 100%;
-  border-left: 1px solid var(--border-color);
-  background: var(--background-color);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+    width: 300px;
+    height: 100%;
+    border-left: 1px solid var(--border-color);
+    background: var(--background-color);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
 }
 
 /* Remove the pseudo-element since we don't need it anymore */
 .editor-sidebar::before {
-  display: none;
+    display: none;
 }
 
 .vale-sidebar {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
 }
 
 .vale-sidebar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
 }
 
 .vale-sidebar-header h3 {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-color);
-  opacity: 0.8;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-color);
+    opacity: 0.8;
 }
 
 .vale-close-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 4px;
-  border: none;
-  background: transparent;
-  color: var(--text-color);
-  opacity: 0.6;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 4px;
+    border: none;
+    background: transparent;
+    color: var(--text-color);
+    opacity: 0.6;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
 }
 
 .vale-close-button:hover {
-  opacity: 1;
-  background: var(--hover-background);
+    opacity: 1;
+    background: var(--hover-background);
 }
 
 .vale-close-button svg {
-  width: 16px;
-  height: 16px;
+    width: 16px;
+    height: 16px;
 }
 
 /* Remove the old h3 styles since they're now in .vale-sidebar-header h3 */
 .vale-sidebar > h3 {
-  display: none;
+    display: none;
 }
 
 .vale-alert {
-  background: var(--background-color);
-  padding: 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  line-height: 1.4;
-  border-left: 3px solid;
-  margin: 0 0 8px 0;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  cursor: pointer;
-  transition: all 0.2s ease;
+    background: var(--background-color);
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.4;
+    border-left: 3px solid;
+    margin: 0 0 8px 0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .vale-alert:hover {
-  transform: translateX(-4px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    transform: translateX(-4px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
 
 .vale-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
 }
 
 .vale-rule {
-  font-weight: 600;
-  color: var(--text-color);
-  font-size: 11px;
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 11px;
 }
 
 .vale-severity {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  text-transform: lowercase;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: lowercase;
 }
 
 .vale-error .vale-severity {
-  background: #ff4444;
-  color: white;
+    background: #ff4444;
+    color: white;
 }
 
 .vale-warning .vale-severity {
-  background: #ffbb33;
-  color: black;
+    background: #ffbb33;
+    color: black;
 }
 
 .vale-suggestion .vale-severity {
-  background: #00C851;
-  color: white;
+    background: #00C851;
+    color: white;
 }
 
 .vale-match {
-  display: block;
-  font-family: monospace;
-  background: var(--hover-background);
-  padding: 4px 8px;
-  border-radius: 3px;
-  margin: 8px 0;
-  color: var(--text-color);
+    display: block;
+    font-family: monospace;
+    background: var(--hover-background);
+    padding: 4px 8px;
+    border-radius: 3px;
+    margin: 8px 0;
+    color: var(--text-color);
 }
 
 .vale-message {
-  display: block;
-  color: var(--text-color);
-  margin-bottom: 4px;
+    display: block;
+    color: var(--text-color);
+    margin-bottom: 4px;
 }
 
 .vale-suggestion {
-  display: block;
-  font-style: italic;
-  color: var(--text-color);
-  opacity: 0.8;
-  font-size: 11px;
+    display: block;
+    font-style: italic;
+    color: var(--text-color);
+    opacity: 0.8;
+    font-size: 11px;
 }
 
 .vale-empty {
-  color: var(--text-color);
-  opacity: 0.5;
-  text-align: center;
-  padding: 20px;
-  font-style: italic;
+    color: var(--text-color);
+    opacity: 0.5;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
 }
 
 .vale-error {
-  border-left-color: var(--border-color);
+    border-left-color: var(--border-color);
 }
 
 .vale-warning {
-  border-left-color: var(--border-color);
+    border-left-color: var(--border-color);
 }
 
 .vale-suggestion {
-  border-left-color: var(--border-color);
+    border-left-color: var(--border-color);
 }
 
 .vale-sidebar-header-sticky {
-  position: sticky;
-  top: 0;
-  background: var(--background-color);
-  backdrop-filter: blur(8px);
-  z-index: 10;
-  padding: 8px 12px;
+    position: sticky;
+    top: 0;
+    background: var(--background-color);
+    backdrop-filter: blur(8px);
+    z-index: 10;
+    padding: 8px 12px;
 }
 
 .vale-sidebar-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px 12px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
 }
 
 .vale-ignore-buttons {
-  display: flex;
-  gap: 8px;
-  padding: 8px 0;
+    display: flex;
+    gap: 8px;
+    padding: 8px 0;
 }
 
 .vale-ignore-button {
-  flex: 1;
-  padding: 4px 8px;
-  border: 1px solid;
-  border-radius: 4px;
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: transparent;
-  color: var(--text-color);
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: transparent;
+    color: var(--text-color);
 }
 
 .vale-ignore-button.warning {
-  border-color: var(--border-color);
+    border-color: var(--border-color);
 }
 
 .vale-ignore-button.error {
-  border-color: var(--border-color);
+    border-color: var(--border-color);
 }
 
 .vale-ignore-button.warning:hover {
-  background: var(--hover-background);
+    background: var(--hover-background);
 }
 
 .vale-ignore-button.error:hover {
-  background: var(--hover-background);
+    background: var(--hover-background);
 }
 
 .vale-ignore-button.ignored {
-  background: var(--hover-background);
-  opacity: 0.7;
+    background: var(--hover-background);
+    opacity: 0.7;
 }
 
 .file-selector {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  text-align: center;
-  padding: 2rem;
-  background: var(--background-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+    padding: 2rem;
+    background: var(--background-color);
 }
 
 .file-selector h2 {
-  margin-bottom: 1rem;
-  font-size: 1.5rem;
-  font-weight: 500;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 500;
 }
 
 .file-selector p {
-  margin-bottom: 2rem;
-  color: var(--text-color);
-  font-size: 1.1rem;
-  opacity: 0.9;
+    margin-bottom: 2rem;
+    color: var(--text-color);
+    font-size: 1.1rem;
+    opacity: 0.9;
 }
 
 .file-input-wrapper {
-  position: relative;
-  display: inline-block;
+    position: relative;
+    display: inline-block;
 }
 
 .file-input-button {
-  padding: 12px 24px;
-  font-size: 1rem;
-  color: var(--background-color);
-  background: var(--text-color);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 12px 24px;
+    font-size: 1rem;
+    color: var(--background-color);
+    background: var(--text-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .file-input-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .file-input-button:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .file-input-hidden {
-  display: none;
+    display: none;
 } 
