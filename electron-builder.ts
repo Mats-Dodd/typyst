@@ -33,6 +33,23 @@ export default {
     files: [
         "dist",
         "dist-electron",
+        "vale/config/**/*",
+        "!vale/bin/**/*",
+        {
+            "from": "vale/bin/darwin",
+            "to": "vale/bin/mac",
+            "when": "platform === 'darwin'"
+        },
+        {
+            "from": "vale/bin/win32",
+            "to": "vale/bin/win",
+            "when": "platform === 'win32'"
+        },
+        {
+            "from": "vale/bin/linux",
+            "to": "vale/bin/linux",
+            "when": "platform === 'linux'"
+        },
         "!node_modules/node-llama-cpp/bins/**/*",
         "node_modules/node-llama-cpp/bins/${os}-${arch}*/**/*",
         "!node_modules/node-llama-cpp/llama/localBuilds/**/*",
@@ -41,6 +58,7 @@ export default {
         "node_modules/@node-llama-cpp/${os}-${arch}*/bins/**/*"
     ],
     asarUnpack: [
+        "vale/bin",
         "node_modules/node-llama-cpp/bins",
         "node_modules/node-llama-cpp/llama/localBuilds",
         "node_modules/@node-llama-cpp/*"

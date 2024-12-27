@@ -7,3 +7,18 @@ node_modules
 /dist-electron
 /release
 /models
+
+/.tmp
+
+# Vale binaries
+vale/bin/
+
+# Vale temporary files
+.tmp/editor/vale-temp.html
+
+# Keep Vale config and styles
+!vale/config/
+!vale/styles/
+
+/files
+/files/
