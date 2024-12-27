@@ -1,4 +1,4 @@
-Endstate Features before launch in the news: I dont know how you do it 
+Endstate Features before launch in the news: I dont know how you do it in the nws
 
 Built in local model inference server:Ability to pull down recent models from hugging faceHave an interface that allows users to pull in models that fit in memory
 
@@ -12,24 +12,24 @@ Nice features i want. When you make an edit from chat it then scrolls to the dif
 
 Autocomplete could be improved by having an embedding being made on the prediction and if its too similar to teh current or previous sentence not have it
 
-1. Deeply understand the domain and CUJs,
+1\. Deeply understand the domain and CUJs,
 
-2. Segment out the system into "problems that traditional software is good at solving" and "LLM-hard problems",
+2\. Segment out the system into "problems that traditional software is good at solving" and "LLM-hard problems",
 
-3. For the LLM hard problems, work out the smallest possible state space of decision making,
+3\. For the LLM hard problems, work out the smallest possible state space of decision making,
 
-4. Build the system, and get users using it,
+4\. Build the system, and get users using it,
 
-5. Gradually expand the state space as feedback flows in from users.
+5\. Gradually expand the state space as feedback flows in from users.
 
 Think harder button
 
 What makes a code editor a code editor?1. Intelligent Code Completion
 
-2. Integrated Debugging Tools
+2\. Integrated Debugging Tools
 
-3. Version control
+3\. Version control
 
-4. Smart Navigation - Features like "Go to Definition," "Find All References,"
+4\. Smart Navigation - Features like "Go to Definition," "Find All References,"
 
 provide the types of things that novel writers have access to. E.g., the ability to keep an outline summarizing the chapters, notes on each character, and the ability to try multiple experiments to see which set of plot twists results in the most interesting resolution.

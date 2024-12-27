@@ -37,7 +37,7 @@
     justify-content: center;
     padding: 4px;
     border: 1px solid transparent;
-    background: transparent;
+    background: transparent !important;
     border-radius: 4px;
     cursor: pointer;
     color: var(--text-color);
@@ -53,7 +53,6 @@
 }
 
 .menu-button:disabled:hover {
-    background: transparent;
     border-color: transparent;
 }
 
@@ -63,12 +62,10 @@
 }
 
 .menu-button:hover {
-    background: var(--hover-background, rgba(0, 0, 0, 0.05));
     border-color: var(--border-color);
 }
 
 .menu-button.is-active {
-    background: var(--active-background, rgba(0, 0, 0, 0.1));
     border-color: var(--border-color);
     color: var(--primary-color, #000);
 }
