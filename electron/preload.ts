@@ -37,6 +37,15 @@ contextBridge.exposeInMainWorld('fs', {
     },
     deleteFile: async (path: string) => {
         return await ipcRenderer.invoke('delete-file', path);
+    },
+    createDir: async (path: string) => {
+        return await ipcRenderer.invoke('create-dir', path);
+    },
+    exists: async (path: string) => {
+        return await ipcRenderer.invoke('exists', path);
+    },
+    showOpenDialog: async () => {
+        return await ipcRenderer.invoke('show-open-dialog');
     }
 });
 
@@ -71,3 +80,21 @@ contextBridge.exposeInMainWorld('versioning', {
         return ipcRenderer.invoke('versioning:merge-branch', docId, sourceBranch, targetBranch);
     }
 } as VersioningAPI);
+
+// Expose path utilities
+contextBridge.exposeInMainWorld('path', {
+    dirname: async (filePath: string) => {
+        return await ipcRenderer.invoke('path:dirname', filePath);
+    },
+    join: async (...paths: string[]) => {
+        return await ipcRenderer.invoke('path:join', ...paths);
+    },
+    normalize: async (filePath: string) => {
+        return await ipcRenderer.invoke('path:normalize', filePath);
+    }
+});
+
+// Expose process utilities
+contextBridge.exposeInMainWorld('process', {
+    cwd: () => ipcRenderer.invoke('process:cwd')
+});

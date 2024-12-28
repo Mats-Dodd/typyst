@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { ipcMain, dialog } from 'electron';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -61,6 +61,94 @@ export function registerFileSystemRpc() {
             console.error('Error deleting file:', error);
             return { 
                 success: false, 
+                error: error instanceof Error ? error.message : String(error)
+            };
+        }
+    });
+
+    ipcMain.handle('create-dir', async (_event, dirPath: string) => {
+        try {
+            await fs.mkdir(dirPath, { recursive: true });
+            return { success: true };
+        } catch (error) {
+            console.error('Error creating directory:', error);
+            return { 
+                success: false, 
+                error: error instanceof Error ? error.message : String(error)
+            };
+        }
+    });
+
+    ipcMain.handle('exists', async (_event, filePath: string) => {
+        try {
+            await fs.access(filePath);
+            return { exists: true };
+        } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+                return { exists: false };
+            }
+            console.error('Error checking file existence:', error);
+            return { 
+                exists: false, 
+                error: error instanceof Error ? error.message : String(error)
+            };
+        }
+    });
+
+    ipcMain.handle('path:dirname', (_event, filePath: string) => {
+        return path.dirname(filePath);
+    });
+
+    ipcMain.handle('path:join', (_event, ...paths: string[]) => {
+        return path.join(...paths);
+    });
+
+    ipcMain.handle('path:normalize', (_event, filePath: string) => {
+        return path.normalize(filePath);
+    });
+
+    ipcMain.handle('process:cwd', () => {
+        return process.cwd();
+    });
+
+    ipcMain.handle('show-open-dialog', async () => {
+        const result = await dialog.showOpenDialog({
+            properties: ['openFile'],
+            filters: [
+                { name: 'Documents', extensions: ['md', 'docx'] }
+            ]
+        });
+        
+        if (result.canceled || !result.filePaths[0]) {
+            return {
+                success: false,
+                error: 'No file selected'
+            };
+        }
+
+        try {
+            const filePath = result.filePaths[0];
+            // Read file based on extension
+            const isDocx = filePath.toLowerCase().endsWith('.docx');
+            if (isDocx) {
+                const buffer = await fs.readFile(filePath);
+                return {
+                    filePath,
+                    content: buffer.toString('base64'), // Send as base64 string
+                    isDocx: true,
+                    success: true
+                };
+            } else {
+                const content = await fs.readFile(filePath, 'utf-8');
+                return {
+                    filePath,
+                    content,
+                    success: true
+                };
+            }
+        } catch (error) {
+            return {
+                success: false,
                 error: error instanceof Error ? error.message : String(error)
             };
         }
