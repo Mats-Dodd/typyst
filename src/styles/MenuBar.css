@@ -1,5 +1,5 @@
 .control-group {
-    padding: 28px 28px 2px 28px;
+    padding: 32px 28px 2px 28px;
     margin-bottom: 2px;
     background: var(--background-color);
     position: fixed;
@@ -189,4 +189,329 @@
 
 .file-name-input:focus {
     border-color: var(--primary-color);
+}
+
+.branch-control {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+}
+
+.branch-display {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-app-region: no-drag;
+}
+
+.branch-display:hover {
+    background-color: var(--background-tertiary);
+}
+
+.branch-display.active {
+    border-color: var(--primary-color);
+}
+
+.branch-display svg {
+    width: 14px;
+    height: 14px;
+    color: var(--text-secondary);
+}
+
+.branch-display .branch-caret {
+    width: 12px;
+    height: 12px;
+    margin-left: 2px;
+    transition: transform 0.2s ease;
+}
+
+.branch-display.active .branch-caret {
+    transform: rotate(180deg);
+}
+
+.branch-name {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.branch-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    z-index: 2000;
+    backdrop-filter: blur(8px);
+}
+
+.branch-dropdown-header {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--background-color);
+}
+
+.branch-dropdown-header svg {
+    width: 12px;
+    height: 12px;
+}
+
+.branch-list {
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: var(--background-color);
+}
+
+.branch-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.branch-item:hover {
+    background-color: var(--background-secondary);
+}
+
+.branch-item.active {
+    background-color: var(--background-tertiary);
+    font-weight: 500;
+}
+
+.branch-menu-trigger {
+    padding: 4px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+}
+
+.branch-item:hover .branch-menu-trigger {
+    opacity: 1;
+}
+
+.branch-menu-trigger:hover {
+    color: var(--text-primary);
+    background-color: var(--background-secondary);
+}
+
+.branch-menu-trigger svg {
+    width: 16px;
+    height: 16px;
+}
+
+.branch-context-menu {
+    position: fixed;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    min-width: 150px;
+    z-index: 2001;
+}
+
+.branch-menu-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.branch-menu-option:hover {
+    background-color: var(--background-secondary);
+}
+
+.branch-menu-option:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.branch-menu-option svg {
+    width: 14px;
+    height: 14px;
+    color: var(--text-secondary);
+}
+
+.branch-rename-form {
+    padding: 8px;
+}
+
+.branch-rename-form input {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--background-secondary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.branch-rename-form input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.branch-item.main-branch {
+    font-weight: 500;
+    padding: 10px 12px;
+    background-color: var(--background-primary);
+    transition: background-color 0.2s;
+}
+
+.branch-item.main-branch:hover {
+    background-color: var(--background-secondary);
+}
+
+.branch-item.main-branch .crown-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--accent-color);
+}
+
+.branch-item:hover {
+    background-color: var(--background-secondary);
+}
+
+.branch-item.active {
+    background-color: var(--background-tertiary);
+    font-weight: 500;
+}
+
+.create-branch-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    transition: background-color 0.2s;
+    background-color: var(--background-color);
+}
+
+.create-branch-option:hover {
+    background-color: var(--background-secondary);
+}
+
+.create-branch-option svg {
+    width: 12px;
+    height: 12px;
+}
+
+.create-branch-form {
+    padding: 12px;
+    background-color: var(--background-secondary);
+}
+
+.create-branch-form input {
+    width: 100%;
+    padding: 6px 8px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--background-secondary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.create-branch-form .error {
+    color: var(--error-color, #dc3545);
+    font-size: 0.75rem;
+    margin: 4px 0;
+}
+
+.create-branch-form .preview {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 4px 0 8px;
+    word-break: break-all;
+}
+
+.create-branch-form button {
+    width: 100%;
+    padding: 6px 8px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 0.875rem;
+}
+
+.create-branch-form button:hover {
+    background-color: var(--accent-color-hover);
+}
+
+.branch-rename-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+
+.branch-rename-form {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 16px;
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.branch-rename-form input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--background-secondary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.branch-rename-form input:focus {
+    border-color: var(--primary-color);
+    outline: none;
 } 

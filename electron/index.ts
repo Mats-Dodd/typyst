@@ -4,6 +4,7 @@ import {app, shell, BrowserWindow} from "electron";
 import {registerLlmRpc} from "./rpc/llmRpc.ts";
 import {registerFileSystemRpc} from "./rpc/fileSystemRpc";
 import {registerValeIpcHandlers} from "./services/vale/valeIpc.js";
+import {registerVersionControlRpc} from "./rpc/versionControlRpc";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -45,6 +46,7 @@ function createWindow() {
     registerLlmRpc(win);
     registerFileSystemRpc();
     registerValeIpcHandlers();
+    registerVersionControlRpc();
 
     // Test active push message to Renderer-process.
     win.webContents.on("did-finish-load", () => {

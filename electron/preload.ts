@@ -46,3 +46,31 @@ contextBridge.exposeInMainWorld('vale', {
         return ipcRenderer.invoke('vale:version');
     }
 });
+
+// Expose Version Control API
+contextBridge.exposeInMainWorld('versionControl', {
+    initializeDocument: (path: string) => {
+        return ipcRenderer.invoke('version-control:init', path);
+    },
+    saveDocument: (content: any) => {
+        return ipcRenderer.invoke('version-control:save', content);
+    },
+    loadDocument: (branchName: string) => {
+        return ipcRenderer.invoke('version-control:load', branchName);
+    },
+    createBranch: (branchName: string) => {
+        return ipcRenderer.invoke('version-control:create-branch', branchName);
+    },
+    switchBranch: (branchName: string) => {
+        return ipcRenderer.invoke('version-control:switch-branch', branchName);
+    },
+    deleteBranch: (branchName: string) => {
+        return ipcRenderer.invoke('version-control:delete-branch', branchName);
+    },
+    getBranches: () => {
+        return ipcRenderer.invoke('version-control:get-branches');
+    },
+    getCurrentBranch: () => {
+        return ipcRenderer.invoke('version-control:get-current-branch');
+    }
+});

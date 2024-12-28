@@ -1,0 +1,105 @@
+.branchSelector {
+  position: relative;
+  display: inline-block;
+  margin: 0 8px;
+}
+
+.currentBranch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: var(--background-secondary);
+  transition: background-color 0.2s;
+}
+
+.currentBranch:hover {
+  background-color: var(--background-tertiary);
+}
+
+.branchList {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 200px;
+  background-color: var(--background-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  margin-top: 4px;
+  z-index: 1000;
+}
+
+.branchItem {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.branchItem:hover {
+  background-color: var(--background-secondary);
+}
+
+.branchItem.active {
+  background-color: var(--background-tertiary);
+  font-weight: 500;
+}
+
+.createBranch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-top: 1px solid var(--border-color);
+  transition: background-color 0.2s;
+}
+
+.createBranch:hover {
+  background-color: var(--background-secondary);
+}
+
+.createBranchForm {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.error {
+  color: var(--error-color, #dc3545);
+  font-size: 0.875rem;
+  margin: 4px 0;
+}
+
+.preview {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 4px 0 8px;
+  word-break: break-all;
+}
+
+.createBranchForm input {
+  width: 100%;
+  padding: 4px 8px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--background-secondary);
+  color: var(--text-primary);
+}
+
+.createBranchForm button {
+  width: 100%;
+  padding: 4px 8px;
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.createBranchForm button:hover {
+  background-color: var(--accent-color-hover);
+} 

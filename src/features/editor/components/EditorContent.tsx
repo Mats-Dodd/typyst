@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { EditorProvider as TiptapProvider } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
 import { extensions } from '../../../extensions/extensions'
@@ -16,6 +16,8 @@ import { convertJsonToMd, convertJsonToDocx, renameFile } from '../services/file
 export function EditorContent(): JSX.Element {
   const [content, setContent] = useState<any>(null);
   const [currentFilePath, setCurrentFilePath] = useState<string | undefined>();
+  const [lastSaveTime, setLastSaveTime] = useState<Date | null>(null);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
   const {
     rawContent,
     prediction,
@@ -47,22 +49,78 @@ export function EditorContent(): JSX.Element {
     }
   }
 
+  const handleAutoSave = async () => {
+    if (!editorRef.current || !currentFilePath || isAutoSaving) return;
+
+    try {
+      setIsAutoSaving(true);
+      
+      // Save to version control
+      await window.versionControl.saveDocument(editorRef.current.getJSON());
+      
+      setLastSaveTime(new Date());
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    } finally {
+      setIsAutoSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!currentFilePath || !editorRef.current) return;
+
+    // Add blur handler to the editor
+    const editor = editorRef.current;
+    const handleBlur = () => {
+      handleAutoSave();
+    };
+
+    editor.on('blur', handleBlur);
+
+    return () => {
+      editor.off('blur', handleBlur);
+    };
+  }, [currentFilePath, editorRef.current]);
+
   const handleSave = async () => {
     if (!editorRef.current || !currentFilePath) return;
     
     try {
-      const markdown = await convertJsonToMd(editorRef.current.getJSON())
-      const result = await window.fs.writeFile(currentFilePath, markdown)
+      // Save to version control first
+      await window.versionControl.saveDocument(editorRef.current.getJSON());
+      
+      // Then save to the original file
+      const markdown = await convertJsonToMd(editorRef.current.getJSON());
+      const result = await window.fs.writeFile(currentFilePath, markdown);
       
       if (!result.success) {
-        console.error('Failed to save file:', result.error)
-        alert('Failed to save file. Please try again.')
+        console.error('Failed to save file:', result.error);
+        alert('Failed to save file. Please try again.');
+        return;
       }
+
+      setLastSaveTime(new Date());
     } catch (error) {
-      console.error('Error saving file:', error)
-      alert('Error saving file. Please try again.')
+      console.error('Error saving file:', error);
+      alert('Error saving file. Please try again.');
     }
-  }
+  };
+
+  // Debounced content update handler
+  const debouncedUpdate = useCallback(
+    async (editor: Editor) => {
+      await handleEditorContentUpdate(editor);
+      await updateValeResults(editor);
+      
+      // Update last save time to track changes
+      setLastSaveTime(new Date());
+    },
+    [handleEditorContentUpdate, updateValeResults]
+  );
+
+  const onUpdate = async ({ editor }: { editor: Editor }): Promise<void> => {
+    await debouncedUpdate(editor);
+  };
 
   const { handleKeyDown } = useEditorShortcuts({
     editor: editorRef.current,
@@ -70,18 +128,30 @@ export function EditorContent(): JSX.Element {
     setPrediction,
     setShowSidebar,
     onSave: handleSave
-  })
+  });
 
-  useEditorSpellcheck(editorRef.current)
+  useEditorSpellcheck(editorRef.current);
 
-  const onUpdate = async ({ editor }: { editor: Editor }): Promise<void> => {
-    await handleEditorContentUpdate(editor)
-    await updateValeResults(editor)
-  }
+  const handleFileSelect = async (selectedContent: any, filePath?: string) => {
+    if (!filePath) {
+      setContent(selectedContent);
+      return;
+    }
 
-  const handleFileSelect = (selectedContent: any, filePath?: string) => {
-    setContent(selectedContent);
-    setCurrentFilePath(filePath);
+    try {
+      // Initialize the document first
+      await window.versionControl.initializeDocument(filePath);
+      
+      // Explicitly load content from main branch
+      const mainContent = await window.versionControl.loadDocument('main');
+      
+      // Set the content and file path
+      setContent(mainContent);
+      setCurrentFilePath(filePath);
+    } catch (error) {
+      console.error('Error loading document:', error);
+      alert('Error loading document. Please try again.');
+    }
   };
 
   const handleFileNameChange = (newPath: string) => {
@@ -107,7 +177,13 @@ export function EditorContent(): JSX.Element {
           content={content}
           onUpdate={onUpdate}
           editorProps={{
-            handleKeyDown
+            handleKeyDown,
+            handleDOMEvents: {
+              blur: () => {
+                handleAutoSave();
+                return true;
+              }
+            }
           }}
         >
           <ErrorOverlay error={error} />

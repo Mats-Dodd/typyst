@@ -33,6 +33,15 @@ export function FileSelector({ onFileSelect }: FileSelectorProps): JSX.Element {
         jsonContent = await convertDocxToJson(buffer);
       }
       const parsedContent = JSON.parse(jsonContent);
+
+      // Initialize version control for the document
+      try {
+        await window.versionControl.initializeDocument(filePath);
+      } catch (error) {
+        console.error('Error initializing version control:', error);
+        // Don't block file opening if version control fails
+      }
+
       onFileSelect(parsedContent, filePath);
     } catch (error) {
       console.error('Error processing file:', error);
@@ -57,7 +66,6 @@ export function FileSelector({ onFileSelect }: FileSelectorProps): JSX.Element {
 
   return (
     <div className="file-selector">
-      {/* <p>Select a file to begin editing</p> */}
       <div className="file-input-wrapper">
         <div className="button-stack">
           <button onClick={handleClick} className="file-input-button">
