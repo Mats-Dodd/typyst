@@ -23,6 +23,13 @@
     "setup:vale": "tsx scripts/setup-vale.ts"
   },
   "dependencies": {
+    "@automerge/automerge": "^2.2.8",
+    "@automerge/automerge-repo": "^1.2.1",
+    "@automerge/automerge-repo-network-broadcastchannel": "^1.2.1",
+    "@automerge/automerge-repo-react-hooks": "^1.2.1",
+    "@automerge/automerge-repo-storage-indexeddb": "^1.2.1",
+    "@automerge/automerge-repo-storage-nodefs": "^1.2.1",
+    "@automerge/automerge-wasm": "^0.1.26",
     "@tiptap/core": "^2.10.4",
     "@tiptap/extension-code-block-lowlight": "^2.10.4",
     "@tiptap/extension-color": "^2.10.4",
@@ -53,10 +60,12 @@
     "react-dom": "^18.3.1",
     "react-icons": "^5.4.0",
     "semver": "^7.6.3",
-    "turndown": "^7.2.0"
+    "turndown": "^7.2.0",
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^2.11.0",
+    "@types/lodash": "^4.17.13",
     "@types/markdown-it": "^14.1.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
@@ -81,6 +90,8 @@
     "vite": "^6.0.1",
     "vite-plugin-electron": "^0.29.0",
     "vite-plugin-electron-renderer": "^0.14.6",
+    "vite-plugin-top-level-await": "^1.4.4",
+    "vite-plugin-wasm": "^3.4.1",
     "zx": "^8.2.4"
   },
   "overrides": {

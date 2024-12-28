@@ -3,6 +3,8 @@ import {fileURLToPath} from "node:url";
 import {defineConfig} from "vite";
 import electron from "vite-plugin-electron/simple";
 import react from "@vitejs/plugin-react";
+import wasm from "vite-plugin-wasm";
+import topLevelAwait from "vite-plugin-top-level-await";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,7 +19,11 @@ export default defineConfig({
         target: "es2022"
     },
     optimizeDeps: {
-        exclude: electronExternalModules,
+        exclude: [
+            ...electronExternalModules,
+            "@automerge/automerge-wasm",
+            "@automerge/automerge-wasm/bundler/bindgen_bg.wasm"
+        ],
         esbuildOptions: {
             target: "es2022"
         }
@@ -29,6 +35,8 @@ export default defineConfig({
     root: path.join(__dirname, "src"),
     publicDir: path.join(__dirname, "public"),
     plugins: [
+        wasm(),
+        topLevelAwait(),
         react(),
         electron({
             main: {
@@ -41,7 +49,8 @@ export default defineConfig({
                         rollupOptions: {
                             external: electronExternalModules
                         }
-                    }
+                    },
+                    plugins: [wasm(), topLevelAwait()]
                 }
             },
             preload: {
@@ -52,7 +61,8 @@ export default defineConfig({
                     build: {
                         target: "es2022",
                         outDir: path.join(__dirname, "dist-electron")
-                    }
+                    },
+                    plugins: [wasm(), topLevelAwait()]
                 }
             },
             // Polyfill the Electron and Node.js API for Renderer process.

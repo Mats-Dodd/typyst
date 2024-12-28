@@ -1,5 +1,8 @@
 import {ipcRenderer, contextBridge} from "electron";
 import type { ValeAPI } from "./types/vale";
+import type { VersioningAPI } from "./types/versioning";
+import type { Doc } from '@automerge/automerge';
+import type { VersionedDocument } from "../src/features/versioning/types";
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld("ipcRenderer", {
@@ -46,3 +49,25 @@ contextBridge.exposeInMainWorld('vale', {
         return ipcRenderer.invoke('vale:version');
     }
 });
+
+// Expose versioning API
+contextBridge.exposeInMainWorld('versioning', {
+    createDocument: (title: string) => {
+        return ipcRenderer.invoke('versioning:create', title);
+    },
+    saveDocument: (docId: string, doc: Doc<VersionedDocument>) => {
+        return ipcRenderer.invoke('versioning:save', docId, doc);
+    },
+    loadDocument: (docId: string) => {
+        return ipcRenderer.invoke('versioning:load', docId);
+    },
+    listDocuments: () => {
+        return ipcRenderer.invoke('versioning:list');
+    },
+    createBranch: (docId: string, branchName: string) => {
+        return ipcRenderer.invoke('versioning:create-branch', docId, branchName);
+    },
+    mergeBranch: (docId: string, sourceBranch: string, targetBranch: string) => {
+        return ipcRenderer.invoke('versioning:merge-branch', docId, sourceBranch, targetBranch);
+    }
+} as VersioningAPI);

@@ -1,3 +1,5 @@
+import type { VersioningAPI } from '../../electron/types/versioning'
+
 interface Window {
     fs: {
         writeFile: (path: string, content: string) => Promise<{ success: boolean; error?: string }>;
@@ -9,4 +11,5 @@ interface Window {
         lint: (htmlContent: string) => Promise<any>;
         getVersion: () => Promise<string>;
     };
+    versioning: VersioningAPI;
 } 
