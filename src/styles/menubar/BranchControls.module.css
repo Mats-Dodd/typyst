@@ -1,196 +1,3 @@
-.control-group {
-    padding: 32px 28px 2px 28px;
-    margin-bottom: 2px;
-    background: var(--background-color);
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    overflow: visible;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    -webkit-app-region: drag;
-}
-
-.control-group button {
-    -webkit-app-region: no-drag;
-}
-
-.button-group {
-    display: flex;
-    gap: 2px;
-    flex-wrap: wrap;
-    align-items: center;
-    position: relative;
-    overflow: visible;
-}
-
-.theme-toggle {
-    margin-left: auto;
-}
-
-.menu-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    border: 1px solid transparent;
-    background: transparent !important;
-    border-radius: 4px;
-    cursor: pointer;
-    color: var(--text-color);
-    transition: all 0.2s ease;
-    width: 28px;
-    height: 28px;
-    position: relative;
-}
-
-.menu-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.menu-button:disabled:hover {
-    border-color: transparent;
-}
-
-.menu-button svg {
-    width: 16px;
-    height: 16px;
-}
-
-.menu-button:hover {
-    border-color: var(--border-color);
-}
-
-.menu-button.is-active {
-    border-color: var(--border-color);
-    color: var(--primary-color, #000);
-}
-
-.menu-button::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: -30px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 4px 8px;
-    background: white;
-    color: #333;
-    font-size: 12px;
-    border-radius: 4px;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.2s ease;
-    pointer-events: none;
-    z-index: 2000;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.menu-button:hover::after {
-    opacity: 1;
-    visibility: visible;
-    bottom: -35px;
-}
-
-.button-group > .menu-button:nth-child(1)::after,
-.button-group > .menu-button:nth-child(2)::after {
-    bottom: auto;
-    top: 100%;
-    margin-top: 8px;
-}
-
-.button-group > .menu-button:nth-child(1):hover::after,
-.button-group > .menu-button:nth-child(2):hover::after {
-    bottom: auto;
-    top: 100%;
-    margin-top: 8px;
-}
-
-.menu-dropdown {
-    position: relative;
-}
-
-.dropdown-menu {
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-top: 4px;
-    background: white;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    padding: 4px;
-    display: flex;
-    flex-direction: row;
-    gap: 2px;
-    z-index: 1500;
-    min-width: max-content;
-}
-
-.dropdown-menu .menu-button {
-    border-radius: 2px;
-}
-
-.dropdown-menu .menu-button:hover::after {
-    bottom: -35px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.separator {
-    width: 1px;
-    height: 20px;
-    background-color: var(--border-color);
-    margin: 0 2px;
-}
-
-.file-name-container {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    top: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    -webkit-app-region: no-drag;
-}
-
-.file-name-display {
-    font-size: 14px;
-    color: var(--text-color);
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid transparent;
-}
-
-.file-name-display:hover {
-    border-color: var(--border-color);
-}
-
-.file-name-input {
-    font-size: 14px;
-    color: var(--text-color);
-    background: var(--background-color);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 4px 8px;
-    outline: none;
-    width: 200px;
-    text-align: center;
-}
-
-.file-name-input:focus {
-    border-color: var(--primary-color);
-}
-
 .branch-control {
     display: flex;
     align-items: center;
@@ -368,13 +175,31 @@
     color: var(--text-secondary);
 }
 
+.branch-rename-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+
 .branch-rename-form {
-    padding: 8px;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 16px;
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .branch-rename-form input {
     width: 100%;
-    padding: 4px 8px;
+    padding: 8px 12px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background-color: var(--background-secondary);
@@ -392,6 +217,9 @@
     padding: 10px 12px;
     background-color: var(--background-primary);
     transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .branch-item.main-branch:hover {
@@ -402,15 +230,7 @@
     width: 14px;
     height: 14px;
     color: var(--accent-color);
-}
-
-.branch-item:hover {
-    background-color: var(--background-secondary);
-}
-
-.branch-item.active {
-    background-color: var(--background-tertiary);
-    font-weight: 500;
+    flex-shrink: 0;
 }
 
 .create-branch-option {
@@ -477,41 +297,4 @@
 
 .create-branch-form button:hover {
     background-color: var(--accent-color-hover);
-}
-
-.branch-rename-dialog {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 3000;
-}
-
-.branch-rename-form {
-    background-color: var(--background-color);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 16px;
-    min-width: 300px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.branch-rename-form input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: var(--background-secondary);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-}
-
-.branch-rename-form input:focus {
-    border-color: var(--primary-color);
-    outline: none;
 } 

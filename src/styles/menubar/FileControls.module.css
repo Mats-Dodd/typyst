@@ -1,0 +1,40 @@
+.file-name-container {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-app-region: no-drag;
+}
+
+.file-name-display {
+    font-size: 14px;
+    color: var(--text-color);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.file-name-display:hover {
+    border-color: var(--border-color);
+}
+
+.file-name-input {
+    font-size: 14px;
+    color: var(--text-color);
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px 8px;
+    outline: none;
+    width: 200px;
+    text-align: center;
+}
+
+.file-name-input:focus {
+    border-color: var(--primary-color);
+} 
