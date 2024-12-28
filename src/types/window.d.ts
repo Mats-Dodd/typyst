@@ -9,7 +9,8 @@ declare global {
             deleteFile: (path: string) => Promise<{ success: boolean; error?: string }>;
             createDir: (path: string) => Promise<{ success: boolean; error?: string }>;
             exists: (path: string) => Promise<{ exists: boolean; error?: string }>;
-            showOpenDialog: () => Promise<{ success: boolean; filePath?: string; content?: string; error?: string; isDocx?: boolean }>;
+            removeDir: (path: string) => Promise<{ success: boolean; error?: string }>;
+            rename: (oldPath: string, newPath: string) => Promise<{ success: boolean; error?: string }>;
         };
         path: {
             dirname: (path: string) => Promise<string>;

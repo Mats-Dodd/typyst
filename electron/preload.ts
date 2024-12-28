@@ -46,7 +46,13 @@ contextBridge.exposeInMainWorld('fs', {
     },
     showOpenDialog: async () => {
         return await ipcRenderer.invoke('show-open-dialog');
-    }
+    },
+    removeDir: async (path: string) => {
+        return await ipcRenderer.invoke('remove-dir', path);
+    },
+    rename: async (oldPath: string, newPath: string) => {
+        return await ipcRenderer.invoke('rename-file', oldPath, newPath);
+    },
 });
 
 // Expose Vale API

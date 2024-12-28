@@ -22,6 +22,7 @@ import {
 import { useTheme } from "../../theme/themeContext"
 import "../../../styles/MenuBar.css"
 import { convertJsonToMd, convertJsonToDocx, renameFile } from "../services/fileSystemService"
+import { BranchControls } from '../../versioning/components/BranchControls';
 
 interface MenuBarProps {
     showRawOutput: boolean
@@ -161,6 +162,10 @@ export function MenuBar({ showRawOutput, setShowRawOutput, currentFilePath, onSa
                 >
                     <BiSave />
                 </button>
+                <div className="separator" />
+                <div className="menu-section">
+                    <BranchControls editor={editor} currentFilePath={currentFilePath} />
+                </div>
                 <div className="separator" />
                 <button
                     onClick={() => editor.chain().focus().undo().run()}

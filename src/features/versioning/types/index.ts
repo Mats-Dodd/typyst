@@ -45,8 +45,11 @@ export interface DocumentIndex {
     lastModified: number;
     currentBranch: string;
     branches: {
-        main: BranchInfo;
-        [branchName: string]: BranchInfo;
+        [key: string]: {
+            created: number;
+            lastSync: number;
+            head: string;
+        };
     };
 }
 
@@ -63,6 +66,29 @@ export interface BranchMetadata {
     lastSyncWithMain: number;
     changesSinceSync: number;
     status: 'ahead' | 'behind' | 'diverged';
+}
+
+export interface BranchControlsProps {
+    editor: any;
+    currentFilePath?: string;
+}
+
+export interface BranchContextMenuProps {
+    contextMenu: {
+        branch: string;
+        x: number;
+        y: number;
+    };
+    currentBranch: string;
+    onDelete: (branch: string) => void;
+    onRename: (branch: string) => void;
+    onClose: () => void;
+}
+
+export interface BranchRenameDialogProps {
+    branch: string;
+    onRename: (oldName: string, newName: string) => void;
+    onClose: () => void;
 }
 
 // Window API extensions

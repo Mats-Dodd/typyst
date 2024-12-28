@@ -1,10 +1,11 @@
 import {fileURLToPath} from "node:url";
 import path from "node:path";
-import {app, shell, BrowserWindow} from "electron";
+import {app, shell, BrowserWindow, ipcMain} from "electron";
 import {registerLlmRpc} from "./rpc/llmRpc.ts";
 import {registerFileSystemRpc} from "./rpc/fileSystemRpc";
 import {registerValeIpcHandlers} from "./services/vale/valeIpc.js";
 import {setupVersioningHandlers} from "./ipc/versioningHandlers";
+import * as fs from 'fs/promises';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -92,3 +93,24 @@ app.on("activate", () => {
 });
 
 app.whenReady().then(createWindow);
+
+// File system operations
+ipcMain.handle('remove-dir', async (_, dirPath: string) => {
+    try {
+        await fs.rm(dirPath, { recursive: true });
+        return { success: true };
+    } catch (error) {
+        console.error('Error removing directory:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+});
+
+ipcMain.handle('rename-file', async (_, oldPath: string, newPath: string) => {
+    try {
+        await fs.rename(oldPath, newPath);
+        return { success: true };
+    } catch (error) {
+        console.error('Error renaming file/directory:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+});
