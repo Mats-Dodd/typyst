@@ -72,5 +72,8 @@ contextBridge.exposeInMainWorld('versionControl', {
     },
     getCurrentBranch: () => {
         return ipcRenderer.invoke('version-control:get-current-branch');
+    },
+    updateDocumentPath: (newPath: string) => {
+        return ipcRenderer.invoke('version-control:update-path', newPath);
     }
 });

@@ -1,13 +1,23 @@
 import fs from 'fs-extra';
 import path from 'path';
 import git from 'isomorphic-git';
+import { v4 as uuidv4 } from 'uuid';
 import { gitService } from '../git/gitService';
+
+interface TypestConfig {
+  documentId: string;
+  originalPath: string;
+  pathHistory: string[];
+  currentPath: string;
+  lastUpdated: string;
+}
 
 export interface DocumentService {
   initializeDocument(originalPath: string): Promise<void>;
   saveDocument(content: any): Promise<void>;
   loadDocument(branchName: string): Promise<any>;
   syncWithOriginal(): Promise<void>;
+  updateDocumentPath(newPath: string): Promise<void>;
 }
 
 interface DocumentContent {
@@ -22,6 +32,49 @@ interface DocumentContent {
 class DocumentServiceImpl implements DocumentService {
   private currentDocPath: string | null = null;
 
+  private async getConfigPath(): Promise<string> {
+    if (!this.currentDocPath) {
+      throw new Error('No document initialized');
+    }
+    const typystDir = path.join(path.dirname(this.currentDocPath), '.typyst');
+    return path.join(typystDir, '.typyst-config.json');
+  }
+
+  private async loadConfig(): Promise<TypestConfig> {
+    const configPath = await this.getConfigPath();
+    try {
+      const config = await fs.readJSON(configPath);
+      // Handle existing configs without new fields
+      if (!config.documentId) {
+        config.documentId = uuidv4();
+        config.pathHistory = [this.currentDocPath!];
+        config.currentPath = this.currentDocPath!;
+        config.originalPath = this.currentDocPath!;
+        config.lastUpdated = new Date().toISOString();
+        await fs.writeJSON(configPath, config);
+      }
+      return config;
+    } catch (error) {
+      // Create new config if it doesn't exist
+      const newConfig: TypestConfig = {
+        documentId: uuidv4(),
+        originalPath: this.currentDocPath!,
+        pathHistory: [this.currentDocPath!],
+        currentPath: this.currentDocPath!,
+        lastUpdated: new Date().toISOString()
+      };
+      await fs.writeJSON(configPath, newConfig);
+      return newConfig;
+    }
+  }
+
+  private async updateConfig(updates: Partial<TypestConfig>): Promise<void> {
+    const config = await this.loadConfig();
+    const updatedConfig = { ...config, ...updates };
+    const configPath = await this.getConfigPath();
+    await fs.writeJSON(configPath, updatedConfig);
+  }
+
   async initializeDocument(originalPath: string): Promise<void> {
     console.log('Initializing document:', originalPath);
     this.currentDocPath = originalPath;
@@ -35,6 +88,9 @@ class DocumentServiceImpl implements DocumentService {
         try {
           await gitService.setRepositoryPath(originalPath);
           console.log('Successfully set repository path, ensuring we are on main branch');
+          
+          // Load or create config
+          await this.loadConfig();
           
           // Get current branch before switch for diagnosis
           const beforeBranch = await gitService.getCurrentBranch();
@@ -71,6 +127,16 @@ class DocumentServiceImpl implements DocumentService {
       // If we get here, we need to initialize a new repository
       console.log('No existing repository found or failed to set path, proceeding with initialization');
       await gitService.initRepository(originalPath);
+
+      // Initialize config with new document ID
+      const config: TypestConfig = {
+        documentId: uuidv4(),
+        originalPath: originalPath,
+        pathHistory: [originalPath],
+        currentPath: originalPath,
+        lastUpdated: new Date().toISOString()
+      };
+      await fs.writeJSON(path.join(typystDir, '.typyst-config.json'), config);
 
       // Copy original content to .typyst directory
       console.log('Reading original content from:', originalPath);
@@ -138,6 +204,17 @@ class DocumentServiceImpl implements DocumentService {
     try {
       const currentBranch = await gitService.getCurrentBranch();
       console.log('Saving document on branch:', currentBranch);
+
+      // Load current config
+      const config = await this.loadConfig();
+      
+      // Update path history if current path has changed
+      if (config.currentPath !== this.currentDocPath) {
+        config.pathHistory.push(this.currentDocPath);
+        config.currentPath = this.currentDocPath;
+        config.lastUpdated = new Date().toISOString();
+        await this.updateConfig(config);
+      }
 
       // Wrap the content in our document format
       const documentContent: DocumentContent = {
@@ -249,6 +326,39 @@ class DocumentServiceImpl implements DocumentService {
     }
 
     return '';
+  }
+
+  async updateDocumentPath(newPath: string): Promise<void> {
+    if (!this.currentDocPath) {
+      throw new Error('No document initialized');
+    }
+
+    try {
+      console.log('Updating document path from:', this.currentDocPath, 'to:', newPath);
+      
+      // Load current config
+      const config = await this.loadConfig();
+      
+      // Update path history
+      if (!config.pathHistory.includes(newPath)) {
+        config.pathHistory.push(newPath);
+      }
+      
+      // Update current path
+      config.currentPath = newPath;
+      config.lastUpdated = new Date().toISOString();
+      
+      // Save config changes
+      await this.updateConfig(config);
+      
+      // Update current path
+      this.currentDocPath = newPath;
+      
+      console.log('Document path updated successfully');
+    } catch (error) {
+      console.error('Error updating document path:', error);
+      throw error;
+    }
   }
 }
 

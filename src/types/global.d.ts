@@ -10,6 +10,17 @@ declare global {
     };
     currentValeHighlights: string[];
     currentPrediction: string;
+    versionControl: {
+      initializeDocument: (path: string) => Promise<void>;
+      saveDocument: (content: any) => Promise<void>;
+      loadDocument: (branchName: string) => Promise<any>;
+      createBranch: (branchName: string) => Promise<void>;
+      switchBranch: (branchName: string) => Promise<void>;
+      deleteBranch: (branchName: string) => Promise<void>;
+      getBranches: () => Promise<string[]>;
+      getCurrentBranch: () => Promise<string>;
+      updateDocumentPath: (newPath: string) => Promise<void>;
+    };
   }
 }
 
