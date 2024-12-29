@@ -19,12 +19,14 @@ declare module '@automerge/automerge' {
         deleteAt(index: number, count: number): void
     }
     
-    export namespace next {
-        export function init<T>(): Doc<T>
-        export function change<T>(doc: Doc<T>, message: string | ((doc: T) => void)): Doc<T>
-        export function save(doc: Doc<any>): Uint8Array
-        export function load<T>(data: Uint8Array): Doc<T>
-        export function initializeBase64Wasm(base64Wasm: string): Promise<void>
-        export class Text implements Text {}
+    export const next: {
+        init<T>(): Doc<T>
+        change<T>(doc: Doc<T>, message: string | ((doc: T) => void)): Doc<T>
+        save(doc: Doc<any>): Uint8Array
+        load<T>(data: Uint8Array): Doc<T>
+        initializeBase64Wasm(base64Wasm: string): Promise<void>
+        Text: {
+            new(): Text
+        }
     }
 } 

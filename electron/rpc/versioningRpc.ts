@@ -1,11 +1,12 @@
 import type { VersionedDocument, DocumentMetadata } from '../../src/features/versioning/types'
 import { VersionStorage } from '../services/versioning/storage'
 import { Automerge, initializeAutomerge } from '../services/versioning/automergeInit'
+import type { Doc } from '@automerge/automerge'
 
 export interface VersioningRPC {
     createDocument(title: string): Promise<string>
-    saveDocument(docId: string, doc: Automerge.Doc<VersionedDocument>): Promise<void>
-    loadDocument(docId: string): Promise<Automerge.Doc<VersionedDocument> | null>
+    saveDocument(docId: string, doc: Doc<VersionedDocument>): Promise<void>
+    loadDocument(docId: string): Promise<Doc<VersionedDocument> | null>
     listDocuments(): Promise<DocumentMetadata[]>
     createBranch(docId: string, branchName: string): Promise<void>
     mergeBranch(docId: string, sourceBranch: string, targetBranch: string): Promise<void>
@@ -27,7 +28,7 @@ export class VersioningRPCImpl implements VersioningRPC {
         const docId = crypto.randomUUID()
         const doc = Automerge.init<VersionedDocument>()
         
-        const docWithContent = Automerge.change(doc, doc => {
+        const docWithContent = Automerge.change(doc, (doc: VersionedDocument) => {
             doc.content = new Automerge.Text()
             doc.metadata = {
                 title,
@@ -48,11 +49,11 @@ export class VersioningRPCImpl implements VersioningRPC {
         return docId
     }
 
-    async saveDocument(docId: string, doc: Automerge.Doc<VersionedDocument>): Promise<void> {
+    async saveDocument(docId: string, doc: Doc<VersionedDocument>): Promise<void> {
         await this.storage.saveDocument(docId, doc)
     }
 
-    async loadDocument(docId: string): Promise<Automerge.Doc<VersionedDocument> | null> {
+    async loadDocument(docId: string): Promise<Doc<VersionedDocument> | null> {
         return await this.storage.loadDocument(docId)
     }
 
@@ -84,7 +85,7 @@ export class VersioningRPCImpl implements VersioningRPC {
         const currentBranch = doc.metadata.branches[doc.metadata.currentBranch]
         if (!currentBranch) throw new Error(`Current branch ${doc.metadata.currentBranch} not found`)
 
-        const docWithNewBranch = Automerge.change(doc, doc => {
+        const docWithNewBranch = Automerge.change(doc, (doc: VersionedDocument) => {
             doc.metadata.branches[branchName] = {
                 lastCommit: currentBranch.lastCommit,
                 createdAt: Date.now(),
@@ -109,7 +110,7 @@ export class VersioningRPCImpl implements VersioningRPC {
             throw new Error(`Target branch ${targetBranch} not found`)
         }
 
-        const docWithMerge = Automerge.change(doc, doc => {
+        const docWithMerge = Automerge.change(doc, (doc: VersionedDocument) => {
             const branch = doc.metadata.branches[targetBranch]
             if (!branch) throw new Error('Target branch not found during merge')
             
