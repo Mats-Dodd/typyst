@@ -30,7 +30,7 @@ export function ValeSidebar({
   const errorCount = alerts.filter(alert => alert.Severity.toLowerCase() === 'error').length
 
   return (
-    <div className="vale-sidebar">
+    <div className="vale-sidebar" data-visible={onClose !== undefined}>
       <div className="vale-sidebar-header-sticky">
         <div className="vale-sidebar-header">
           <h3>Writing Suggestions</h3>

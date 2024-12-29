@@ -36,6 +36,30 @@
     flex: 1;
     margin-top: 60px; /* Height of the menu bar */
     overflow-y: auto;
+    position: relative;
+}
+
+.editor-content > .ProseMirror-wrapper {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.editor-content .vale-sidebar {
+    position: fixed;
+    top: 60px; /* Height of the menu bar */
+    right: 0;
+    width: 300px;
+    height: calc(100vh - 60px);
+    background: var(--background-color);
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1), 0 -2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.editor-content .vale-sidebar[data-visible="true"] {
+    display: flex;
 }
 
 .ProseMirror {

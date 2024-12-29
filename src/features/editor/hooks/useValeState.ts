@@ -8,7 +8,7 @@ export interface ValeState {
   ignoredWarnings: boolean
   ignoredErrors: boolean
   showSidebar: boolean
-  setShowSidebar: (show: boolean) => void
+  setShowSidebar: (show: boolean | ((prev: boolean) => boolean)) => void
   setIgnoredWarnings: (ignored: boolean) => void
   setIgnoredErrors: (ignored: boolean) => void
   updateValeResults: (editor: Editor) => Promise<void>
@@ -20,8 +20,12 @@ export function useValeState(editor: Editor | null): ValeState {
   const [ignoredWarnings, setIgnoredWarnings] = useState(false)
   const [ignoredErrors, setIgnoredErrors] = useState(false)
 
-  const setShowSidebar = (show: boolean) => {
-    _setShowSidebar(show)
+  const setShowSidebar = (show: boolean | ((prev: boolean) => boolean)) => {
+    if (typeof show === 'function') {
+      _setShowSidebar(show(showSidebar))
+    } else {
+      _setShowSidebar(show)
+    }
   }
 
   useEffect(() => {

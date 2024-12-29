@@ -195,7 +195,7 @@ export function EditorContent(): JSX.Element {
           <ErrorOverlay error={error} />
           <ValeSidebar
             alerts={valeAlerts}
-            onClose={setShowSidebar}
+            onClose={showSidebar ? setShowSidebar : undefined}
             ignoredWarnings={ignoredWarnings}
             setIgnoredWarnings={setIgnoredWarnings}
             ignoredErrors={ignoredErrors}
