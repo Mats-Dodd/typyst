@@ -15,7 +15,6 @@ import {
     BiRedo,
     BiSun,
     BiMoon,
-    BiData,
     BiCodeAlt,
     BiSave
 } from "react-icons/bi"
@@ -25,14 +24,12 @@ import { convertJsonToMd, convertJsonToDocx, renameFile } from "../services/file
 import { BranchControls } from '../../versioning/components/BranchControls';
 
 interface MenuBarProps {
-    showRawOutput: boolean
-    setShowRawOutput: (show: boolean) => void
     currentFilePath?: string
     onSave?: () => void
     onFileNameChange?: (newPath: string) => void
 }
 
-export function MenuBar({ showRawOutput, setShowRawOutput, currentFilePath, onSave, onFileNameChange }: MenuBarProps) {
+export function MenuBar({ currentFilePath, onSave, onFileNameChange }: MenuBarProps) {
     const { editor } = useCurrentEditor()
     const [showAlignMenu, setShowAlignMenu] = useState(false)
     const [isEditingFileName, setIsEditingFileName] = useState(false)
@@ -163,10 +160,6 @@ export function MenuBar({ showRawOutput, setShowRawOutput, currentFilePath, onSa
                     <BiSave />
                 </button>
                 <div className="separator" />
-                <div className="menu-section">
-                    <BranchControls editor={editor} currentFilePath={currentFilePath} />
-                </div>
-                <div className="separator" />
                 <button
                     onClick={() => editor.chain().focus().undo().run()}
                     disabled={!editor.can().undo()}
@@ -251,13 +244,9 @@ export function MenuBar({ showRawOutput, setShowRawOutput, currentFilePath, onSa
                     <BiCodeAlt />
                 </button>
                 <div className="separator" />
-                <button
-                    onClick={() => setShowRawOutput(!showRawOutput)}
-                    className={`menu-button ${showRawOutput ? "is-active" : ""}`}
-                    data-tooltip="Toggle Raw Output"
-                >
-                    <BiData />
-                </button>
+                <div className="menu-section">
+                    <BranchControls editor={editor} currentFilePath={currentFilePath} />
+                </div>
             </div>
             <div className="file-name-container">
                 {isEditingFileName ? (

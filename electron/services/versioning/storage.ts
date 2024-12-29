@@ -2,6 +2,7 @@ import * as fs from 'fs/promises'
 import * as path from 'path'
 import { app } from 'electron'
 import type { VersionedDocument, VersionConfig } from '../../../src/features/versioning/types'
+import type { Doc } from '@automerge/automerge'
 import { Automerge } from './automergeInit'
 
 export class VersionStorage {
@@ -54,7 +55,7 @@ export class VersionStorage {
         await fs.writeFile(configPath, JSON.stringify(this.config, null, 2))
     }
 
-    async saveDocument(docId: string, doc: Automerge.Doc<VersionedDocument>): Promise<void> {
+    async saveDocument(docId: string, doc: Doc<VersionedDocument>): Promise<void> {
         const docPath = path.join(this.basePath, 'versions', docId)
         await fs.mkdir(docPath, { recursive: true })
 
@@ -76,7 +77,7 @@ export class VersionStorage {
         )
     }
 
-    async loadDocument(docId: string): Promise<Automerge.Doc<VersionedDocument> | null> {
+    async loadDocument(docId: string): Promise<Doc<VersionedDocument> | null> {
         try {
             const binary = await fs.readFile(
                 path.join(this.basePath, 'versions', docId, 'automerge', 'current.bin')

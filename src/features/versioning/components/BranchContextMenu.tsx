@@ -1,49 +1,46 @@
-import React, { useEffect } from 'react';
-import { BiRename, BiTrash } from 'react-icons/bi';
-import type { BranchContextMenuProps } from '../types';
+import React from 'react';
+
+interface BranchContextMenuProps {
+    contextMenu: {
+        branch: string;
+        x: number;
+        y: number;
+    };
+    currentBranch: string;
+    onDelete: (branch: string) => void;
+    onRename: (branch: string) => void;
+    onClose: () => void;
+}
 
 export const BranchContextMenu: React.FC<BranchContextMenuProps> = ({
     contextMenu,
     currentBranch,
     onDelete,
     onRename,
-    onClose,
+    onClose
 }) => {
-    useEffect(() => {
-        const handleClickOutside = () => onClose();
-        document.addEventListener('click', handleClickOutside);
-        return () => document.removeEventListener('click', handleClickOutside);
-    }, [onClose]);
-
-    const isDeleteDisabled = contextMenu.branch === 'main';
+    const handleRename = () => {
+        console.log('Rename clicked for branch:', contextMenu.branch);
+        onRename(contextMenu.branch);
+        onClose();
+    };
 
     return (
-        <div
+        <div 
             className="branch-context-menu"
             style={{
                 position: 'fixed',
+                top: contextMenu.y,
                 left: contextMenu.x,
-                top: contextMenu.y
+                zIndex: 1000
             }}
-            onClick={(e) => e.stopPropagation()}
         >
-            <button
-                className="branch-menu-option"
-                onClick={() => onRename(contextMenu.branch)}
-                disabled={contextMenu.branch === 'main'}
-            >
-                <BiRename />
-                Rename Branch
-            </button>
-            <button
-                className="branch-menu-option"
-                onClick={() => onDelete(contextMenu.branch)}
-                disabled={isDeleteDisabled}
-                title={isDeleteDisabled ? "Cannot delete main branch" : ""}
-            >
-                <BiTrash />
-                Delete Branch
-            </button>
+            <div className="menu-item" onClick={handleRename}>
+                Rename branch
+            </div>
+            <div className="menu-item delete" onClick={() => onDelete(contextMenu.branch)}>
+                Delete branch
+            </div>
         </div>
     );
 }; 

@@ -21,6 +21,34 @@ export const BranchControls: React.FC<BranchControlsProps> = ({ editor, currentF
 
     const [contextMenu, setContextMenu] = useState<{ branch: string; x: number; y: number } | null>(null);
     const [isRenamingBranch, setIsRenamingBranch] = useState<string | null>(null);
+    const [editedFileName, setEditedFileName] = useState<string>('');
+
+    React.useEffect(() => {
+        const handleGlobalClick = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            const isContextMenuClick = target.closest('.branch-context-menu');
+            const isMenuTriggerClick = target.closest('.branch-menu-trigger');
+            const isBranchDisplayClick = target.closest('.branch-display');
+            const isBranchDropdownClick = target.closest('.branch-dropdown');
+
+            // Don't close anything if clicking within the context menu or its trigger
+            if (isContextMenuClick || isMenuTriggerClick) {
+                return;
+            }
+
+            // Don't close anything if clicking within the branch selector or its trigger
+            if (isBranchDisplayClick || isBranchDropdownClick) {
+                return;
+            }
+
+            // Close both menus if clicking outside
+            setContextMenu(null);
+            setShowBranchSelector(false);
+        };
+
+        document.addEventListener('mousedown', handleGlobalClick);
+        return () => document.removeEventListener('mousedown', handleGlobalClick);
+    }, [setShowBranchSelector]);
 
     const handleContextMenu = (e: React.MouseEvent, branch: string) => {
         e.preventDefault();
@@ -72,15 +100,41 @@ export const BranchControls: React.FC<BranchControlsProps> = ({ editor, currentF
                     <div className="branch-list">
                         {branches
                             .filter(branch => branch !== 'main')
-                            .map(branch => (
-                                <div
-                                    key={branch}
-                                    className={`branch-item ${branch === currentBranch ? 'active' : ''}`}
-                                    onClick={() => handleBranchSwitch(branch)}
-                                >
-                                    <span>{branch}</span>
-                                </div>
-                            ))}
+                            .map(branch => {
+                                return (
+                                    <div
+                                        key={branch}
+                                        className={`branch-item ${branch === currentBranch ? 'active' : ''} ${isRenamingBranch === branch ? 'renaming' : ''}`}
+                                        onClick={() => !isRenamingBranch && handleBranchSwitch(branch)}
+                                    >
+                                        {isRenamingBranch === branch ? (
+                                            <input
+                                                className="branch-rename-input"
+                                                value={editedFileName}
+                                                onChange={(e) => setEditedFileName(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        handleBranchRename(branch, editedFileName);
+                                                        setIsRenamingBranch(null);
+                                                    } else if (e.key === 'Escape') {
+                                                        setIsRenamingBranch(null);
+                                                    }
+                                                }}
+                                                onBlur={() => {
+                                                    if (editedFileName && editedFileName !== branch) {
+                                                        handleBranchRename(branch, editedFileName);
+                                                    }
+                                                    setIsRenamingBranch(null);
+                                                }}
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            <span>{branch}</span>
+                                        )}
+                                    </div>
+                                );
+                            })}
                     </div>
                     
                     <div 
@@ -99,18 +153,13 @@ export const BranchControls: React.FC<BranchControlsProps> = ({ editor, currentF
                     currentBranch={currentBranch}
                     onDelete={handleBranchDelete}
                     onRename={(branch: string) => {
+                        console.log('Starting rename for branch:', branch);
+                        setEditedFileName(branch);
                         setIsRenamingBranch(branch);
+                        setShowBranchSelector(true);
                         setContextMenu(null);
                     }}
                     onClose={() => setContextMenu(null)}
-                />
-            )}
-
-            {isRenamingBranch && (
-                <BranchRenameDialog
-                    branch={isRenamingBranch}
-                    onRename={handleBranchRename}
-                    onClose={() => setIsRenamingBranch(null)}
                 />
             )}
         </div>

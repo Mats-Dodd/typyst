@@ -127,7 +127,7 @@ export async function getVersionMetadata(documentPath: string): Promise<Document
 export async function createBranch(documentPath: string, branchName: string, content: any): Promise<boolean> {
     try {
         const metadata = await getVersionMetadata(documentPath);
-        if (!metadata) return false;
+        if (!metadata || !metadata.currentBranch || !metadata.branches[metadata.currentBranch]?.head) return false;
 
         const documentDir = await window.path.dirname(documentPath);
         const typystDir = await window.path.join(documentDir, '.typyst');
@@ -147,7 +147,7 @@ export async function createBranch(documentPath: string, branchName: string, con
         const branchMetadata: BranchMetadata = {
             name: branchName,
             parent: metadata.currentBranch,
-            divergePoint: metadata.branches[metadata.currentBranch].head,
+            divergePoint: metadata.branches[metadata.currentBranch]?.head ?? '',
             lastSyncWithMain: Date.now(),
             changesSinceSync: 0,
             status: 'ahead'
@@ -297,8 +297,8 @@ export async function deleteBranch(documentPath: string, branchName: string): Pr
         const versionsDir = await window.path.join(typystDir, 'versions');
         const branchDir = await window.path.join(versionsDir, branchName);
 
-        // Delete branch directory
-        await window.fs.removeDir(branchDir);
+        // Delete branch directory recursively
+        await window.fs.deleteFile(branchDir);
 
         // Update document index
         delete metadata.branches[branchName];
@@ -336,8 +336,19 @@ export async function renameBranch(documentPath: string, oldName: string, newNam
         const oldBranchDir = await window.path.join(versionsDir, oldName);
         const newBranchDir = await window.path.join(versionsDir, newName);
 
-        // Rename branch directory
-        await window.fs.rename(oldBranchDir, newBranchDir);
+        // Move old branch directory to new location
+        const oldContent = await window.fs.readFile(await window.path.join(oldBranchDir, 'content.json'));
+        if (oldContent.error) return false;
+
+        // Create new branch directory
+        await window.fs.createDir(newBranchDir);
+        await window.fs.writeFile(
+            await window.path.join(newBranchDir, 'content.json'),
+            oldContent.content
+        );
+
+        // Delete old branch directory
+        await window.fs.deleteFile(oldBranchDir);
 
         // Update document index
         metadata.branches[newName] = metadata.branches[oldName];

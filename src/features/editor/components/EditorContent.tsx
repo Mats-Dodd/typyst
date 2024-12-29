@@ -4,7 +4,6 @@ import type { Editor } from '@tiptap/core'
 import { extensions } from '../../../extensions/extensions'
 import { MenuBar } from './MenuBar'
 import { ErrorOverlay } from './ErrorOverlay'
-import { RawContentPreview } from './RawContentPreview'
 import { ValeSidebar } from './ValeSidebar'
 import { FileSelector } from './FileSelector'
 import { useEditorCore } from '../hooks/useEditorCore'
@@ -17,14 +16,11 @@ export function EditorContent(): JSX.Element {
   const [content, setContent] = useState<any>(null);
   const [currentFilePath, setCurrentFilePath] = useState<string | undefined>();
   const {
-    rawContent,
     prediction,
     error,
-    showRawOutput,
     editorRef,
     setPrediction,
     setError,
-    setShowRawOutput,
     handleEditorContentUpdate
   } = useEditorCore()
 
@@ -97,8 +93,6 @@ export function EditorContent(): JSX.Element {
       <div className="editor-main">
         <TiptapProvider
           slotBefore={<MenuBar 
-            showRawOutput={showRawOutput} 
-            setShowRawOutput={setShowRawOutput} 
             currentFilePath={currentFilePath}
             onSave={handleSave}
             onFileNameChange={handleFileNameChange}
@@ -112,7 +106,6 @@ export function EditorContent(): JSX.Element {
         >
           <ErrorOverlay error={error} />
         </TiptapProvider>
-        {showRawOutput && <RawContentPreview content={rawContent} />}
       </div>
       {showSidebar && (
         <div className="editor-sidebar">

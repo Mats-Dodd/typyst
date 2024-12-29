@@ -66,10 +66,12 @@
     width: 200px;
     background-color: var(--background-color);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     margin-top: 4px;
     z-index: 1000;
+    padding: 4px 0;
+    overflow: hidden;
 }
 
 .branch-dropdown-header {
@@ -79,16 +81,47 @@
     padding: 8px 12px;
     color: var(--text-secondary);
     font-size: 12px;
-    border-bottom: 1px solid var(--border-color);
+    margin-top: 4px;
+}
+
+.branch-dropdown-header svg {
+    width: 16px;
+    height: 16px;
 }
 
 .branch-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px;
+    padding: 8px 34px 8px 12px;
     cursor: pointer;
     transition: background-color 0.2s;
+    font-size: 13px;
+}
+
+.branch-item.renaming {
+    background-color: var(--hover-bg);
+    cursor: default;
+}
+
+.branch-rename-input {
+    width: 100%;
+    background: var(--background-color);
+    border: none;
+    font-size: 13px;
+    color: var(--text-primary);
+    padding: 0;
+    margin: 0;
+    outline: none;
+}
+
+.branch-rename-input:focus {
+    outline: none;
+}
+
+/* Add indentation to non-main branches */
+.branch-list .branch-item {
+    padding-left: 34px;
 }
 
 .branch-item:hover {
@@ -100,12 +133,17 @@
 }
 
 .main-branch {
+    padding-bottom: 8px;
+    margin-bottom: 4px;
     border-bottom: 1px solid var(--border-color);
+    padding-right: 34px;
 }
 
 .crown-icon {
     color: var(--text-secondary);
     font-size: 14px;
+    width: 16px;
+    height: 16px;
 }
 
 .create-branch-option {
@@ -114,9 +152,11 @@
     gap: 8px;
     padding: 8px 12px;
     cursor: pointer;
+    margin-top: 4px;
     border-top: 1px solid var(--border-color);
     color: var(--text-secondary);
     transition: background-color 0.2s;
+    font-size: 13px;
 }
 
 .create-branch-option:hover {
@@ -127,61 +167,36 @@
     position: fixed;
     background-color: var(--background-color);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1000;
     min-width: 150px;
     display: flex;
     flex-direction: column;
+    padding: 4px 0;
+    overflow: hidden;
 }
 
-.branch-menu-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
+.menu-item {
     padding: 8px 12px;
-    border: none;
-    background: none;
     cursor: pointer;
-    color: var(--text-primary);
     transition: background-color 0.2s;
+    font-size: 13px;
 }
 
-.branch-menu-option:hover:not(:disabled) {
+.menu-item:hover {
     background-color: var(--hover-bg);
 }
 
-.branch-menu-option:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.menu-item.delete {
+    color: #ff4444;
 }
 
-.branch-rename-dialog {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: var(--background-color);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    padding: 16px;
-    z-index: 1000;
-    min-width: 300px;
+.menu-item.delete:hover {
+    background-color: rgba(255, 68, 68, 0.1);
 }
 
+.branch-rename-dialog,
 .branch-rename-form input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: var(--background-color);
-    color: var(--text-primary);
-    font-size: 14px;
-}
-
-.branch-rename-form input:focus {
-    outline: none;
-    border-color: var(--primary-color);
+    display: none;
 } 

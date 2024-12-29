@@ -63,6 +63,21 @@ export async function convertJsonToDocx(json: JSONContent): Promise<Blob> {
 
 export async function renameFile(oldPath: string, newPath: string, content: JSONContent): Promise<boolean> {
     try {
+        // If the paths are the same, no need to rename - just update the content
+        if (oldPath === newPath) {
+            const isDocx = newPath.endsWith('.docx')
+            if (isDocx) {
+                const docxBlob = await convertJsonToDocx(content)
+                const buffer = await docxBlob.arrayBuffer()
+                const result = await window.fs.writeBuffer(newPath, buffer)
+                return result.success
+            } else {
+                const markdown = await convertJsonToMd(content)
+                const result = await window.fs.writeFile(newPath, markdown)
+                return result.success
+            }
+        }
+
         // First write the content to the new path
         const isDocx = newPath.endsWith('.docx')
         let result

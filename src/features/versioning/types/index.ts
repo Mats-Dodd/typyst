@@ -1,4 +1,5 @@
 import { Text } from '@automerge/automerge'
+import type { Editor } from '@tiptap/core';
 
 export interface VersionedDocument {
     content: Text
@@ -69,7 +70,7 @@ export interface BranchMetadata {
 }
 
 export interface BranchControlsProps {
-    editor: any;
+    editor: Editor | null;
     currentFilePath?: string;
 }
 

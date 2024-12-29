@@ -7,12 +7,10 @@ export interface EditorCoreState {
   isFirstRender: boolean
   prediction: string
   error: string | null
-  showRawOutput: boolean
   editorRef: React.MutableRefObject<Editor | null>
   timeoutRef: React.MutableRefObject<NodeJS.Timeout | null>
   setPrediction: (prediction: string) => void
   setError: (error: string | null) => void
-  setShowRawOutput: (show: boolean) => void
   handleEditorContentUpdate: (editor: Editor) => Promise<void>
 }
 
@@ -21,7 +19,6 @@ export function useEditorCore(): EditorCoreState {
   const [isFirstRender, setIsFirstRender] = useState(true)
   const [prediction, setPrediction] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [showRawOutput, setShowRawOutput] = useState(false)
   const editorRef = useRef<Editor | null>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -58,12 +55,10 @@ export function useEditorCore(): EditorCoreState {
     isFirstRender,
     prediction,
     error,
-    showRawOutput,
     editorRef,
     timeoutRef,
     setPrediction,
     setError,
-    setShowRawOutput,
     handleEditorContentUpdate
   }
 } 
