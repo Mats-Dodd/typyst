@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Editor as TiptapEditor } from '@tiptap/core';
 import { versionControlService } from '../services/versionControlService';
+import type { BranchInfo } from '../../../../electron/types/versioning';
 
 export const useBranchOperations = (editor: TiptapEditor | null, currentFilePath?: string) => {
     const [currentBranch, setCurrentBranch] = useState<string>('main');
@@ -105,6 +106,38 @@ export const useBranchOperations = (editor: TiptapEditor | null, currentFilePath
         }
     };
 
+    const handleBranchRename = async (oldName: string, newName: string) => {
+        if (!documentId || oldName === 'main') return;
+
+        try {
+            const doc = await versionControlService.getDocument(documentId);
+            if (doc && doc.branches[oldName]) {
+                const branchInfo: BranchInfo = {
+                    lastModified: Date.now(),
+                    head: doc.branches[oldName].head
+                };
+                
+                const updatedBranches = { ...doc.branches };
+                updatedBranches[newName] = branchInfo;
+                delete updatedBranches[oldName];
+                
+                await versionControlService.updateDocument(documentId, { 
+                    branches: updatedBranches,
+                    currentBranch: currentBranch === oldName ? newName : currentBranch
+                });
+
+                setBranches(Object.keys(updatedBranches));
+                if (currentBranch === oldName) {
+                    setCurrentBranch(newName);
+                }
+            }
+        } catch (error) {
+            console.error('Error renaming branch:', error);
+        }
+    };
+
+    const getDocumentId = () => documentId;
+
     useEffect(() => {
         loadBranches();
     }, [currentFilePath, editor]);
@@ -116,6 +149,8 @@ export const useBranchOperations = (editor: TiptapEditor | null, currentFilePath
         setShowBranchSelector,
         handleBranchSwitch,
         handleCreateBranch,
-        handleBranchDelete
+        handleBranchDelete,
+        handleBranchRename,
+        getDocumentId
     };
 }; 

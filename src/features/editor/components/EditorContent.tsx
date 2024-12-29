@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { EditorProvider as TiptapProvider } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
 import { extensions } from '../../../extensions/extensions'
@@ -12,10 +12,13 @@ import { useEditorShortcuts } from '../hooks/useEditorShortcuts'
 import { useEditorSpellcheck } from '../hooks/useEditorSpellcheck'
 import { useBranchOperations } from '../../versioning/hooks/useBranchOperations'
 import { convertJsonToMd, convertJsonToDocx, renameFile } from '../services/fileSystemService'
+import { versionControlService } from '../../versioning/services/versionControlService'
 
 export function EditorContent(): JSX.Element {
   const [content, setContent] = useState<any>(null);
   const [currentFilePath, setCurrentFilePath] = useState<string | undefined>();
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const {
     prediction,
     error,
@@ -43,7 +46,9 @@ export function EditorContent(): JSX.Element {
     setShowBranchSelector,
     handleBranchSwitch,
     handleCreateBranch,
-    handleBranchDelete
+    handleBranchDelete,
+    handleBranchRename,
+    getDocumentId
   } = useBranchOperations(editorRef.current, currentFilePath)
 
   const setShowSidebar = (show: boolean | ((prev: boolean) => boolean)) => {
@@ -78,6 +83,30 @@ export function EditorContent(): JSX.Element {
     console.log('EditorContent: Content updated');
     handleEditorContentUpdate(editor);
     await updateValeResults(editor);
+
+    // Clear any existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Set a new timeout for saving
+    saveTimeoutRef.current = setTimeout(async () => {
+      const documentId = getDocumentId();
+      if (!documentId) {
+        console.log('EditorContent: No document ID available, skipping version control save');
+        return;
+      }
+
+      try {
+        console.log('EditorContent: Saving to version control');
+        const content = editor.getJSON();
+        await versionControlService.saveContent(documentId, content);
+        console.log('EditorContent: Saved to version control successfully');
+      } catch (err) {
+        console.error('EditorContent: Failed to save to version control:', err);
+        setError('Failed to save changes');
+      }
+    }, 100);
   }
 
   const handleFileSelect = (selectedContent: any, filePath?: string) => {
