@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Editor } from '@tiptap/core'
 import { EditorView } from 'prosemirror-view'
-import { handleTabKey, handleSidebarShortcut } from '../services/eventHandlers'
+import { handleSidebarShortcut } from '../services/eventHandlers'
 
 export interface EditorShortcutsConfig {
   editor: Editor | null

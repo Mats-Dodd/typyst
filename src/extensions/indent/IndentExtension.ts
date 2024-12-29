@@ -63,7 +63,13 @@ export const IndentExtension = Extension.create<IndentOptions>({
 
   addKeyboardShortcuts() {
     return {
-      Tab: () => this.editor.commands.indent(),
+      Tab: () => {
+        const prediction = (window as any).currentPrediction;
+        if (prediction) {
+          return false;
+        }
+        return this.editor.commands.indent();
+      },
       'Shift-Tab': () => this.editor.commands.outdent(),
     }
   },
