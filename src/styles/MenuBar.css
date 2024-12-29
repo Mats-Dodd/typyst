@@ -1,4 +1,4 @@
-.control-group {
+.menu-bar {
     padding: 28px 28px 2px 28px;
     margin-bottom: 2px;
     background: var(--background-color);
@@ -14,24 +14,8 @@
     -webkit-app-region: drag;
 }
 
-.control-group button {
+.menu-bar button {
     -webkit-app-region: no-drag;
-}
-
-.button-group {
-    display: flex;
-    gap: 2px;
-    flex-wrap: wrap;
-    align-items: center;
-    position: relative;
-    overflow: visible;
-}
-
-.theme-toggle {
-    margin-left: auto;
-}
-
-.menu-button {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -47,30 +31,30 @@
     position: relative;
 }
 
-.menu-button:disabled {
+.menu-bar button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-.menu-button:disabled:hover {
+.menu-bar button:disabled:hover {
     border-color: transparent;
 }
 
-.menu-button svg {
+.menu-bar button svg {
     width: 16px;
     height: 16px;
 }
 
-.menu-button:hover {
+.menu-bar button:hover {
     border-color: var(--border-color);
 }
 
-.menu-button.is-active {
+.menu-bar button.is-active {
     border-color: var(--border-color);
     color: var(--primary-color, #000);
 }
 
-.menu-button::after {
+.menu-bar button::after {
     content: attr(data-tooltip);
     position: absolute;
     bottom: -30px;
@@ -91,63 +75,29 @@
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.menu-button:hover::after {
+.menu-bar button:hover::after {
     opacity: 1;
     visibility: visible;
     bottom: -35px;
 }
 
-.button-group > .menu-button:nth-child(1)::after,
-.button-group > .menu-button:nth-child(2)::after {
-    bottom: auto;
-    top: 100%;
-    margin-top: 8px;
-}
-
-.button-group > .menu-button:nth-child(1):hover::after,
-.button-group > .menu-button:nth-child(2):hover::after {
-    bottom: auto;
-    top: 100%;
-    margin-top: 8px;
-}
-
-.menu-dropdown {
-    position: relative;
-}
-
-.dropdown-menu {
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-top: 4px;
-    background: white;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    padding: 4px;
+.menu-section {
     display: flex;
-    flex-direction: row;
+    align-items: center;
     gap: 2px;
-    z-index: 1500;
-    min-width: max-content;
+    position: relative;
+    overflow: visible;
 }
 
-.dropdown-menu .menu-button {
-    border-radius: 2px;
-}
-
-.dropdown-menu .menu-button:hover::after {
-    bottom: -35px;
-    left: 50%;
-    transform: translateX(-50%);
+.menu-section:not(:last-child) {
+    margin-right: 8px;
 }
 
 .separator {
     width: 1px;
     height: 20px;
     background-color: var(--border-color);
-    margin: 0 2px;
+    margin: 0 8px;
 }
 
 .file-name-container {
@@ -161,7 +111,7 @@
     -webkit-app-region: no-drag;
 }
 
-.file-name-display {
+.file-name {
     font-size: 14px;
     color: var(--text-color);
     padding: 4px 8px;
@@ -169,13 +119,14 @@
     cursor: pointer;
     transition: all 0.2s ease;
     border: 1px solid transparent;
+    -webkit-app-region: no-drag;
 }
 
-.file-name-display:hover {
+.file-name:hover {
     border-color: var(--border-color);
 }
 
-.file-name-input {
+.file-name input {
     font-size: 14px;
     color: var(--text-color);
     background: var(--background-color);
@@ -187,90 +138,33 @@
     text-align: center;
 }
 
-.file-name-input:focus {
+.file-name input:focus {
     border-color: var(--primary-color);
 }
 
-.menu-section {
-    display: flex;
-    align-items: center;
-    padding: 0 4px;
+.menu-dropdown {
+    position: relative;
 }
 
-.menu-bar {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem;
-    background-color: var(--background-color);
-    border-bottom: 1px solid var(--border-color);
-    gap: 0.5rem;
-}
-
-.menu-section {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0 0.5rem;
-    border-right: 1px solid var(--border-color);
-}
-
-.menu-section:last-child {
-    border-right: none;
-}
-
-.menu-section button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.25rem;
-    border: none;
-    background: none;
-    color: var(--text-color);
-    border-radius: 0.25rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.menu-section button:hover {
-    background-color: var(--hover-color);
-}
-
-.menu-section button:active {
-    background-color: var(--active-color);
-}
-
-.menu-section button svg {
-    width: 1.25rem;
-    height: 1.25rem;
-}
-
-.file-name {
-    font-size: 0.9rem;
-    color: var(--text-color);
-    cursor: pointer;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    transition: background-color 0.2s;
-}
-
-.file-name:hover {
-    background-color: var(--hover-color);
-}
-
-.file-name input {
-    font-size: 0.9rem;
-    padding: 0.25rem;
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 4px;
+    background: var(--background-color);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     border: 1px solid var(--border-color);
-    border-radius: 0.25rem;
-    background-color: var(--background-color);
-    color: var(--text-color);
+    padding: 4px;
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+    z-index: 1500;
 }
 
-/* Version Control Styles */
-.version-control {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+.theme-toggle {
+    margin-left: auto;
 }
 
 .branch-selector {
@@ -280,31 +174,25 @@
 .branch-selector button {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: 0.25rem;
-    background-color: var(--background-color);
-    color: var(--text-color);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    gap: 4px;
+    padding: 4px 8px;
+    min-width: auto;
 }
 
-.branch-selector button:hover {
-    background-color: var(--hover-color);
+.branch-selector button span {
+    font-size: 14px;
 }
 
 .branch-dropdown {
     position: absolute;
     top: 100%;
     left: 0;
-    margin-top: 0.25rem;
-    min-width: 200px;
-    background-color: var(--background-color);
+    margin-top: 4px;
+    background: var(--background-color);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     border: 1px solid var(--border-color);
-    border-radius: 0.25rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
     z-index: 1000;
 }
 
@@ -312,7 +200,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.5rem;
+    padding: 8px;
     cursor: pointer;
     transition: background-color 0.2s;
 }
@@ -325,40 +213,23 @@
     background-color: var(--active-color);
 }
 
-.branch-item span {
-    font-size: 0.9rem;
+.create-branch {
+    width: 100%;
+    padding: 8px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
 }
 
 .delete-branch {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.8rem;
+    padding: 2px 4px;
+    font-size: 12px;
     color: var(--error-color);
-    background: none;
-    border: none;
-    cursor: pointer;
     opacity: 0;
-    transition: opacity 0.2s;
 }
 
 .branch-item:hover .delete-branch {
     opacity: 1;
-}
-
-.create-branch {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    width: 100%;
-    padding: 0.5rem;
-    border: none;
-    border-top: 1px solid var(--border-color);
-    background: none;
-    color: var(--text-color);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.create-branch:hover {
-    background-color: var(--hover-color);
 } 

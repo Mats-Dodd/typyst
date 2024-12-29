@@ -27,17 +27,19 @@
 
 .branch-icon {
     font-size: 16px;
-    color: var(--text-secondary);
+    color: var(--text-color);
+    opacity: 0.7;
 }
 
 .branch-name {
     font-size: 14px;
-    color: var(--text-primary);
+    color: var(--text-color);
 }
 
 .branch-caret {
     font-size: 14px;
-    color: var(--text-secondary);
+    color: var(--text-color);
+    opacity: 0.7;
     transition: transform 0.2s;
 }
 
@@ -50,7 +52,8 @@
     border: none;
     background: none;
     cursor: pointer;
-    color: var(--text-secondary);
+    color: var(--text-color);
+    opacity: 0.7;
     border-radius: 4px;
     border: 1px solid transparent;
 }
@@ -79,7 +82,8 @@
     align-items: center;
     gap: 6px;
     padding: 8px 12px;
-    color: var(--text-secondary);
+    color: var(--text-color);
+    opacity: 0.7;
     font-size: 12px;
     margin-top: 4px;
 }
@@ -97,10 +101,11 @@
     cursor: pointer;
     transition: background-color 0.2s;
     font-size: 13px;
+    color: var(--text-color);
 }
 
 .branch-item.renaming {
-    background-color: var(--hover-bg);
+    background-color: var(--hover-background);
     cursor: default;
 }
 
@@ -109,7 +114,7 @@
     background: var(--background-color);
     border: none;
     font-size: 13px;
-    color: var(--text-primary);
+    color: var(--text-color);
     padding: 0;
     margin: 0;
     outline: none;
@@ -119,17 +124,16 @@
     outline: none;
 }
 
-/* Add indentation to non-main branches */
 .branch-list .branch-item {
     padding-left: 34px;
 }
 
 .branch-item:hover {
-    background-color: var(--hover-bg);
+    background-color: var(--hover-background);
 }
 
 .branch-item.active {
-    background-color: var(--hover-bg);
+    background-color: var(--hover-background);
 }
 
 .main-branch {
@@ -140,7 +144,8 @@
 }
 
 .crown-icon {
-    color: var(--text-secondary);
+    color: var(--text-color);
+    opacity: 0.7;
     font-size: 14px;
     width: 16px;
     height: 16px;
@@ -154,13 +159,14 @@
     cursor: pointer;
     margin-top: 4px;
     border-top: 1px solid var(--border-color);
-    color: var(--text-secondary);
+    color: var(--text-color);
+    opacity: 0.7;
     transition: background-color 0.2s;
     font-size: 13px;
 }
 
 .create-branch-option:hover {
-    background-color: var(--hover-bg);
+    background-color: var(--hover-background);
 }
 
 .branch-context-menu {
@@ -182,10 +188,11 @@
     cursor: pointer;
     transition: background-color 0.2s;
     font-size: 13px;
+    color: var(--text-color);
 }
 
 .menu-item:hover {
-    background-color: var(--hover-bg);
+    background-color: var(--hover-background);
 }
 
 .menu-item.delete {
