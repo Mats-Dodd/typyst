@@ -26,7 +26,7 @@ export function EditorContent(): JSX.Element {
     setPrediction,
     setError,
     handleEditorContentUpdate
-  } = useEditorCore()
+  } = useEditorCore(currentFilePath)
 
   const {
     valeAlerts,

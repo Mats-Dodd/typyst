@@ -14,7 +14,7 @@ export interface EditorCoreState {
   handleEditorContentUpdate: (editor: Editor) => Promise<void>
 }
 
-export function useEditorCore(): EditorCoreState {
+export function useEditorCore(currentFilePath?: string): EditorCoreState {
   const [rawContent, setRawContent] = useState('')
   const [isFirstRender, setIsFirstRender] = useState(true)
   const [prediction, setPrediction] = useState('')
@@ -36,7 +36,7 @@ export function useEditorCore(): EditorCoreState {
     }
     
     setRawContent(JSON.stringify(editor.getJSON(), null, 2))
-    await handleEditorUpdate(editor, setPrediction, setError, timeoutRef)
+    await handleEditorUpdate(editor, setPrediction, setError, timeoutRef, currentFilePath)
   }
 
   return {

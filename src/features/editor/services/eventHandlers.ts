@@ -4,6 +4,8 @@ import { isCursorAtEnd, hasWordsBetween, hasWordsAfter } from './cursorService'
 import { MutableRefObject } from 'react'
 import { LlmService } from '../../../services/LlmService'
 import { cleanCompletion, cleanSpaces, cutToFirstSentence, handleSentenceCapitalization } from './predictionService'
+import { versionControlService } from '../../versioning/services/versionControlService'
+import { convertJsonToMd, convertJsonToDocx } from './fileSystemService'
 
 export const handleSidebarShortcut = (
   e: KeyboardEvent,
@@ -42,14 +44,40 @@ export const handleEditorUpdate = async (
   editor: Editor,
   setPrediction: (prediction: string) => void,
   setError: (error: string | null) => void,
-  timeoutRef: MutableRefObject<NodeJS.Timeout | null>
+  timeoutRef: MutableRefObject<NodeJS.Timeout | null>,
+  currentFilePath?: string
 ): Promise<void> => {
   const state = editor.state
   const { from } = state.selection
 
+  // Save to VCS (existing behavior)
   if (timeoutRef.current) {
     clearTimeout(timeoutRef.current)
-  }    
+  }
+
+  try {
+    // Get current document and branch info
+    if (currentFilePath) {
+      const doc = await versionControlService.getDocumentByPath(currentFilePath)
+      if (doc && doc.currentBranch === 'main') {
+        // If we're on main branch, save to disk
+        const content = editor.getJSON()
+        const isDocx = currentFilePath.toLowerCase().endsWith('.docx')
+        
+        if (isDocx) {
+          const blobContent = await convertJsonToDocx(content)
+          await window.ipcRenderer.invoke('write-buffer', currentFilePath, await blobContent.arrayBuffer())
+        } else {
+          // Default to markdown for .md or any other extension
+          const fileContent = await convertJsonToMd(content)
+          await window.ipcRenderer.invoke('write-file', currentFilePath, fileContent)
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error saving to disk:', error)
+    // Don't throw error to allow VCS save to continue
+  }
 
   if (editor.state.tr.docChanged) {
     clearPrediction(setPrediction)
