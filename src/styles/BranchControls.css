@@ -137,10 +137,19 @@
 }
 
 .main-branch {
-    padding-bottom: 8px;
+    padding: 8px 12px;
     margin-bottom: 4px;
     border-bottom: 1px solid var(--border-color);
-    padding-right: 34px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-left: 34px;
+    position: relative;
+}
+
+.main-branch .crown-icon {
+    position: absolute;
+    left: 12px;
 }
 
 .crown-icon {
@@ -206,4 +215,20 @@
 .branch-rename-dialog,
 .branch-rename-form input {
     display: none;
+}
+
+.branch-item.active::after {
+    content: 'current';
+    font-size: 11px;
+    opacity: 0.6;
+    margin-left: auto;
+    font-style: italic;
+}
+
+.main-branch.active::after {
+    content: 'current';
+    font-size: 11px;
+    opacity: 0.6;
+    margin-left: auto;
+    font-style: italic;
 } 
