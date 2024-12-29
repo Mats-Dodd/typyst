@@ -14,7 +14,7 @@ export function FileSelector({ onFileSelect }: FileSelectorProps): JSX.Element {
       const result = await window.fs.showOpenDialog();
       console.log('Open dialog result:', result);
 
-      if (!result.success || !result.filePath || !result.content) {
+      if (!result.success || !result.filePath) {
         console.error('Dialog failed or missing data:', { result });
         throw new Error(result.error || 'Failed to open file');
       }
@@ -27,11 +27,19 @@ export function FileSelector({ onFileSelect }: FileSelectorProps): JSX.Element {
       let jsonContent: string;
       if (isMarkdown) {
         console.log('Converting markdown to JSON...');
-        jsonContent = await convertMdToJson(result.content);
+        const fileContent = await window.fs.readFile(filePath);
+        if (!fileContent.content) {
+          throw new Error('Failed to read markdown file');
+        }
+        jsonContent = await convertMdToJson(fileContent.content);
       } else if (isDocx) {
         console.log('Converting DOCX to JSON...');
-        // Convert base64 string back to ArrayBuffer
-        const binaryString = atob(result.content);
+        const binaryResult = await window.fs.readBinaryFile(filePath);
+        if (!binaryResult.success || !binaryResult.content) {
+          throw new Error('Failed to read DOCX file');
+        }
+        // Convert base64 string to ArrayBuffer
+        const binaryString = atob(binaryResult.content);
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
             bytes[i] = binaryString.charCodeAt(i);

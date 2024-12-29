@@ -196,4 +196,22 @@ export function registerFileSystemRpc(win?: BrowserWindow) {
         console.log('Main Process: CWD:', cwd);
         return cwd;
     });
+
+    ipcMain.handle('read-binary-file', async (_event, filePath: string) => {
+        console.log('Main Process: Reading binary file:', filePath);
+        try {
+            const buffer = await fs.readFile(filePath);
+            console.log('Main Process: Binary file read successfully');
+            return { 
+                success: true,
+                content: buffer.toString('base64')
+            };
+        } catch (error) {
+            console.error('Main Process: Error reading binary file:', error);
+            return { 
+                success: false,
+                error: error instanceof Error ? error.message : String(error)
+            };
+        }
+    });
 } 

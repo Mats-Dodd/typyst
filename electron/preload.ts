@@ -35,6 +35,9 @@ contextBridge.exposeInMainWorld('fs', {
     readFile: async (path: string) => {
         return await ipcRenderer.invoke('read-file', path);
     },
+    readBinaryFile: async (path: string) => {
+        return await ipcRenderer.invoke('read-binary-file', path);
+    },
     deleteFile: async (path: string) => {
         return await ipcRenderer.invoke('delete-file', path);
     },
