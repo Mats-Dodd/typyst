@@ -117,23 +117,37 @@ export function EditorContent(): JSX.Element {
     console.log('EditorContent: State updated with new file');
   }
 
-  const handleFileNameChange = (newPath: string) => {
+  const handleFileNameChange = async (newPath: string) => {
     console.log('EditorContent: Renaming file', { from: currentFilePath, to: newPath });
-    if (!currentFilePath || !editorRef.current) {
-      console.log('EditorContent: Missing current file path or editor, skipping rename');
+    if (!currentFilePath) {
+      console.log('EditorContent: Missing current file path, skipping rename');
       return;
     }
 
-    const content = editorRef.current.getJSON();
-    renameFile(currentFilePath, newPath, content)
-      .then(() => {
-        console.log('EditorContent: File renamed successfully');
-        setCurrentFilePath(newPath);
-      })
-      .catch(err => {
-        console.error('EditorContent: Failed to rename file:', err);
-        setError('Failed to rename file');
-      });
+    try {
+      // Get the document ID before renaming
+      const documentId = getDocumentId();
+      if (!documentId) {
+        console.error('EditorContent: No document ID found for file');
+        setError('Failed to rename file: No version control document found');
+        return;
+      }
+
+      // First rename the file in the filesystem
+      await renameFile(currentFilePath, newPath, content);
+      console.log('EditorContent: File renamed successfully in filesystem');
+
+      // Then update the document path in version control
+      await versionControlService.updateDocument(documentId, { path: newPath });
+      console.log('EditorContent: Document path updated in version control');
+
+      // Update local state
+      setCurrentFilePath(newPath);
+      setError(null);
+    } catch (err) {
+      console.error('EditorContent: Error renaming file:', err);
+      setError('Failed to rename file');
+    }
   }
 
   const { handleKeyDown } = useEditorShortcuts({
