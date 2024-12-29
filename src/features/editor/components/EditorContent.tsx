@@ -94,7 +94,6 @@ export function EditorContent(): JSX.Element {
         <TiptapProvider
           slotBefore={<MenuBar 
             currentFilePath={currentFilePath}
-            onSave={handleSave}
             onFileNameChange={handleFileNameChange}
           />}
           extensions={extensions}
