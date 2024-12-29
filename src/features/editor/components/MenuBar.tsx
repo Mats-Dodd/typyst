@@ -15,8 +15,7 @@ import {
     BiRedo,
     BiSun,
     BiMoon,
-    BiCodeAlt,
-    BiSave
+    BiCodeAlt
 } from "react-icons/bi"
 import { useTheme } from "../../theme/themeContext"
 import "../../../styles/MenuBar.css"
@@ -25,11 +24,10 @@ import { BranchControls } from '../../versioning/components/BranchControls';
 
 interface MenuBarProps {
     currentFilePath?: string
-    onSave?: () => void
     onFileNameChange?: (newPath: string) => void
 }
 
-export function MenuBar({ currentFilePath, onSave, onFileNameChange }: MenuBarProps) {
+export function MenuBar({ currentFilePath, onFileNameChange }: MenuBarProps) {
     const { editor } = useCurrentEditor()
     const [showAlignMenu, setShowAlignMenu] = useState(false)
     const [isEditingFileName, setIsEditingFileName] = useState(false)
@@ -101,38 +99,6 @@ export function MenuBar({ currentFilePath, onSave, onFileNameChange }: MenuBarPr
         }
     }
 
-    const handleSave = async () => {
-        if (!editor || !currentFilePath) {
-            return;
-        }
-        
-        try {
-            const isDocx = currentFilePath.endsWith('.docx');
-            
-            if (isDocx) {
-                const docxBlob = await convertJsonToDocx(editor.getJSON());
-                const buffer = await docxBlob.arrayBuffer();
-                const result = await window.fs.writeBuffer(currentFilePath, buffer);
-                
-                if (!result.success) {
-                    console.error('Failed to save DOCX file:', result.error);
-                    alert('Failed to save file. Please try again.');
-                }
-            } else {
-                const markdown = await convertJsonToMd(editor.getJSON());
-                const result = await window.fs.writeFile(currentFilePath, markdown);
-                
-                if (!result.success) {
-                    console.error('Failed to save file:', result.error);
-                    alert('Failed to save file. Please try again.');
-                }
-            }
-        } catch (error) {
-            console.error('Error saving file:', error);
-            alert('Error saving file. Please try again.');
-        }
-    }
-
     if (!editor)
         return null
 
@@ -151,15 +117,6 @@ export function MenuBar({ currentFilePath, onSave, onFileNameChange }: MenuBarPr
     return (
         <div className="control-group">
             <div className="button-group">
-                <button
-                    onClick={handleSave}
-                    className="menu-button"
-                    disabled={!currentFilePath}
-                    data-tooltip="Save (⌘S)"
-                >
-                    <BiSave />
-                </button>
-                <div className="separator" />
                 <button
                     onClick={() => editor.chain().focus().undo().run()}
                     disabled={!editor.can().undo()}
