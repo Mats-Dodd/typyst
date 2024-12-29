@@ -15,7 +15,9 @@ import {
     BiRedo,
     BiSun,
     BiMoon,
-    BiCodeAlt
+    BiCodeAlt,
+    BiGitBranch,
+    BiGitCommit
 } from "react-icons/bi"
 import { useTheme } from "../../theme/themeContext"
 import "../../../styles/MenuBar.css"
@@ -23,216 +25,207 @@ import { convertJsonToMd, convertJsonToDocx, renameFile } from "../services/file
 import { BranchControls } from '../../versioning/components/BranchControls';
 
 interface MenuBarProps {
-    currentFilePath?: string
-    onFileNameChange?: (newPath: string) => void
+    currentFilePath?: string;
+    onFileNameChange?: (newPath: string) => void;
+    onSave?: () => Promise<void>;
+    showSidebar?: boolean;
+    setShowSidebar?: (show: boolean | ((prev: boolean) => boolean)) => void;
+    currentBranch?: string;
+    branches?: string[];
+    showBranchSelector?: boolean;
+    setShowBranchSelector?: (show: boolean) => void;
+    onBranchSwitch?: (branchName: string) => Promise<void>;
+    onBranchCreate?: () => Promise<void>;
+    onBranchDelete?: (branchName: string) => Promise<void>;
 }
 
-export function MenuBar({ currentFilePath, onFileNameChange }: MenuBarProps) {
+export function MenuBar({ 
+    currentFilePath, 
+    onFileNameChange,
+    onSave,
+    showSidebar,
+    setShowSidebar,
+    currentBranch = 'main',
+    branches = ['main'],
+    showBranchSelector = false,
+    setShowBranchSelector,
+    onBranchSwitch,
+    onBranchCreate,
+    onBranchDelete
+}: MenuBarProps) {
     const { editor } = useCurrentEditor()
-    const [showAlignMenu, setShowAlignMenu] = useState(false)
-    const [isEditingFileName, setIsEditingFileName] = useState(false)
-    const [editedFileName, setEditedFileName] = useState("")
     const { theme, toggleTheme } = useTheme()
+    const [isEditing, setIsEditing] = useState(false)
+    const [editedName, setEditedName] = useState('')
 
     const getFileName = (filePath: string) => {
-        const parts = filePath.split(/[/\\]/)
-        const fullName = parts[parts.length - 1] || ''
-        // Remove the extension
-        return fullName.replace(/\.[^/.]+$/, '')
+        const parts = filePath.split('/')
+        return parts[parts.length - 1]
     }
 
     const getFileExtension = (filePath: string) => {
-        const match = filePath.match(/\.[^/.]+$/)
-        return match ? match[0] : ''
+        const parts = filePath.split('.')
+        return parts[parts.length - 1]
     }
 
     const getDirectory = (filePath: string) => {
-        const lastSlashIndex = filePath.lastIndexOf('/')
-        if (lastSlashIndex === -1) {
-            const lastBackslashIndex = filePath.lastIndexOf('\\')
-            return lastBackslashIndex === -1 ? '' : filePath.slice(0, lastBackslashIndex)
-        }
-        return filePath.slice(0, lastSlashIndex)
+        const parts = filePath.split('/')
+        parts.pop()
+        return parts.join('/')
     }
 
-    const displayFileName = currentFilePath ? getFileName(currentFilePath) : "Untitled"
-
     const handleFileNameClick = () => {
-        if (currentFilePath) {
-            const fileName = getFileName(currentFilePath)
-            if (fileName) {
-                setEditedFileName(fileName)
-                setIsEditingFileName(true)
-            }
-        }
+        if (!currentFilePath || !onFileNameChange) return
+        setIsEditing(true)
+        const fileName = getFileName(currentFilePath)
+        setEditedName(fileName || '')
     }
 
     const handleFileNameSubmit = async () => {
-        if (currentFilePath && editedFileName && onFileNameChange && editor) {
-            const directory = getDirectory(currentFilePath)
-            const extension = getFileExtension(currentFilePath)
-            const newPath = directory 
-                ? `${directory}/${editedFileName}${extension}`
-                : `${editedFileName}${extension}`
-            
-            try {
-                const success = await renameFile(currentFilePath, newPath, editor.getJSON())
-                if (success) {
-                    onFileNameChange(newPath)
-                } else {
-                    alert('Failed to rename file. Please try again.')
-                }
-            } catch (error) {
-                console.error('Error renaming file:', error)
-                alert('Error renaming file. Please try again.')
-            }
-        }
-        setIsEditingFileName(false)
+        if (!currentFilePath || !onFileNameChange || !editedName) return
+        const directory = getDirectory(currentFilePath)
+        const extension = getFileExtension(currentFilePath)
+        const newPath = `${directory}/${editedName}.${extension}`
+        onFileNameChange(newPath)
+        setIsEditing(false)
     }
 
     const handleFileNameKeyDown = async (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
-            e.preventDefault() // Prevent default to avoid potential form submission
             await handleFileNameSubmit()
         } else if (e.key === 'Escape') {
-            setIsEditingFileName(false)
+            setIsEditing(false)
         }
     }
 
-    if (!editor)
-        return null
-
-    const alignmentOptions = [
-        { icon: BiAlignLeft, value: 'left', tooltip: 'Align Left (⌘⇧L)' },
-        { icon: BiAlignMiddle, value: 'center', tooltip: 'Align Center (⌘⇧E)' },
-        { icon: BiAlignRight, value: 'right', tooltip: 'Align Right (⌘⇧R)' },
-        { icon: BiAlignJustify, value: 'justify', tooltip: 'Justify (⌘⇧J)' },
-    ]
-
     const handleAlignment = (alignment: string) => {
-        editor.chain().focus().setTextAlign(alignment).run()
-        setShowAlignMenu(false)
+        editor?.chain().focus().setTextAlign(alignment).run()
     }
 
     return (
-        <div className="control-group">
-            <div className="button-group">
-                <button
-                    onClick={() => editor.chain().focus().undo().run()}
-                    disabled={!editor.can().undo()}
-                    className="menu-button"
-                    data-tooltip="Undo (⌘Z)"
-                >
-                    <BiUndo />
-                </button>
-                <button
-                    onClick={() => editor.chain().focus().redo().run()}
-                    disabled={!editor.can().redo()}
-                    className="menu-button"
-                    data-tooltip="Redo (⌘⇧Z)"
-                >
-                    <BiRedo />
-                </button>
-                <div className="separator" />
-                <button
-                    onClick={() => editor.chain().focus().toggleBold().run()}
-                    className={`menu-button ${editor.isActive("bold") ? "is-active" : ""}`}
-                    data-tooltip="Bold (⌘B)"
-                >
-                    <BiBold />
-                </button>
-                <button
-                    onClick={() => editor.chain().focus().toggleItalic().run()}
-                    className={`menu-button ${editor.isActive("italic") ? "is-active" : ""}`}
-                    data-tooltip="Italic (⌘I)"
-                >
-                    <BiItalic />
-                </button>
-                <button
-                    onClick={() => editor.chain().focus().toggleStrike().run()}
-                    className={`menu-button ${editor.isActive("strike") ? "is-active" : ""}`}
-                    data-tooltip="Strikethrough (⌘⇧X)"
-                >
-                    <BiStrikethrough />
-                </button>
-                <button
-                    onClick={() => editor.chain().focus().toggleBulletList().run()}
-                    className={`menu-button ${editor.isActive("bulletList") ? "is-active" : ""}`}
-                    data-tooltip="Bullet List (⌘⇧8)"
-                >
-                    <BiListUl />
-                </button>
-                <button
-                    onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                    className={`menu-button ${editor.isActive("orderedList") ? "is-active" : ""}`}
-                    data-tooltip="Ordered List (⌘⇧7)"
-                >
-                    <BiListOl />
-                </button>
-                <div className="menu-dropdown">
-                    <button
-                        onClick={() => setShowAlignMenu(!showAlignMenu)}
-                        className="menu-button"
-                        data-tooltip="Text Alignment"
-                    >
-                        <BiAlign />
-                    </button>
-                    {showAlignMenu && (
-                        <div className="dropdown-menu">
-                            {alignmentOptions.map((option) => (
-                                <button
-                                    key={option.value}
-                                    onClick={() => handleAlignment(option.value)}
-                                    className={`menu-button ${editor.isActive({ textAlign: option.value }) ? "is-active" : ""}`}
-                                    data-tooltip={option.tooltip}
-                                >
-                                    <option.icon />
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-                <div className="separator" />
-                <button
-                    onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-                    className={`menu-button ${editor.isActive('codeBlock') ? "is-active" : ""}`}
-                    data-tooltip="Code Block"
-                >
-                    <BiCodeAlt />
-                </button>
-                <div className="separator" />
-                <div className="menu-section">
-                    <BranchControls editor={editor} currentFilePath={currentFilePath} />
-                </div>
-            </div>
-            <div className="file-name-container">
-                {isEditingFileName ? (
-                    <input
-                        type="text"
-                        className="file-name-input"
-                        value={editedFileName}
-                        onChange={(e) => setEditedFileName(e.target.value)}
-                        onBlur={handleFileNameSubmit}
-                        onKeyDown={handleFileNameKeyDown}
-                        autoFocus
-                    />
-                ) : (
-                    <div 
-                        className="file-name-display"
-                        onClick={handleFileNameClick}
-                        title="Click to rename"
-                    >
-                        {displayFileName}
+        <div className="menu-bar">
+            <div className="menu-section">
+                {currentFilePath && (
+                    <div className="file-name" onClick={handleFileNameClick}>
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={editedName}
+                                onChange={e => setEditedName(e.target.value)}
+                                onKeyDown={handleFileNameKeyDown}
+                                onBlur={handleFileNameSubmit}
+                                autoFocus
+                            />
+                        ) : (
+                            getFileName(currentFilePath)
+                        )}
                     </div>
                 )}
             </div>
-            <button
-                onClick={toggleTheme}
-                className="menu-button theme-toggle"
-                data-tooltip={`${theme === 'light' ? 'Dark' : 'Light'} Mode`}
-            >
-                {theme === 'light' ? <BiMoon /> : <BiSun />}
-            </button>
+
+            <div className="menu-section">
+                <button onClick={() => editor?.chain().focus().toggleBold().run()}>
+                    <BiBold />
+                </button>
+                <button onClick={() => editor?.chain().focus().toggleItalic().run()}>
+                    <BiItalic />
+                </button>
+                <button onClick={() => editor?.chain().focus().toggleStrike().run()}>
+                    <BiStrikethrough />
+                </button>
+                <button onClick={() => editor?.chain().focus().toggleBulletList().run()}>
+                    <BiListUl />
+                </button>
+                <button onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
+                    <BiListOl />
+                </button>
+                <button onClick={() => editor?.chain().focus().toggleCodeBlock().run()}>
+                    <BiCodeAlt />
+                </button>
+            </div>
+
+            <div className="menu-section">
+                <button onClick={() => handleAlignment('left')}>
+                    <BiAlignLeft />
+                </button>
+                <button onClick={() => handleAlignment('center')}>
+                    <BiAlignMiddle />
+                </button>
+                <button onClick={() => handleAlignment('right')}>
+                    <BiAlignRight />
+                </button>
+                <button onClick={() => handleAlignment('justify')}>
+                    <BiAlignJustify />
+                </button>
+            </div>
+
+            <div className="menu-section">
+                <button onClick={() => editor?.chain().focus().undo().run()}>
+                    <BiUndo />
+                </button>
+                <button onClick={() => editor?.chain().focus().redo().run()}>
+                    <BiRedo />
+                </button>
+            </div>
+
+            {onSave && (
+                <div className="menu-section">
+                    <button onClick={onSave}>Save</button>
+                </div>
+            )}
+
+            {setShowSidebar && (
+                <div className="menu-section">
+                    <button onClick={() => setShowSidebar(prev => !prev)}>
+                        {showSidebar ? 'Hide Sidebar' : 'Show Sidebar'}
+                    </button>
+                </div>
+            )}
+
+            <div className="menu-section version-control">
+                <div className="branch-selector">
+                    <button onClick={() => setShowBranchSelector?.(!showBranchSelector)}>
+                        <BiGitBranch />
+                        <span>{currentBranch}</span>
+                    </button>
+                    {showBranchSelector && (
+                        <div className="branch-dropdown">
+                            {branches.map(branch => (
+                                <div
+                                    key={branch}
+                                    className={`branch-item ${branch === currentBranch ? 'active' : ''}`}
+                                    onClick={() => onBranchSwitch?.(branch)}
+                                >
+                                    <span>{branch}</span>
+                                    {branch !== 'main' && (
+                                        <button
+                                            className="delete-branch"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onBranchDelete?.(branch);
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                            <button className="create-branch" onClick={() => onBranchCreate?.()}>
+                                <BiGitBranch /> New Branch
+                            </button>
+                        </div>
+                    )}
+                </div>
+                <button onClick={() => onSave?.()}>
+                    <BiGitCommit /> Commit
+                </button>
+            </div>
+
+            <div className="menu-section">
+                <button onClick={toggleTheme}>
+                    {theme === 'light' ? <BiMoon /> : <BiSun />}
+                </button>
+            </div>
         </div>
     )
 } 

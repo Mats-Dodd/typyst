@@ -1,11 +1,10 @@
 import {fileURLToPath} from "node:url";
 import path from "node:path";
-import {app, shell, BrowserWindow, ipcMain} from "electron";
+import {app, shell, BrowserWindow} from "electron";
 import {registerLlmRpc} from "./rpc/llmRpc.ts";
 import {registerFileSystemRpc} from "./rpc/fileSystemRpc";
 import {registerValeIpcHandlers} from "./services/vale/valeIpc.js";
-import {setupVersioningHandlers} from "./ipc/versioningHandlers";
-import * as fs from 'fs/promises';
+import {registerVersioningRpc} from "./rpc/versioningRpc";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -44,10 +43,6 @@ function createWindow() {
         minWidth: 800,
         minHeight: 600
     });
-    registerLlmRpc(win);
-    registerFileSystemRpc();
-    registerValeIpcHandlers();
-    setupVersioningHandlers();
 
     // Test active push message to Renderer-process.
     win.webContents.on("did-finish-load", () => {
@@ -92,25 +87,19 @@ app.on("activate", () => {
     }
 });
 
-app.whenReady().then(createWindow);
-
-// File system operations
-ipcMain.handle('remove-dir', async (_, dirPath: string) => {
-    try {
-        await fs.rm(dirPath, { recursive: true });
-        return { success: true };
-    } catch (error) {
-        console.error('Error removing directory:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-    }
-});
-
-ipcMain.handle('rename-file', async (_, oldPath: string, newPath: string) => {
-    try {
-        await fs.rename(oldPath, newPath);
-        return { success: true };
-    } catch (error) {
-        console.error('Error renaming file/directory:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+app.whenReady().then(async () => {
+    console.log('Main Process: App is ready');
+    
+    // Create the window first
+    createWindow();
+    
+    // Then register RPC handlers
+    console.log('Main Process: Registering RPC handlers...');
+    if (win) {
+        registerLlmRpc(win);
+        registerFileSystemRpc(win);
+        registerValeIpcHandlers();
+        await registerVersioningRpc();
+        console.log('Main Process: RPC handlers registered');
     }
 });

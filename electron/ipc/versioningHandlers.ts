@@ -1,34 +1,28 @@
-import { ipcMain } from 'electron'
-import { VersioningRPCImpl } from '../rpc/versioningRpc'
+// import { ipcMain } from 'electron'
+// import { createBirpc } from 'birpc'
+// import { VersioningRpc } from '../rpc/versioningRpc'
 
-export function setupVersioningHandlers() {
-    const versioningRPC = new VersioningRPCImpl()
-    
-    // Initialize versioning service
-    versioningRPC.initialize().catch(console.error)
+// export function registerVersioningHandlers() {
+//     const versioningRpc = new VersioningRpc()
+//     versioningRpc.initialize()
 
-    // Set up IPC handlers
-    ipcMain.handle('versioning:create', async (_, title: string) => {
-        return await versioningRPC.createDocument(title)
-    })
-
-    ipcMain.handle('versioning:save', async (_, docId: string, doc: any) => {
-        await versioningRPC.saveDocument(docId, doc)
-    })
-
-    ipcMain.handle('versioning:load', async (_, docId: string) => {
-        return await versioningRPC.loadDocument(docId)
-    })
-
-    ipcMain.handle('versioning:list', async () => {
-        return await versioningRPC.listDocuments()
-    })
-
-    ipcMain.handle('versioning:create-branch', async (_, docId: string, branchName: string) => {
-        await versioningRPC.createBranch(docId, branchName)
-    })
-
-    ipcMain.handle('versioning:merge-branch', async (_, docId: string, sourceBranch: string, targetBranch: string) => {
-        await versioningRPC.mergeBranch(docId, sourceBranch, targetBranch)
-    })
-} 
+//     createBirpc(
+//         versioningRpc,
+//         {
+//             post: (data) => {
+//                 // Send to all renderer processes
+//                 const windows = require('electron').BrowserWindow.getAllWindows()
+//                 for (const win of windows) {
+//                     win.webContents.send('versioning:to-renderer', data)
+//                 }
+//             },
+//             on: (handler) => {
+//                 ipcMain.on('versioning:from-renderer', (event, data) => {
+//                     handler(data)
+//                 })
+//             },
+//             serialize: (value) => JSON.stringify(value),
+//             deserialize: (value) => JSON.parse(value)
+//         }
+//     )
+// } 

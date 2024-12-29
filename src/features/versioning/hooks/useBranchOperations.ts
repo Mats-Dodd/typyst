@@ -1,152 +1,113 @@
 import { useState, useEffect } from 'react';
-import type { Editor } from '@tiptap/react';
-import { 
-    getVersionMetadata, 
-    createBranch, 
-    switchBranch,
-    getBranchContent,
-    saveBranchContent,
-    deleteBranch, 
-    renameBranch,
-    initializeVersionControl
-} from '../services/versionControlService';
+import { Editor as TiptapEditor } from '@tiptap/core';
+import { versionControlService } from '../services/versionControlService';
 
-export const useBranchOperations = (editor: Editor | null, currentFilePath?: string) => {
+export const useBranchOperations = (editor: TiptapEditor | null, currentFilePath?: string) => {
     const [currentBranch, setCurrentBranch] = useState<string>('main');
     const [branches, setBranches] = useState<string[]>(['main']);
     const [showBranchSelector, setShowBranchSelector] = useState(false);
+    const [documentId, setDocumentId] = useState<string | null>(null);
 
     const loadBranches = async () => {
         if (!currentFilePath || !editor) return;
-        try {
-            const metadata = await getVersionMetadata(currentFilePath);
-            if (metadata) {
-                setBranches(Object.keys(metadata.branches));
-                setCurrentBranch(metadata.currentBranch);
 
-                // Load content for current branch
-                const content = await getBranchContent(currentFilePath, metadata.currentBranch);
-                if (content) {
-                    editor.commands.setContent(content);
-                } else {
-                    // If no content exists, initialize version control with current content
-                    const currentContent = editor.getJSON();
-                    await initializeVersionControl(currentFilePath, currentContent);
-                }
+        try {
+            const doc = await versionControlService.getDocumentByPath(currentFilePath);
+            if (!doc) {
+                // Initialize new document if it doesn't exist
+                const newDoc = await versionControlService.createDocument(currentFilePath);
+                setDocumentId(newDoc.id);
+                setCurrentBranch(newDoc.currentBranch);
+                setBranches(Object.keys(newDoc.branches));
             } else {
-                // Initialize version control if it doesn't exist
-                const currentContent = editor.getJSON();
-                await initializeVersionControl(currentFilePath, currentContent);
+                setDocumentId(doc.id);
+                setCurrentBranch(doc.currentBranch);
+                setBranches(Object.keys(doc.branches));
             }
         } catch (error) {
-            console.error('Failed to load branches:', error);
+            console.error('Error loading branches:', error);
         }
     };
 
     const getNextBranchNumber = (): number => {
         const branchNumbers = branches
-            .map(branch => {
-                const match = branch.match(/^branch-(\d+)$/);
-                return match ? parseInt(match[1], 10) : 0;
-            })
-            .filter(num => num > 0);
+            .filter(b => b.startsWith('branch-'))
+            .map(b => parseInt(b.replace('branch-', ''), 10))
+            .filter(n => !isNaN(n));
 
-        return branchNumbers.length === 0 ? 1 : Math.max(...branchNumbers) + 1;
+        return branchNumbers.length > 0 ? Math.max(...branchNumbers) + 1 : 1;
     };
 
     const handleBranchSwitch = async (branchName: string) => {
-        if (!editor || !currentFilePath) return;
+        if (!documentId || !editor || currentBranch === branchName) return;
 
         try {
             // Save current content before switching
-            const currentContent = editor.getJSON();
-            await saveBranchContent(currentFilePath, currentBranch, currentContent);
+            const content = editor.getJSON();
+            await versionControlService.saveContent(documentId, content);
 
-            const success = await switchBranch(currentFilePath, branchName);
-            if (success) {
-                // Load branch content
-                const content = await getBranchContent(currentFilePath, branchName);
-                if (content) {
-                    editor.commands.setContent(content);
-                }
-                
-                setShowBranchSelector(false);
-                setCurrentBranch(branchName);
-            } else {
-                throw new Error('Failed to switch branch');
+            // Switch branch
+            await versionControlService.switchBranch(documentId, branchName);
+
+            // Load new branch content
+            const newContent = await versionControlService.loadContent(documentId);
+            if (newContent) {
+                editor.commands.setContent(newContent);
             }
+
+            setCurrentBranch(branchName);
         } catch (error) {
-            console.error('Failed to switch branch:', error);
-            alert('Failed to switch branch. Please try again.');
+            console.error('Error switching branch:', error);
         }
     };
 
     const handleCreateBranch = async () => {
-        if (!editor || !currentFilePath) return;
+        if (!documentId || !editor) return;
 
         try {
-            // Save current branch content first
-            const currentContent = editor.getJSON();
-            await saveBranchContent(currentFilePath, currentBranch, currentContent);
+            const branchNumber = getNextBranchNumber();
+            const newBranchName = `branch-${branchNumber}`;
 
-            const nextNumber = getNextBranchNumber();
-            const branchName = `branch-${nextNumber}`;
+            // Create new branch
+            await versionControlService.createBranch(documentId, newBranchName);
 
-            const success = await createBranch(currentFilePath, branchName, currentContent);
-            if (success) {
-                setShowBranchSelector(false);
-                await loadBranches();
-                await handleBranchSwitch(branchName);
-            } else {
-                throw new Error('Failed to create branch');
-            }
+            // Save current content to new branch
+            const content = editor.getJSON();
+            await versionControlService.saveContent(documentId, content);
+
+            // Update UI
+            setBranches(prev => [...prev, newBranchName]);
+            await handleBranchSwitch(newBranchName);
         } catch (error) {
-            console.error('Failed to create branch:', error);
-            alert('Failed to create branch. Please try again.');
+            console.error('Error creating branch:', error);
         }
     };
 
     const handleBranchDelete = async (branchName: string) => {
-        if (!editor || !currentFilePath || branchName === 'main') return;
-        
+        if (!documentId || branchName === 'main') return;
+
         try {
-            if (branchName === currentBranch) {
+            // Switch to main before deleting if we're on the branch to be deleted
+            if (currentBranch === branchName) {
                 await handleBranchSwitch('main');
             }
-            
-            const success = await deleteBranch(currentFilePath, branchName);
-            if (success) {
-                await loadBranches();
-            } else {
-                throw new Error('Failed to delete branch');
-            }
-        } catch (error) {
-            console.error('Failed to delete branch:', error);
-            alert('Failed to delete branch. Please try again.');
-        }
-    };
 
-    const handleBranchRename = async (oldName: string, newName: string) => {
-        if (!editor || !currentFilePath || oldName === 'main') return;
-        
-        try {
-            const success = await renameBranch(currentFilePath, oldName, newName);
-            if (success) {
-                await loadBranches();
-            } else {
-                throw new Error('Failed to rename branch');
+            // Delete branch
+            const doc = await versionControlService.getDocument(documentId);
+            if (doc) {
+                const updatedBranches = { ...doc.branches };
+                delete updatedBranches[branchName];
+                await versionControlService.updateDocument(documentId, { branches: updatedBranches });
+                setBranches(Object.keys(updatedBranches));
             }
         } catch (error) {
-            console.error('Failed to rename branch:', error);
-            alert('Failed to rename branch. Please try again.');
+            console.error('Error deleting branch:', error);
         }
     };
 
     useEffect(() => {
-        if (currentFilePath) {
-            loadBranches();
-        }
-    }, [currentFilePath]);
+        loadBranches();
+    }, [currentFilePath, editor]);
 
     return {
         currentBranch,
@@ -155,7 +116,6 @@ export const useBranchOperations = (editor: Editor | null, currentFilePath?: str
         setShowBranchSelector,
         handleBranchSwitch,
         handleCreateBranch,
-        handleBranchDelete,
-        handleBranchRename,
+        handleBranchDelete
     };
 }; 

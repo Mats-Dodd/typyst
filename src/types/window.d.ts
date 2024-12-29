@@ -11,6 +11,7 @@ declare global {
             exists: (path: string) => Promise<{ exists: boolean; error?: string }>;
             removeDir: (path: string) => Promise<{ success: boolean; error?: string }>;
             rename: (oldPath: string, newPath: string) => Promise<{ success: boolean; error?: string }>;
+            showOpenDialog: () => Promise<{ success: boolean; filePath?: string; content?: string; error?: string }>;
         };
         path: {
             dirname: (path: string) => Promise<string>;
