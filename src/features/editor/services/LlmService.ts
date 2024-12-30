@@ -1,5 +1,5 @@
-import { electronLlmRpc } from '../rpc/llmRpc'
-import { EditorContext } from '../features/editor/types'
+import { electronLlmRpc } from '../../../rpc/llmRpc'
+import { EditorContext } from '../types'
 
 interface AutocompleteResponse {
   text?: string;
