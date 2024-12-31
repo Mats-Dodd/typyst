@@ -109,6 +109,8 @@
     font-size: 13px;
     color: var(--text-color);
     position: relative;
+    height: 36px;
+    box-sizing: border-box;
 }
 
 .branch-item.renaming {
@@ -125,6 +127,7 @@
     padding: 0;
     margin: 0;
     outline: none;
+    height: 20px;
 }
 
 .branch-rename-input:focus {
@@ -153,6 +156,8 @@
     gap: 6px;
     padding-left: 34px;
     position: relative;
+    height: 36px;
+    box-sizing: border-box;
 }
 
 .main-branch .crown-icon {

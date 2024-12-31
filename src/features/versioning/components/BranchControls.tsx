@@ -30,6 +30,7 @@ export const BranchControls: React.FC<BranchControlsProps> = ({ editor, currentF
             const isMenuTriggerClick = target.closest('.branch-menu-trigger');
             const isBranchDisplayClick = target.closest('.branch-display');
             const isBranchDropdownClick = target.closest('.branch-dropdown');
+            const isRenameInputClick = target.closest('.branch-rename-input');
 
             // Don't close anything if clicking within the context menu or its trigger
             if (isContextMenuClick || isMenuTriggerClick) {
@@ -39,6 +40,12 @@ export const BranchControls: React.FC<BranchControlsProps> = ({ editor, currentF
             // Don't close anything if clicking within the branch selector or its trigger
             if (isBranchDisplayClick || isBranchDropdownClick) {
                 return;
+            }
+
+            // Reset rename state if clicking outside the rename input
+            if (!isRenameInputClick) {
+                setIsRenamingBranch(null);
+                setEditedFileName('');
             }
 
             // Close both menus if clicking outside

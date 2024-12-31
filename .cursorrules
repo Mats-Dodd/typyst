@@ -1,203 +1,220 @@
-Project Overview:
-Typyst is a modern, desktop-based text editor application built using Electron and React, focusing on providing advanced writing assistance and suggestions. The application features a clean, modular architecture with clear separation of concerns between the main process and renderer components.
+# Typyst - Modern Text Editor Specification
 
-Technical Stack:
-- Frontend: React with TypeScript
-- Desktop Runtime: Electron
-- Editor Framework: TipTap (ProseMirror-based rich text editor)
-- Build Tools: Vite
-- Writing Assistant: Vale
-- AI Integration: LLama
-- State Management: React Hooks
-- Styling: CSS Modules
+## Project Overview
+Typyst is a modern, desktop-based text editor application built using Electron and React, focusing on providing advanced writing assistance, AI-powered suggestions, and local version control. The application features a clean, modular architecture with clear separation of concerns between the main process and renderer components.
 
-Architecture:
-1. /electron
-   - Main Process Architecture:
-     * index.ts: Main entry point
-       - Window management and lifecycle
-       - Custom frameless window with macOS integration
-       - Development tools configuration
-       - App event handling (window creation, quit, activate)
-     
-     * preload.ts: Electron-Renderer Bridge
-       - Secure IPC communication setup
-       - Exposes safe APIs to renderer process
-       - Type-safe bridge interfaces
-       - File system operations bridge
-       - Vale integration bridge
+## Technical Stack
+- **Frontend**: React with TypeScript
+- **Desktop Runtime**: Electron
+- **Editor Framework**: TipTap (ProseMirror-based rich text editor)
+- **Build Tools**: Vite
+- **Writing Assistant**: Vale
+- **AI Integration**: LLama
+- **State Management**: React Hooks
+- **Styling**: CSS Modules
+- **Version Control**: Custom local versioning system
 
-   - RPC (Remote Procedure Call) System:
-     * fileSystemRpc.ts: File operations handler
-       - Markdown file processing
-       - File system access
-       - Content conversion utilities
-     * llmRpc.ts: LLama model integration
-       - AI-powered suggestions
-       - Context-aware completions
-     * Bidirectional communication using birpc
+## Directory Structure and Architecture
 
-   - Services:
-     * vale/: Writing assistance service
-       - Style checking integration
-       - Real-time linting
-       - Custom rule management
-     * autocomplete/: Text completion service
-       - AI-powered suggestions
-       - Context-aware completions
-       - Prediction management
+### 1. Main Process (/electron)
+#### Core Files
+- **index.ts**
+  - Window lifecycle management
+  - Custom frameless window (macOS integration)
+  - Development tools configuration
+  - App event handling (window creation, quit, activate)
+  - Process communication setup
 
-2. /src
-   - Application Architecture:
-     * index.tsx: Application Entry Point
-       - React initialization
-       - Root component mounting
-       - IPC bridge setup
-       - Global style injection
-     
-     * /app: Core Application Setup
-       - App.tsx: Root component
-       - Application-wide providers
-       - Global state management
-       - Layout structure
+- **preload.ts**
+  - Secure IPC bridge configuration
+  - Type-safe API exposure to renderer
+  - File system operations bridge
+  - Vale integration bridge
+  - Version control bridge
 
-   - Feature-based Organization:
-     * /features: Core Application Features
-       - editor/: Main Editor Implementation
-         * components/: React Components
-           - Editor.tsx: Main editor wrapper
-             * Theme provider integration
-             * Global layout management
-           - EditorContent.tsx: Core editor functionality
-             * TipTap integration
-             * Content management
-             * Feature coordination
-           - FileSelector.tsx: File handling
-             * Markdown file processing
-             * File input management
-           - MenuBar.tsx: Toolbar and controls
-           - ValeSidebar.tsx: Writing suggestions panel
-           - ErrorOverlay.tsx: Error display
-           - RawContentPreview.tsx: Debug view
-         * hooks/: Custom React Hooks
-           - useEditorCore.ts: Core editor state and operations
-           - useValeState.ts: Writing suggestions management
-           - useEditorShortcuts.ts: Keyboard interactions
-           - useEditorSpellcheck.ts: Spellcheck integration
-         * services/: Feature-specific Logic
-           - fileSystemService.ts: File operations
-           - valeService.ts: Vale integration
-           - eventHandlers.ts: Editor event management
-         * types/: Feature-specific Types
-         * constants/: Feature Configuration
+#### RPC System (/electron/rpc)
+- **fileSystemRpc.ts**
+  - Markdown file operations
+  - File system access
+  - Content conversion
+  - File watching and auto-save
 
-       - theme/: Theming System
-         * themeContext.tsx: Theme provider
-         * themes/: Theme definitions
-         * hooks/: Theme utilities
+- **versioningRpc.ts**
+  - Version control operations
+  - Branch management
+  - History tracking
+  - Diff generation
 
-   - Editor Extensions:
-     * /extensions: TipTap Extensions
-       - extensions.ts: Extension configuration
-       - indent/: Indentation handling
-       - predictions/: AI suggestions
-       - Custom ProseMirror plugins
+- **llmRpc.ts**
+  - LLama model integration
+  - AI-powered suggestions
+  - Context-aware completions
 
-   - Shared Resources:
-     * /types: Global TypeScript Definitions
-       - Global type declarations
-       - API interfaces
-       - Shared type utilities
-     
-     * /services: Shared Business Logic
-       - Authentication
-       - State management
-       - Shared utilities
-     
-     * /styles: Global Styling
-       - index.css: Global styles
-       - Editor.css: Editor-specific styles
-       - MenuBar.css: Toolbar styles
-       - Theme variables
+#### Services (/electron/services)
+- **versioning/**
+  - Local version control implementation
+  - Branch management system
+  - Version history storage
+  - Diff computation engine
+  - Restore point management
 
-Key Features:
-1. Rich Text Editing
-   - TipTap/ProseMirror foundation
-   - Advanced text formatting
-   - Code block highlighting
-   - Custom extensions
-   - Real-time content updates
+- **vale/**
+  - Style checking integration
+  - Real-time linting engine
+  - Custom rule management
+  - Asynchronous processing
 
-2. Writing Assistance
-   - Vale integration for style checking
-   - Real-time writing suggestions
-   - Customizable rules and style guides
-   - Interactive suggestion sidebar
-   - Warning/error management
-   - Ignorable warnings system
+- **autocomplete/**
+  - LLM-powered suggestions
+  - Context analysis
+  - Prediction management
+  - Performance optimization
 
-3. File Management
-   - Markdown file support
-   - File selection interface
-   - Content conversion utilities
-   - Error handling
+### 2. Renderer Process (/src)
+#### Core Setup
+- **index.tsx**
+  - React initialization
+  - Root component mounting
+  - IPC bridge setup
+  - Global style injection
 
-4. Theme Support
-   - Theme system
-   - Customizable styling
-   - Dark/light mode support
+- **app/**
+  - Root component (App.tsx)
+  - Global providers
+  - Layout structure
+  - State management
 
-5. Advanced Editor Features
-   - Keyboard shortcuts
-   - Spellchecking
-   - Raw content preview
-   - Error handling
-   - Sidebar management
+#### Features (/src/features)
+##### Editor Module (/features/editor)
+- **components/**
+  - Editor.tsx: Main wrapper with theme integration
+  - EditorContent.tsx: TipTap integration & core functionality
+  - FileSelector.tsx: File management UI
+  - MenuBar.tsx: Toolbar and controls
+  - ValeSidebar.tsx: Writing suggestions panel
+  - ErrorOverlay.tsx: Error handling
+  - RawContentPreview.tsx: Debug view
+  - BranchControls.tsx: Version control interface
 
-Core Components:
-1. Editor Component
-   - Modular architecture:
-     * Editor.tsx: Theme and layout wrapper
-     * EditorContent.tsx: Core functionality
-     * FileSelector.tsx: File handling
-   - Feature integration through hooks:
-     * useEditorCore
-     * useValeState
-     * useEditorShortcuts
-     * useEditorSpellcheck
+- **hooks/**
+  - useEditorCore.ts: Core editor state
+  - useValeState.ts: Writing suggestions
+  - useEditorShortcuts.ts: Keyboard handling
+  - useEditorSpellcheck.ts: Spellcheck
+  - useVersionControl.ts: Version management
 
-2. MenuBar
-   - Editing tools and controls
-   - Feature toggles
-   - Raw output toggle
+- **services/**
+  - fileSystemService.ts: File operations
+  - valeService.ts: Writing assistance
+  - eventHandlers.ts: Event management
+  - versionControlService.ts: Version control
 
-3. ValeSidebar
-   - Writing suggestions display
-   - Warning/error management
-   - Interactive feedback
-   - Ignorable warnings system
+##### Versioning Module (/features/versioning)
+- **components/**
+  - BranchList.tsx: Branch management
+  - HistoryView.tsx: Version history
+  - DiffViewer.tsx: Changes display
 
-Technical Features:
-1. RPC System
-   - birpc for Electron-React communication
-   - Structured service architecture
-   - Type-safe interfaces
+- **services/**
+  - versionControlService.ts: Version management
+  - diffService.ts: Diff computation
+  - historyService.ts: History tracking
 
-2. AI Integration
-   - LLama model integration
-   - AI-powered writing assistance
-   - Context-aware suggestions
+##### Theme Module (/features/theme)
+- themeContext.tsx: Theme provider
+- themes/: Theme definitions
+- hooks/: Theme utilities
 
-3. Extension System
-   - Modular editor extensions
-   - Custom TipTap extensions
-   - ProseMirror plugins
+#### Extensions (/src/extensions)
+- **TipTap Extensions**
+  - extensions.ts: Configuration
+  - indent/: Indentation handling
+  - predictions/: AI suggestions
+  - versioning/: Version control
+  - Custom ProseMirror plugins
 
-Development:
-- Modern development tooling
+#### Shared Resources
+- **/types**: Global TypeScript definitions
+- **/services**: Shared business logic
+- **/styles**: Global styling
+  - Editor.css: Editor styles
+  - MenuBar.css: Toolbar styles
+  - BranchControls.css: Version control UI
+
+## Core Features
+
+### 1. Rich Text Editing
+- TipTap/ProseMirror foundation
+- Advanced text formatting
+- Code block highlighting
+- Custom extensions
+- Real-time content updates
+- Keyboard shortcuts
+- Spellchecking
+
+### 2. AI-Powered Assistance
+- Real-time LLM completions
+- Context-aware suggestions
+- Inline predictions
+- Performance-optimized processing
+- Customizable suggestion display
+
+### 3. Writing Assistance (Vale)
+- Real-time style checking
+- Custom rule support
+- Interactive suggestion sidebar
+- Warning/error management
+- Ignorable warnings system
+- Performance optimization
+
+### 4. Version Control System
+- Local version history
+- Branch management
+- Real-time diff generation
+- Version comparison
+- Restore points
+- Automatic version creation
+- Branch metadata tracking
+
+### 5. File Management
+- Markdown support
+- Auto-save functionality
+- File watching
+- Content conversion
+- Error handling
+
+### 6. Theme System
+- Light/dark mode
+- Customizable styling
+- Dynamic theme switching
+- CSS module integration
+
+## Technical Implementation
+
+### 1. Communication Architecture
+- Bidirectional IPC (birpc)
+- Type-safe interfaces
+- Service-based architecture
+- Asynchronous operations
+- Performance optimization
+
+### 2. State Management
+- React hooks-based
+- Feature-specific hooks
+- Centralized core state
+- Optimized updates
+
+### 3. Extension System
+- Modular TipTap extensions
+- Custom ProseMirror plugins
+- Feature-specific plugins
+- Performance considerations
+
+## Development Guidelines
 - TypeScript for type safety
-- Linting and formatting
-- Automated setup scripts
-- Cross-platform support
-- Modular component architecture
+- Modular architecture
 - Hook-based state management
+- Comprehensive error handling
+- Performance optimization
+- Cross-platform support
+- Modern development practices
