@@ -16,6 +16,7 @@ import js from 'highlight.js/lib/languages/javascript'
 import ts from 'highlight.js/lib/languages/typescript'
 import html from 'highlight.js/lib/languages/xml'
 import python from 'highlight.js/lib/languages/python'
+import Link from '@tiptap/extension-link'
 
 
 const lowlight = createLowlight(all)
@@ -100,4 +101,11 @@ export const extensions = [
     Paragraph,
     Underline,
     ValeHighlightExtension,
+    Link.configure({
+        openOnClick: true,
+        linkOnPaste: true,
+        autolink: false,
+        defaultProtocol: 'https',
+
+    }),
 ]; 
