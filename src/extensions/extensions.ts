@@ -17,6 +17,10 @@ import ts from 'highlight.js/lib/languages/typescript'
 import html from 'highlight.js/lib/languages/xml'
 import python from 'highlight.js/lib/languages/python'
 import Link from '@tiptap/extension-link'
+import Placeholder from '@tiptap/extension-placeholder'
+import Typography from '@tiptap/extension-typography'
+import Image from '@tiptap/extension-image'
+
 
 
 const lowlight = createLowlight(all)
@@ -108,4 +112,12 @@ export const extensions = [
         defaultProtocol: 'https',
 
     }),
+    Placeholder.configure({
+      // Use a placeholder:
+      placeholder: 'Once upon a time...',
+    }),
+    Typography,
+    Image.configure({
+      allowBase64: true,
+    })
 ]; 

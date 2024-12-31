@@ -99,6 +99,15 @@
     margin: 1em 0;
 }
 
+.ProseMirror img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1em auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 .ProseMirror:first-child {
     margin-top: 0;
 }
@@ -440,3 +449,11 @@
     flex-direction: column;
     gap: 12px;
 } 
+
+.tiptap p.is-editor-empty:first-child::before {
+    color: #adb5bd;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
