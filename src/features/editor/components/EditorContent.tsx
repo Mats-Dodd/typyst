@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { EditorProvider as TiptapProvider } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
 import { extensions } from '../../../extensions/extensions'
@@ -6,6 +6,7 @@ import { MenuBar } from './MenuBar'
 import { ErrorOverlay } from './ErrorOverlay'
 import { ValeSidebar } from './ValeSidebar'
 import { FileSelector } from './FileSelector'
+import { TableMenu } from './TableMenu'
 import { useEditorCore } from '../hooks/useEditorCore'
 import { useValeState } from '../hooks/useValeState'
 import { useEditorShortcuts } from '../hooks/useEditorShortcuts'
@@ -17,6 +18,7 @@ import { versionControlService } from '../../versioning/services/versionControlS
 export function EditorContent(): JSX.Element {
   const [content, setContent] = useState<any>(null);
   const [currentFilePath, setCurrentFilePath] = useState<string | undefined>();
+  const [tableMenuPosition, setTableMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
@@ -50,6 +52,47 @@ export function EditorContent(): JSX.Element {
     handleBranchRename,
     getDocumentId
   } = useBranchOperations(editorRef.current, currentFilePath)
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+
+    const updateTableMenu = () => {
+      const editor = editorRef.current;
+      if (!editor) return;
+
+      // Check if we're in a table or have a CellSelection
+      const isTableActive = editor.isActive('table');
+      const isCellSelection = editor.view.state.selection.type === 'cell';
+      
+      if (isTableActive || isCellSelection) {
+        const { view } = editor;
+        const { selection } = view.state;
+        const dom = view.domAtPos(selection.from);
+        const table = dom.node?.parentElement?.closest('table');
+        
+        if (table) {
+          const rect = table.getBoundingClientRect();
+          const menuHeight = 150; // Approximate height of our menu with all groups
+          const gap = 10; // Gap between menu and table
+          setTableMenuPosition({
+            x: rect.left + (rect.width / 2) - 100, // Center the menu above table
+            y: Math.max(rect.top - menuHeight - gap, 80), // Ensure it's below the top menubar
+          });
+        }
+      } else {
+        setTableMenuPosition(null);
+      }
+    };
+
+    const editor = editorRef.current;
+    editor.on('selectionUpdate', updateTableMenu);
+    editor.on('focus', updateTableMenu);
+
+    return () => {
+      editor.off('selectionUpdate', updateTableMenu);
+      editor.off('focus', updateTableMenu);
+    };
+  }, [editorRef.current]);
 
   const setShowSidebar = (show: boolean | ((prev: boolean) => boolean)) => {
     if (typeof show === 'function') {
@@ -201,6 +244,15 @@ export function EditorContent(): JSX.Element {
             ignoredErrors={ignoredErrors}
             setIgnoredErrors={setIgnoredErrors}
           />
+          {editorRef.current && tableMenuPosition && (
+            <div style={{ 
+              position: 'fixed',
+              left: `${tableMenuPosition.x}px`,
+              top: `${tableMenuPosition.y}px`,
+            }}>
+              <TableMenu editor={editorRef.current} />
+            </div>
+          )}
         </TiptapProvider>
       )}
     </div>
