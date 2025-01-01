@@ -17,7 +17,8 @@ import {
     BiMoon,
     BiCodeAlt,
     BiGitBranch,
-    BiGitCommit
+    BiGitCommit,
+    BiTable
 } from "react-icons/bi"
 import { useTheme } from "../../theme/themeContext"
 import "../../../styles/MenuBar.css"
@@ -58,6 +59,8 @@ export function MenuBar({
     const [isEditing, setIsEditing] = useState(false)
     const [editedName, setEditedName] = useState('')
     const [showAlignMenu, setShowAlignMenu] = useState(false)
+    const [showTableSelector, setShowTableSelector] = useState(false)
+    const [hoveredCell, setHoveredCell] = useState({ row: 0, col: 0 })
 
     if (!editor) return null
 
@@ -198,6 +201,52 @@ export function MenuBar({
                 >
                     <BiCodeAlt />
                 </button>
+                <div className="menu-dropdown">
+                    <button
+                        onClick={() => setShowTableSelector(!showTableSelector)}
+                        className={`menu-button ${editor.isActive('table') ? 'is-active' : ''}`}
+                        data-tooltip="Insert Table"
+                    >
+                        <BiTable />
+                    </button>
+                    {showTableSelector && (
+                        <div className="table-grid-selector">
+                            <div className="table-grid-title">Insert Table</div>
+                            <div 
+                                className="table-grid"
+                                onMouseLeave={() => setHoveredCell({ row: 0, col: 0 })}
+                            >
+                                {Array.from({ length: 100 }, (_, i) => {
+                                    const row = Math.floor(i / 10) + 1;
+                                    const col = (i % 10) + 1;
+                                    return (
+                                        <div
+                                            key={i}
+                                            className={`table-grid-cell ${
+                                                row <= hoveredCell.row && col <= hoveredCell.col ? 'active' : ''
+                                            }`}
+                                            onMouseEnter={() => setHoveredCell({ row, col })}
+                                            onClick={() => {
+                                                editor.chain().focus().insertTable({
+                                                    rows: row,
+                                                    cols: col,
+                                                    withHeaderRow: true
+                                                }).run();
+                                                setShowTableSelector(false);
+                                                setHoveredCell({ row: 0, col: 0 });
+                                            }}
+                                        />
+                                    );
+                                })}
+                            </div>
+                            <div className="table-dimensions">
+                                {hoveredCell.row > 0
+                                    ? `${hoveredCell.row} × ${hoveredCell.col}`
+                                    : 'Hover to select'}
+                            </div>
+                        </div>
+                    )}
+                </div>
                 <div className="separator" />
                 <BranchControls editor={editor} currentFilePath={currentFilePath} />
             </div>
