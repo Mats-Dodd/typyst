@@ -1,18 +1,10 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { db } from '@haptic/db';
 import * as schema from '@haptic/db';
-import { DATABASE_URL } from '$env/static/private';
 import type { RequestEvent } from '@sveltejs/kit';
 import { auth } from '$lib/auth';
 import { and, eq } from 'drizzle-orm';
 
-const client = postgres(DATABASE_URL, {
-	prepare: false
-});
-
-export const db = drizzle(client, { schema });
-
-export { schema };
+export { db, schema };
 
 export async function getUserId(event: RequestEvent): Promise<string> {
 	const session = await auth.api.getSession({
