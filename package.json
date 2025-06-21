@@ -7,7 +7,9 @@
     "dev-web": "turbo run dev --filter=web --filter=homepage",
     "lint": "turbo run lint",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "migrate:generate": "turbo run migrate:generate",
+    "migrate:push": "turbo run migrate:push"
   },
   "devDependencies": {
     "@haptic/eslint-config": "workspace:*",

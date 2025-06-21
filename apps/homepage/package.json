@@ -37,6 +37,7 @@
 	"dependencies": {
 		"@haptic/ui": "workspace:^",
 		"@vercel/edge-config": "^1.2.1",
+		"better-auth": "^1.0.0",
 		"lucide-svelte": "^0.428.0"
 	},
 	"type": "module"

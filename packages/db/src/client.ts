@@ -4,15 +4,19 @@ import postgres from 'postgres';
 // Import all schema tables
 import * as schema from './schema';
 
-// Create the connection
-const connectionString = process.env.SUPABASE_URL;
+// Create the connection string - use DATABASE_URL for direct Supabase database connection
+const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error('SUPABASE_URL environment variable is required');
+  throw new Error(
+    'DATABASE_URL environment variable is required (get this from Supabase project settings)'
+  );
 }
 
 // Create the postgres client
-const client = postgres(connectionString);
+const client = postgres(connectionString, {
+  max: 1 // Limit connection pool for Better Auth compatibility
+});
 
 // Create the drizzle database instance with schema
 export const db = drizzle(client, { schema });
