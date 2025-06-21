@@ -39,11 +39,11 @@ This document outlines the comprehensive plan to implement authentication in the
 ```
 
 #### 1.2 Configure Better Auth Server
-- [ ] Install Better Auth dependencies
-- [ ] Create auth configuration file
-- [ ] Set up email/password authentication
-- [ ] Configure session management
-- [ ] Set up environment variables for Supabase connection
+- [done] Install Better Auth dependencies
+- [done] Create auth configuration file
+- [done] Set up email/password authentication
+- [done] Configure session management
+- [done] Set up environment variables for Supabase connection
 
 #### 1.3 Database Package Updates
 - [ ] Update `@haptic/db` package to include Better Auth schema
@@ -53,14 +53,21 @@ This document outlines the comprehensive plan to implement authentication in the
 ### Phase 2: Homepage Authentication Integration
 
 #### 2.1 Homepage UI Updates
-- [ ] Add authentication state detection
-- [ ] Add "Sign In / Sign Up" button in top right when not authenticated
-- [ ] Add "Go to App" button when authenticated
-- [ ] Create loading states for auth checks
+- [x] Add authentication state detection
+- [x] Add "Sign In / Sign Up" button in top right when not authenticated
+- [x] Add "Go to App" button when authenticated
+- [x] Create loading states for auth checks
 
 #### 2.2 Homepage Route Protection
-- [ ] Implement server-side session checking
-- [ ] Add redirect logic based on authentication state
+- [x] Implement server-side session checking
+- [x] Add redirect logic based on authentication state
+
+**Implementation Notes:**
+- Used server-side authentication checking in `+layout.server.ts` to avoid cross-origin issues
+- Homepage communicates with web app's auth server via server-to-server requests
+- Authentication state is passed from layout to components via SvelteKit's data loading
+- Eliminated client-side auth API calls that were causing 404 errors
+- Conditional UI renders based on server-side authentication status
 
 ### Phase 3: Web App Authentication Pages
 

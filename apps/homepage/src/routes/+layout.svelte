@@ -1,7 +1,15 @@
 <script lang="ts">
 	import '@haptic/ui/app.web.css';
 	import { Button } from '@haptic/ui/components/button';
+	import type { LayoutData } from './$types';
+
+	export let data: LayoutData;
+
 	const currentYear = new Date().getFullYear();
+
+	// Use server-side authentication data
+	$: isAuthenticated = data.isAuthenticated;
+	$: user = data.user;
 </script>
 
 <svelte:head>
@@ -67,9 +75,21 @@
 				<Button variant="secondary" size="sm" scale="sm" class="rounded-full">Star on Github</Button
 				>
 			</a>
-			<a href="/app" target="_blank" rel="noopener noreferrer">
-				<Button size="sm" scale="sm" class="rounded-full">Open App</Button>
-			</a>
+
+			{#if isAuthenticated}
+				<!-- Authenticated state - Go to App button -->
+				<a href="/app" target="_blank" rel="noopener noreferrer">
+					<Button size="sm" scale="sm" class="rounded-full">Go to App</Button>
+				</a>
+			{:else}
+				<!-- Unauthenticated state - Sign In / Sign Up buttons -->
+				<a href="/app/auth/signin" target="_blank" rel="noopener noreferrer">
+					<Button variant="secondary" size="sm" scale="sm" class="rounded-full">Sign In</Button>
+				</a>
+				<a href="/app/auth/signup" target="_blank" rel="noopener noreferrer">
+					<Button size="sm" scale="sm" class="rounded-full">Sign Up</Button>
+				</a>
+			{/if}
 		</div>
 	</header>
 
