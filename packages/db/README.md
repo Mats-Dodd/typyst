@@ -7,7 +7,7 @@ Database package for Haptic with Drizzle ORM and Supabase PostgreSQL.
 Make sure you have the environment variables set in your app:
 
 ```bash
-SUPABASE_URL=postgresql://postgres:your_password@db.your_project_ref.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres:your_password@db.your_project_ref.supabase.co:5432/postgres
 ```
 
 ## Usage

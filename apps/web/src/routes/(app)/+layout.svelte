@@ -14,6 +14,9 @@
 	import '@haptic/ui/app.web.css';
 	import { ModeWatcher } from 'mode-watcher';
 	import { onMount } from 'svelte';
+	import type { LayoutData } from './$types';
+
+	export let data: LayoutData;
 
 	// Device detector
 	const device = createDeviceDetector();
@@ -109,14 +112,20 @@
 </svelte:head>
 
 {#if $device.isDesktop}
-	<Command />
-	<ModeWatcher />
-	<Header />
-	<Sidebar />
-	<main class="flex min-h-screen w-full items-center justify-center">
-		<slot />
-	</main>
-	<Footer />
+	{#if data.session}
+		<Command />
+		<ModeWatcher />
+		<Header />
+		<Sidebar />
+		<main class="flex min-h-screen w-full items-center justify-center">
+			<slot />
+		</main>
+		<Footer />
+	{:else}
+		<main class="flex min-h-screen w-full items-center justify-center">
+			<div class="text-muted-foreground">Redirecting to login...</div>
+		</main>
+	{/if}
 {:else}
 	<main class="flex min-h-[100dvh] w-full flex-col items-center justify-center gap-5">
 		<Icon name="phoneOff" class="w-9 h-9 fill-none text-secondary-foreground" />

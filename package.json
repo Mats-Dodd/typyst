@@ -7,18 +7,21 @@
     "dev-web": "turbo run dev --filter=web --filter=homepage",
     "lint": "turbo run lint",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "migrate:generate": "turbo run migrate:generate",
+    "migrate:push": "turbo run migrate:push"
   },
   "devDependencies": {
     "@haptic/eslint-config": "workspace:*",
-    "eslint": "^8.56.0",
+    "dotenv-cli": "^8.0.0",
+    "eslint": "^9.0.0",
     "husky": "^9.0.10",
     "lint-staged": "^15.2.1",
     "prettier": "^3.1.1",
-    "prettier-plugin-svelte": "^3.1.2",
     "turbo": "latest"
   },
   "packageManager": "pnpm@8.9.0",
+  "type": "module",
   "lint-staged": {
     "*.{svelte,js,ts}": [
       "prettier --write",
