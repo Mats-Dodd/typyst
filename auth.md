@@ -75,7 +75,6 @@ This document outlines the comprehensive plan to implement authentication in the
 - [ ] `/auth/signin` - Sign in page with email/password form
 - [ ] `/auth/signup` - Sign up page with email/password form
 - [ ] `/auth/signout` - Sign out handler
-- [ ] `/auth/verify-email` - Email verification page (if required)
 
 #### 3.2 Authentication Components
 - [ ] Sign in form component
