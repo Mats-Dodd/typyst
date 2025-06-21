@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Tooltip from '$lib/components/tooltip.svelte';
 	import { Button } from '@haptic/ui/components/button';
+	import { WEB_APP_URL } from '$lib/config';
 	import banner from '$lib/assets/hero-dark.png';
 	import type { PageData } from './$types';
 
@@ -70,7 +71,7 @@
 			{#if isAuthenticated}
 				<!-- Authenticated - Go to App -->
 				<a
-					href="/app"
+					href="{WEB_APP_URL}/notes"
 					target="_blank"
 					rel="noopener noreferrer"
 					class="group overflow-hidden rounded-full border border-primary-foreground/10 dark:border-border bg-background/5 dark:bg-background dark:brightness-110 backdrop-blur-sm transition hover:scale-[1.05]"
@@ -87,7 +88,7 @@
 			{:else}
 				<!-- Unauthenticated - Sign Up -->
 				<a
-					href="/app/auth/signup"
+					href="{WEB_APP_URL}/auth/signup"
 					target="_blank"
 					rel="noopener noreferrer"
 					class="group overflow-hidden rounded-full border border-primary-foreground/10 dark:border-border bg-background/5 dark:bg-background dark:brightness-110 backdrop-blur-sm transition hover:scale-[1.05]"

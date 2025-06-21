@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '@haptic/ui/app.web.css';
 	import { Button } from '@haptic/ui/components/button';
+	import { WEB_APP_URL } from '$lib/config';
 	import type { LayoutData } from './$types';
 
 	export let data: LayoutData;
@@ -78,15 +79,15 @@
 
 			{#if isAuthenticated}
 				<!-- Authenticated state - Go to App button -->
-				<a href="/app" target="_blank" rel="noopener noreferrer">
+				<a href="{WEB_APP_URL}/notes" target="_blank" rel="noopener noreferrer">
 					<Button size="sm" scale="sm" class="rounded-full">Go to App</Button>
 				</a>
 			{:else}
 				<!-- Unauthenticated state - Sign In / Sign Up buttons -->
-				<a href="/app/auth/signin" target="_blank" rel="noopener noreferrer">
+				<a href="{WEB_APP_URL}/auth/signin" target="_blank" rel="noopener noreferrer">
 					<Button variant="secondary" size="sm" scale="sm" class="rounded-full">Sign In</Button>
 				</a>
-				<a href="/app/auth/signup" target="_blank" rel="noopener noreferrer">
+				<a href="{WEB_APP_URL}/auth/signup" target="_blank" rel="noopener noreferrer">
 					<Button size="sm" scale="sm" class="rounded-full">Sign Up</Button>
 				</a>
 			{/if}

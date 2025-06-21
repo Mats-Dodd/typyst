@@ -13,8 +13,8 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
 		}
 
 		// Make a request to the web app to verify the session
-		const webAppURL = process.env.WEB_APP_URL || 'http://localhost:5173';
-		const response = await fetch(`${webAppURL}/api/auth/get-session`, {
+		const webAppURL = process.env.WEB_APP_URL || 'http://localhost:5174';
+		const response = await fetch(`${webAppURL}/api/auth/session`, {
 			headers: {
 				Cookie: `better-auth.session_token=${sessionToken}`,
 				'Content-Type': 'application/json'
@@ -24,7 +24,7 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
 		if (response.ok) {
 			const sessionData = await response.json();
 			return {
-				isAuthenticated: !!sessionData.session,
+				isAuthenticated: !!sessionData.user,
 				user: sessionData.user || null
 			};
 		}
