@@ -17,8 +17,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
-    "migrate:generate": "dotenv -e ../../.env drizzle-kit generate",
-    "migrate:push": "dotenv -e ../../.env drizzle-kit push",
+    "migrate:generate": "dotenv -e ../../.env -- cross-env MIGRATION_MODE=true drizzle-kit generate",
+    "migrate:push": "dotenv -e ../../.env -- cross-env MIGRATION_MODE=true drizzle-kit push",
     "studio": "drizzle-kit studio"
   },
   "dependencies": {
@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.4.2",
     "typescript": "^5.5.0"
   }

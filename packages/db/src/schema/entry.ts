@@ -6,7 +6,7 @@ export const entry = pgTable(
   'entry',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    userId: uuid('user_id')
+    userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     collectionId: uuid('collection_id')
