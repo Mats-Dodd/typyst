@@ -4,7 +4,7 @@ export const authClient = createAuthClient({
 	baseURL:
 		process.env.NODE_ENV === 'production'
 			? process.env.PUBLIC_APP_URL || 'https://haptic.app'
-			: 'http://localhost:5173',
+			: 'http://localhost:5174',
 	basePath: '/api/auth'
 });
 
