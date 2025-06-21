@@ -109,4 +109,5 @@ class CollectionsApi {
 	}
 }
 
+// this is a test
 export const collectionsApi = new CollectionsApi();
