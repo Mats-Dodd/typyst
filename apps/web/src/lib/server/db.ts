@@ -30,5 +30,5 @@ export async function verifyUserOwnership(userId: string, resourceId: string, ta
 		throw new Error('Resource not found or access denied');
 	}
 
-	return resource;
+	return true;
 }
