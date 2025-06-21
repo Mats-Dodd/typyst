@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SigninForm } from '@haptic/ui/components/auth';
+	import { SignupForm } from '@haptic/ui/components/auth';
 	import { authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -7,12 +7,13 @@
 	let error: string | null = null;
 	let loading = false;
 
-	async function handleSignin(data: { email: string; password: string }) {
+	async function handleSignup(data: { name: string; email: string; password: string }) {
 		loading = true;
 		error = null;
 
 		try {
-			const { error: authError } = await authClient.signIn.email({
+			const { error: authError } = await authClient.signUp.email({
+				name: data.name,
 				email: data.email,
 				password: data.password
 			});
@@ -33,7 +34,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign In - Haptic</title>
+	<title>Sign Up - Haptic</title>
 </svelte:head>
 
 <div
@@ -59,21 +60,25 @@
 		<div class="relative z-20 mt-auto">
 			<blockquote class="space-y-2">
 				<p class="text-lg">
-					"Haptic has transformed how I organize my thoughts and manage my daily tasks. The seamless
-					note-taking experience is unmatched."
+					"The best note-taking app I've ever used. Simple, fast, and beautiful."
 				</p>
-				<footer class="text-sm">Sofia Davis</footer>
+				<footer class="text-sm">Alex Johnson</footer>
 			</blockquote>
 		</div>
 	</div>
 
 	<div class="lg:p-8">
 		<div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-			<SigninForm onSubmit={handleSignin} {error} {loading} />
+			<SignupForm onSubmit={handleSignup} {error} {loading} />
 
 			<p class="px-8 text-center text-sm text-muted-foreground">
-				Don't have an account?{' '}
-				<a href="/auth/signup" class="underline underline-offset-4 hover:text-primary"> Sign up </a>
+				Already have an account?{' '}
+				<a
+					href="/auth/signin{$page.url.search}"
+					class="underline underline-offset-4 hover:text-primary"
+				>
+					Sign in
+				</a>
 			</p>
 		</div>
 	</div>

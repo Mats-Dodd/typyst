@@ -1,4 +1,5 @@
 import { onDestroy, onMount, afterUpdate } from 'svelte';
+import { browser } from '$app/environment';
 
 // Interface for shortcut parameters
 export interface ShortcutParams {
@@ -15,23 +16,25 @@ export interface ShortcutParams {
 // Registry for shortcuts
 const shortcuts: ShortcutParams[] = [];
 
-// Global event listener
-window.addEventListener('keydown', (e: KeyboardEvent) => {
-	for (const shortcut of shortcuts) {
-		if (
-			!!shortcut.alt !== e.altKey ||
-			!!shortcut.shift !== e.shiftKey ||
-			!!shortcut.command !== (e.ctrlKey || e.metaKey) ||
-			(shortcut.key.toLowerCase() !== e.key.toLowerCase() &&
-				!(shortcut.code && shortcut.code === e.code)) ||
-			(shortcut.hover && !(shortcut.node?.parentNode as Element)?.matches(':hover'))
-		)
-			continue;
+// Global event listener - only add in browser
+if (browser) {
+	window.addEventListener('keydown', (e: KeyboardEvent) => {
+		for (const shortcut of shortcuts) {
+			if (
+				!!shortcut.alt !== e.altKey ||
+				!!shortcut.shift !== e.shiftKey ||
+				!!shortcut.command !== (e.ctrlKey || e.metaKey) ||
+				(shortcut.key.toLowerCase() !== e.key.toLowerCase() &&
+					!(shortcut.code && shortcut.code === e.code)) ||
+				(shortcut.hover && !(shortcut.node?.parentNode as Element)?.matches(':hover'))
+			)
+				continue;
 
-		e.preventDefault();
-		shortcut.callback ? shortcut.callback() : shortcut.node?.click();
-	}
-});
+			e.preventDefault();
+			shortcut.callback ? shortcut.callback() : shortcut.node?.click();
+		}
+	});
+}
 
 // Function to handle shortcut
 const handleShortcut = (

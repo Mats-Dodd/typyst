@@ -4,9 +4,10 @@
   "main": "index.js",
   "type": "module",
   "dependencies": {
-    "typescript-eslint": "latest",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-svelte": "latest"
+    "eslint-plugin-svelte": "latest",
+    "globals": "^16.2.0",
+    "typescript-eslint": "latest"
   },
   "publishConfig": {
     "access": "public"

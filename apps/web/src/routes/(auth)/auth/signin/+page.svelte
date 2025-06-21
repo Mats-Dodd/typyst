@@ -1,27 +1,27 @@
 <script lang="ts">
-	import { SignupForm } from '@haptic/ui/components/auth';
+	import { SigninForm } from '@haptic/ui/components/auth';
 	import { authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	let error: string | null = null;
 	let loading = false;
 
-	async function handleSignup(data: { name: string; email: string; password: string }) {
+	async function handleSignin(data: { email: string; password: string }) {
 		loading = true;
 		error = null;
 
 		try {
-			const { error: authError } = await authClient.signUp.email({
-				name: data.name,
+			const result = await authClient.signIn.email({
 				email: data.email,
 				password: data.password
 			});
 
-			if (authError) {
-				error = authError.message || 'Authentication failed';
+			if (result.error) {
+				error = result.error.message || 'Authentication failed';
 			} else {
-				// Redirect to notes after successful signup
-				goto('/notes');
+				const redirectTo = $page.url.searchParams.get('redirectTo') || '/notes';
+				goto(redirectTo);
 			}
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'An unexpected error occurred';
@@ -32,7 +32,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign Up - Haptic</title>
+	<title>Sign In - Haptic</title>
 </svelte:head>
 
 <div
@@ -58,20 +58,26 @@
 		<div class="relative z-20 mt-auto">
 			<blockquote class="space-y-2">
 				<p class="text-lg">
-					"The best note-taking app I've ever used. Simple, fast, and beautiful."
+					"Haptic has transformed how I organize my thoughts and manage my daily tasks. The seamless
+					note-taking experience is unmatched."
 				</p>
-				<footer class="text-sm">Alex Johnson</footer>
+				<footer class="text-sm">Sofia Davis</footer>
 			</blockquote>
 		</div>
 	</div>
 
 	<div class="lg:p-8">
 		<div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-			<SignupForm onSubmit={handleSignup} {error} {loading} />
+			<SigninForm onSubmit={handleSignin} {error} {loading} />
 
 			<p class="px-8 text-center text-sm text-muted-foreground">
-				Already have an account?{' '}
-				<a href="/auth/signin" class="underline underline-offset-4 hover:text-primary"> Sign in </a>
+				Don't have an account?{' '}
+				<a
+					href="/auth/signup{$page.url.search}"
+					class="underline underline-offset-4 hover:text-primary"
+				>
+					Sign up
+				</a>
 			</p>
 		</div>
 	</div>

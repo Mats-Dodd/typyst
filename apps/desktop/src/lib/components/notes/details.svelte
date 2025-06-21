@@ -272,7 +272,7 @@
 								const rect = node.getBoundingClientRect();
 								const isAboveView = rect.top < 0;
 								const isBelowView = rect.bottom > window.innerHeight;
-								console.log(rect.top, rect.bottom, window.innerHeight);
+
 								if (isAboveView || isBelowView) {
 									// Smooth scroll doesn't seem to work well from bottom to top
 									const behavior = isAboveView ? 'auto' : 'smooth';
