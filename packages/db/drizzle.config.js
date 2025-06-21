@@ -4,6 +4,6 @@ export default {
   schema: './src/schema/**.ts',
   out: './drizzle', // SQL files land here
   dbCredentials: {
-    url: process.env.SUPABASE_URL
+    url: process.env.DATABASE_URL
   }
 };

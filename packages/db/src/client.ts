@@ -4,13 +4,11 @@ import postgres from 'postgres';
 // Import all schema tables
 import * as schema from './schema';
 
-// Create the connection string - use DATABASE_URL for direct Supabase database connection
+// Create the connection string - use DATABASE_URL for PostgreSQL connection
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error(
-    'DATABASE_URL environment variable is required (get this from Supabase project settings)'
-  );
+  throw new Error('DATABASE_URL environment variable is required (PostgreSQL connection string)');
 }
 
 // Create the postgres client
