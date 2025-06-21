@@ -3,6 +3,7 @@ CREATE TABLE "account" (
 	"user_id" text NOT NULL,
 	"account_id" text NOT NULL,
 	"provider_id" text NOT NULL,
+	"password" text,
 	"access_token" text,
 	"refresh_token" text,
 	"id_token" text,
