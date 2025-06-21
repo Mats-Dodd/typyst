@@ -28,3 +28,9 @@ yarn-error.log*
 
 # turbo
 .turbo
+
+# generated/built files
+dist/
+build/
+
+.env

@@ -44,6 +44,7 @@
 	"type": "module",
 	"dependencies": {
 		"@electric-sql/pglite": "^0.2.0",
+		"@haptic/db": "workspace:^",
 		"@haptic/ui": "workspace:^",
 		"@internationalized/date": "^3.5.4",
 		"@tiptap/core": "^2.2.1",
