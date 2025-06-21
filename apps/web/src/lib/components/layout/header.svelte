@@ -13,13 +13,8 @@
 		{$collection?.split('/').pop() || ''}
 	</p>
 	<div class="flex gap-1">
-		<a href="https://go.haptic.md/github" target="_blank" rel="noopener noreferrer">
-			<Button variant="secondary" size="sm" scale="sm" class="rounded-full h-[27px] px-2.5"
-				>Star on Github</Button
-			>
-		</a>
-		<a href="https://go.haptic.md/download" target="_blank" rel="noopener noreferrer">
-			<Button size="sm" scale="sm" class="rounded-full h-[27px] px-2.5">Download</Button>
+		<a href="/auth/signout">
+			<Button size="sm" scale="sm" class="rounded-full h-[27px] px-2.5">Sign Out</Button>
 		</a>
 	</div>
 </header>

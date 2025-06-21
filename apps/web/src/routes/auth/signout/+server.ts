@@ -1,7 +1,8 @@
 import { authClient } from '$lib/auth-client';
 import { redirect } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
-export async function load() {
+export const GET: RequestHandler = async () => {
 	try {
 		await authClient.signOut();
 	} catch (error) {
@@ -9,5 +10,5 @@ export async function load() {
 	}
 
 	// Redirect to homepage after sign out
-	throw redirect(302, '/');
-}
+	throw redirect(302, 'http://localhost:5173');
+};
