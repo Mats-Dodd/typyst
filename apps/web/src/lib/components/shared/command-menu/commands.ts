@@ -64,7 +64,7 @@ export const mainCommands: CommandGroup[] = [
 				}
 			},
 			{
-				title: 'Toggle editor mode',
+				title: 'Change editor mode',
 				icon: 'cursorI',
 				shortcut: SHORTCUTS['editor:toggle-mode'],
 				onSelect: () => {
