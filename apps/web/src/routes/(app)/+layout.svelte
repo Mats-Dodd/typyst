@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { loadSettings } from '@/api/settings';
+	import { loadCollection } from '@/api/collection';
 	import Footer from '@/components/layout/footer.svelte';
 	import Header from '@/components/layout/header.svelte';
 	import Sidebar from '@/components/layout/sidebar.svelte';
 	import Command from '@/components/shared/command-menu/command.svelte';
 	import Icon from '@/components/shared/icon.svelte';
-	import { collection } from '@/store';
 	import { createDeviceDetector } from '@/utils';
 	import '@haptic/ui/app.web.css';
 	import { ModeWatcher } from 'mode-watcher';
@@ -24,7 +24,7 @@
 			}
 			const data = await response.json();
 			if (data && data.path) {
-				collection.set(data.path);
+				await loadCollection(data.path);
 			}
 		} catch (error) {
 			console.error('Error loading latest collection:', error);

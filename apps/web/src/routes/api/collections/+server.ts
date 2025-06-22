@@ -1,6 +1,6 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { db, getUserId, schema } from '$lib/server/db';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import {
 	DEFAULT_COLLECTION_SETTINGS,
 	validateCollectionName,
@@ -10,8 +10,9 @@ import {
 export const GET = async (event: RequestEvent) => {
 	try {
 		const userId = await getUserId(event);
+		const path = event.url.searchParams.get('path');
 
-		const collectionsWithSettings = await db
+		let query = db
 			.select({
 				collection: schema.collection,
 				settings: schema.collectionSettings
@@ -23,6 +24,24 @@ export const GET = async (event: RequestEvent) => {
 			)
 			.where(eq(schema.collection.userId, userId))
 			.orderBy(desc(schema.collection.lastOpened));
+
+		// If path is provided, filter by it
+		if (path) {
+			query = db
+				.select({
+					collection: schema.collection,
+					settings: schema.collectionSettings
+				})
+				.from(schema.collection)
+				.leftJoin(
+					schema.collectionSettings,
+					eq(schema.collection.id, schema.collectionSettings.collectionId)
+				)
+				.where(and(eq(schema.collection.userId, userId), eq(schema.collection.path, path)))
+				.orderBy(desc(schema.collection.lastOpened));
+		}
+
+		const collectionsWithSettings = await query;
 
 		const collections = collectionsWithSettings.map(({ collection, settings }) => ({
 			...collection,

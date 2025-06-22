@@ -1,9 +1,9 @@
-import { activeFile, collection, collectionEntries, noteHistory } from '@/store';
+import { activeFile, collection, collectionId, collectionEntries, noteHistory } from '@/store';
 import type { FileEntry } from '@/types';
 import { buildFileTree, sortFileEntry } from '@/utils';
 import { get } from 'svelte/store';
 import { apiClient } from './client';
-import type { Entry, Collection, CreateCollectionRequest } from './types';
+import type { Entry, Collection, CreateCollectionRequest, CollectionSettings } from './types';
 
 // Fetch the collection entries
 export const fetchCollectionEntries = async (
@@ -76,10 +76,11 @@ export const loadCollection = async (path?: string | undefined) => {
 	// Reset all collection states
 	noteHistory.set([]);
 	activeFile.set(null);
+	collectionId.set(null);
 
 	try {
-		// Check if collection exists by fetching it
-		const response = await fetch(`/api/collections/${encodeURIComponent(path)}`);
+		// Check if collection exists by fetching it by path
+		const response = await fetch(`/api/collections?path=${encodeURIComponent(path)}`);
 
 		if (!response.ok && response.status === 404) {
 			// Collection doesn't exist, create it
@@ -88,19 +89,27 @@ export const loadCollection = async (path?: string | undefined) => {
 				name: path.split('/').pop()!
 			};
 
-			await apiClient.request('/api/collections', {
+			const response = await apiClient.request<{
+				collection: Collection;
+				settings: CollectionSettings;
+			}>('/api/collections', {
 				method: 'POST',
 				body: JSON.stringify(createRequest)
 			});
+
+			collectionId.set(response.collection.id);
 		} else if (response.ok) {
 			// Collection exists, update last accessed time
-			const collectionData = await response.json();
-			await apiClient.request(`/api/collections/${collectionData.id}`, {
-				method: 'PATCH',
-				body: JSON.stringify({
-					lastAccessedAt: new Date().toISOString()
-				})
-			});
+			const { collections } = await response.json();
+			const collectionData = collections.find((c: Collection) => c.path === path);
+
+			if (collectionData) {
+				collectionId.set(collectionData.id);
+				await apiClient.request(`/api/collections/${collectionData.id}`, {
+					method: 'PUT',
+					body: JSON.stringify({})
+				});
+			}
 		} else {
 			throw new Error('Failed to load collection');
 		}

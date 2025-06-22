@@ -1,4 +1,4 @@
-import { appSettings, collection, collectionSettings } from '@/store';
+import { appSettings, collectionId, collectionSettings } from '@/store';
 import type { AppSettingsParams, CollectionSettingsParams } from '@/types';
 import { get } from 'svelte/store';
 import { apiClient } from './client';
@@ -15,11 +15,16 @@ export const loadSettings = async (loadApp: boolean, loadCollection: boolean) =>
 	}
 
 	if (loadCollection) {
+		const currentCollectionId = get(collectionId);
+		if (!currentCollectionId) {
+			// No collection ID yet, use defaults
+			setSettings('collection');
+			return;
+		}
+
 		try {
 			// Fetch collection settings from API
-			const response = await fetch(
-				`/api/collections/${encodeURIComponent(get(collection))}/settings`
-			);
+			const response = await fetch(`/api/collections/${currentCollectionId}/settings`);
 
 			if (response.ok) {
 				const collectionSettingsData = await response.json();
@@ -54,9 +59,15 @@ export const setSettings = async (
 		const settings = (value ?? get(collectionSettings)) as CollectionSettingsParams;
 		collectionSettings.set(settings);
 
+		const currentCollectionId = get(collectionId);
+		if (!currentCollectionId) {
+			console.warn('No collection ID available, cannot save settings to server');
+			return;
+		}
+
 		try {
 			// Save collection settings via API
-			await apiClient.request(`/api/collections/${encodeURIComponent(get(collection))}/settings`, {
+			await apiClient.request(`/api/collections/${currentCollectionId}/settings`, {
 				method: 'PUT',
 				body: JSON.stringify({
 					editor: settings.editor,
