@@ -1,9 +1,10 @@
-import { activeFile, collection, editor, noteHistory } from '@/store';
+import { activeFile, collection, editor, noteHistory, collectionId } from '@/store';
 import type { NoteMetadataParams } from '@/types';
 import { calculateReadingTime, getNextUntitledName, setEditorContent } from '@/utils';
 import { get } from 'svelte/store';
 import { apiClient } from './client';
 import type { Entry, CreateEntryRequest, UpdateEntryRequest, EntryWithMetadata } from './types';
+import { refreshCollection } from './store-helpers';
 
 // Create a new note
 export const createNote = async (dirPath: string, name?: string) => {
@@ -24,7 +25,7 @@ export const createNote = async (dirPath: string, name?: string) => {
 			path: `${dirPath}/${name}`.replace('//', '/'),
 			content: '',
 			parentPath: dirPath,
-			collectionPath: get(collection),
+			collectionId: get(collectionId) as string,
 			isFolder: false
 		};
 
@@ -32,6 +33,9 @@ export const createNote = async (dirPath: string, name?: string) => {
 			method: 'POST',
 			body: JSON.stringify(createRequest)
 		});
+
+		// Refresh the collection to update the sidebar
+		await refreshCollection();
 
 		// Open the note
 		openNote(`${dirPath}/${name}`.replace('//', '/'));
@@ -79,6 +83,9 @@ export const deleteNote = async (path: string) => {
 		});
 
 		activeFile.set(null);
+
+		// Refresh the collection to update the sidebar
+		await refreshCollection();
 	} catch (error) {
 		console.error('Error deleting note:', error);
 		throw error;
@@ -127,6 +134,9 @@ export const renameNote = async (path: string, name: string) => {
 		});
 
 		activeFile.set(`${parentPath}/${name}`);
+
+		// Refresh the collection to update the sidebar
+		await refreshCollection();
 	} catch (error) {
 		console.error('Error renaming note:', error);
 		throw error;
@@ -197,6 +207,9 @@ export const moveNote = async (source: string, target: string) => {
 			body: JSON.stringify(updateRequest)
 		});
 
+		// Refresh the collection to update the sidebar
+		await refreshCollection();
+
 		// Open the note at new location
 		openNote(`${target}/${noteName}`);
 	} catch (error) {
@@ -234,7 +247,7 @@ export const duplicateNote = async (path: string) => {
 			name: newName,
 			path: `${parentPath}/${newName}`,
 			parentPath: parentPath,
-			collectionPath: entry.collectionPath || get(collection),
+			collectionId: entry.collectionId || (get(collectionId) as string),
 			content: entry.content || '',
 			isFolder: false
 		};
@@ -243,6 +256,9 @@ export const duplicateNote = async (path: string) => {
 			method: 'POST',
 			body: JSON.stringify(createRequest)
 		});
+
+		// Refresh the collection to update the sidebar
+		await refreshCollection();
 
 		// Open the new note
 		openNote(`${parentPath}/${newName}`);

@@ -13,7 +13,7 @@ export interface CreateEntryRequest {
 	path: string;
 	content?: string;
 	parentPath: string;
-	collectionPath: string;
+	collectionId: string;
 	isFolder: boolean;
 	size?: number;
 }
