@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fetchCollectionEntries } from '@/api/collection';
 	import { createNote, openNote } from '@/api/notes';
-	import { pgClient } from '@/database/client';
+	import { refreshCollection } from '@/api/store-helpers';
 	import {
 		activeFile,
 		collection,
@@ -21,16 +21,6 @@
 
 	let calValue = today(getLocalTimeZone());
 	let entries: FileEntry[] = [];
-	let stopWatching: () => void;
-
-	// Watch for changes in the collection
-	async function watchCollection() {
-		const dbWatcher = await pgClient.live.query('SELECT * FROM entry', [], async () => {
-			await fetchCollectionEntries($collection + '/.haptic/daily');
-		});
-
-		return dbWatcher.unsubscribe;
-	}
 
 	const stopWatchingStore = collectionEntries.subscribe((value) => {
 		entries = value;
@@ -49,12 +39,12 @@
 
 		// Open today's note
 		openNote(value + '/.haptic/daily/' + today + '.md', true);
-
-		if (value) {
-			if (stopWatching) stopWatching();
-			stopWatching = await watchCollection();
-		}
 	});
+
+	// Refresh collection when it changes
+	$: if ($collection) {
+		refreshCollection($collection + '/.haptic/daily');
+	}
 
 	const handleMouseMove = (e: MouseEvent) => {
 		resizingPageSidebar.set(true);
@@ -171,7 +161,6 @@
 	});
 
 	onDestroy(() => {
-		if (stopWatching) stopWatching();
 		stopWatchingStore();
 		stopWatchingCollectionStore();
 	});
