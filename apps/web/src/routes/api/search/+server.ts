@@ -1,14 +1,20 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { db, getUserId } from '$lib/server/db';
 import { entry } from '@haptic/db';
-import { eq, and, like, ilike } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 const searchSchema = z.object({
 	collection: z.string().min(1),
 	query: z.string().min(1).max(100),
-	caseSensitive: z.enum(['true', 'false']).optional().default('false')
+	caseSensitive: z.enum(['true', 'false']).optional().default('false'),
+	matchWord: z.enum(['true', 'false']).optional().default('false')
 });
+
+type SearchResult = {
+	path: string;
+	context_preview: string;
+};
 
 export const GET = async (event: RequestEvent) => {
 	const userId = await getUserId(event);
@@ -26,38 +32,81 @@ export const GET = async (event: RequestEvent) => {
 		);
 	}
 
-	const { collection: collectionPath, query, caseSensitive } = parsed.data;
+	const { collection: collectionPath, query, caseSensitive, matchWord } = parsed.data;
 	const isCaseSensitive = caseSensitive === 'true';
+	const isMatchWord = matchWord === 'true';
 
 	try {
-		const searchOp = isCaseSensitive ? like : ilike;
+		// Escape single quotes in the query for SQL
+		const escapedQuery = query.replace(/'/g, "''");
+		const wordBoundary = isMatchWord ? ' ' : '';
+		const searchPattern = `%${wordBoundary}${escapedQuery}${wordBoundary}%`;
+
+		// Use raw SQL to match the exact functionality of the original searchEntries
+		const likeOperator = isCaseSensitive ? 'LIKE' : 'ILIKE';
 
 		const results = await db
 			.select({
-				id: entry.id,
 				path: entry.path,
-				name: entry.name,
-				snippet: entry.content
+				content: entry.content
 			})
 			.from(entry)
 			.where(
 				and(
 					eq(entry.userId, userId),
-					like(entry.path, `${collectionPath}%`),
-					searchOp(entry.content, `%${query}%`),
-					eq(entry.isFolder, false)
+					eq(entry.isFolder, false),
+					sql`${entry.path} LIKE ${`${collectionPath}%`}`,
+					sql`${entry.content} ${sql.raw(likeOperator)} ${searchPattern}`
 				)
-			)
-			.limit(50);
+			);
 
-		const resultsWithSnippets = results.map((r) => ({
-			...r,
-			snippet: r.snippet?.substring(0, 150) || ''
-		}));
+		// Extract all contexts from the results
+		const searchResults: SearchResult[] = [];
+		results.forEach((row) => {
+			const contexts = extractAllContexts(
+				row.content || '',
+				escapedQuery,
+				isCaseSensitive,
+				isMatchWord
+			);
+			contexts.forEach((context) => {
+				searchResults.push({
+					path: row.path,
+					context_preview: context
+				});
+			});
+		});
 
-		return json(resultsWithSnippets);
+		return json(searchResults);
 	} catch (error) {
 		console.error('Error searching entries:', error);
 		return json({ error: 'Failed to search entries' }, { status: 500 });
 	}
 };
+
+function extractAllContexts(
+	content: string,
+	query: string,
+	caseSensitive: boolean,
+	matchWord: boolean
+): string[] {
+	const lines = content.split('\n');
+	const contexts: string[] = [];
+	lines.forEach((line, index) => {
+		const compareLine = caseSensitive ? line : line.toLowerCase();
+		const compareQuery = caseSensitive ? query : query.toLowerCase();
+		if (matchWord) {
+			const regex = new RegExp(`(^|\\s)${compareQuery}($|\\s)`, caseSensitive ? '' : 'i');
+			if (regex.test(compareLine)) {
+				const startLine = Math.max(0, index - 1);
+				const endLine = Math.min(lines.length - 1, index + 1);
+				contexts.push(lines.slice(startLine, endLine + 1).join('\n'));
+			}
+		} else if (compareLine.includes(compareQuery)) {
+			const startLine = Math.max(0, index - 1);
+			const endLine = Math.min(lines.length - 1, index + 1);
+			contexts.push(lines.slice(startLine, endLine + 1).join('\n'));
+		}
+	});
+	return contexts;
+}
