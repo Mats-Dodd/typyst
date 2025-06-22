@@ -119,7 +119,7 @@ export const renameNote = async (path: string, name: string) => {
 
 		// Rename the file via API
 		await apiClient.request(`/api/entries/${id}`, {
-			method: 'PATCH',
+			method: 'PUT',
 			body: JSON.stringify({
 				name,
 				path: `${parentPath}/${name}`
@@ -156,7 +156,7 @@ export const saveNote = async (path: string) => {
 		};
 
 		await apiClient.request(`/api/entries/${id}`, {
-			method: 'PATCH',
+			method: 'PUT',
 			body: JSON.stringify(updateRequest)
 		});
 	} catch (error) {
@@ -193,7 +193,7 @@ export const moveNote = async (source: string, target: string) => {
 		};
 
 		await apiClient.request(`/api/entries/${sourceId}`, {
-			method: 'PATCH',
+			method: 'PUT',
 			body: JSON.stringify(updateRequest)
 		});
 
