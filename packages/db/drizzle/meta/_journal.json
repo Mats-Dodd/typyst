@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1750530060424,
-      "tag": "0000_striped_doctor_doom",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1750542908025,
-      "tag": "0001_ambitious_marten_broadcloak",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1750543790548,
-      "tag": "0002_funny_sauron",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1750543826700,
-      "tag": "0003_faithful_paladin",
+      "when": 1750567372414,
+      "tag": "0000_robust_morph",
       "breakpoints": true
     }
   ]
