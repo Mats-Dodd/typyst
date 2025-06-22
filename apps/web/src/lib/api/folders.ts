@@ -1,9 +1,10 @@
-import { collection } from '@/store';
+import { collection, collectionId } from '@/store';
 import { getNextUntitledName } from '@/utils';
 import { get } from 'svelte/store';
 import { moveNote } from './notes';
 import { apiClient } from './client';
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from './types';
+import { refreshCollection } from './store-helpers';
 
 // Create a new folder
 export const createFolder = async (dirPath: string) => {
@@ -21,7 +22,7 @@ export const createFolder = async (dirPath: string) => {
 			name,
 			path: `${dirPath}/${name}`.replace('//', '/'),
 			parentPath: dirPath,
-			collectionPath: get(collection),
+			collectionId: get(collectionId) || '',
 			isFolder: true
 		};
 
@@ -29,6 +30,9 @@ export const createFolder = async (dirPath: string) => {
 			method: 'POST',
 			body: JSON.stringify(createRequest)
 		});
+
+		// Refresh the collection to update the sidebar
+		await refreshCollection();
 
 		return newFolder.path;
 	} catch (error) {
@@ -63,6 +67,9 @@ export const deleteFolder = async (path: string, recursive = false) => {
 		await apiClient.request(`/api/entries/${id}`, {
 			method: 'DELETE'
 		});
+
+		// Refresh the collection to update the sidebar
+		await refreshCollection();
 	} catch (error) {
 		console.error('Error deleting folder:', error);
 		throw error;
@@ -83,6 +90,9 @@ export const renameFolder = async (path: string, name: string) => {
 				path: `${path.split('/').slice(0, -1).join('/')}/${name}`
 			})
 		});
+
+		// Refresh the collection to update the sidebar
+		await refreshCollection();
 	} catch (error) {
 		console.error('Error renaming folder:', error);
 		throw error;
@@ -134,6 +144,9 @@ export const moveFolder = async (source: string, target: string) => {
 			method: 'PATCH',
 			body: JSON.stringify(updateRequest)
 		});
+
+		// Refresh the collection to update the sidebar
+		await refreshCollection();
 	} catch (error) {
 		console.error('Error moving folder:', error);
 		throw error;
