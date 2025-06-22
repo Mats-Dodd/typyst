@@ -1,15 +1,11 @@
 <script lang="ts">
-	import migrations from '$lib/database/migrations/migrations.sql?raw';
-	import seed from '$lib/database/migrations/seed.sql?raw';
 	import { loadSettings } from '@/api/settings';
+	import { loadCollection } from '@/api/collection';
 	import Footer from '@/components/layout/footer.svelte';
 	import Header from '@/components/layout/header.svelte';
 	import Sidebar from '@/components/layout/sidebar.svelte';
 	import Command from '@/components/shared/command-menu/command.svelte';
 	import Icon from '@/components/shared/icon.svelte';
-	import { db, pgClient } from '@/database/client';
-	import { collection as collectionTable } from '@/database/schema';
-	import { collection } from '@/store';
 	import { createDeviceDetector } from '@/utils';
 	import '@haptic/ui/app.web.css';
 	import { ModeWatcher } from 'mode-watcher';
@@ -18,44 +14,26 @@
 
 	export let data: LayoutData;
 
-	// Device detector
 	const device = createDeviceDetector();
 
-	// Migrate database
-	async function migrateDatabase() {
+	async function loadLatestCollection() {
 		try {
-			await pgClient.exec(migrations);
-
-			// Seed database
-			await pgClient.exec(seed);
+			const response = await fetch('/api/collections/latest');
+			if (!response.ok) {
+				throw new Error('Failed to load latest collection');
+			}
+			const data = await response.json();
+			if (data && data.path) {
+				await loadCollection(data.path);
+			}
 		} catch (error) {
-			console.log('Table already exists');
+			console.error('Error loading latest collection:', error);
 		}
 	}
 
-	// Load latest collection
-	async function loadLatestCollection() {
-		const collections = await db.select().from(collectionTable);
-
-		if (!collections || collections.length === 0) return;
-
-		// Get collection with latest lastOpened date
-		const latestCollection = collections.reduce((prev, current) =>
-			prev.lastOpened > current.lastOpened ? prev : current
-		);
-
-		collection.set(latestCollection.path);
-	}
-
 	onMount(async () => {
-		// Migrate database
-		await migrateDatabase();
-
-		console.log(await db.select().from(collectionTable));
-		// Load latest collection on mount
 		await loadLatestCollection();
 
-		// Load app & collection settings
 		loadSettings(true, true);
 	});
 </script>

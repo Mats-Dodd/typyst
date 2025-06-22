@@ -1,5 +1,4 @@
 import { browser } from '$app/environment';
-import { entry as entryTable } from '@/database/schema';
 import { EditorState } from '@tiptap/pm/state';
 import { clsx, type ClassValue } from 'clsx';
 import { setMode, userPrefersMode } from 'mode-watcher';
@@ -7,9 +6,21 @@ import { cubicOut } from 'svelte/easing';
 import { get, readable } from 'svelte/store';
 import type { TransitionConfig } from 'svelte/transition';
 import { twMerge } from 'tailwind-merge';
-import { pgClient } from './database/client';
 import { collection, editor } from './store';
 import type { FileEntry, SearchResultParams, ShortcutParams } from './types';
+
+// Type for entry data (matching the database schema)
+interface EntryData {
+	path: string;
+	name?: string | null;
+	isFolder?: boolean | null;
+	parentPath?: string | null;
+	content?: string | null;
+	size?: number | null;
+	createdAt?: Date;
+	updatedAt?: Date;
+	[key: string]: unknown;
+}
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -215,10 +226,7 @@ export function toggleTheme() {
 	setMode(nextTheme);
 }
 
-export function buildFileTree(
-	entries: (typeof entryTable.$inferSelect)[],
-	rootPath?: string
-): FileEntry[] {
+export function buildFileTree(entries: EntryData[], rootPath?: string): FileEntry[] {
 	const entryMap = new Map<string, FileEntry>();
 
 	// First pass: create FileEntry objects for all entries
@@ -238,7 +246,7 @@ export function buildFileTree(
 		// If it's a root entry, add it to rootEntries
 		if (entry.parentPath === get(collection) || entry.parentPath === rootPath) {
 			rootEntries.push(fileEntry);
-		} else {
+		} else if (entry.parentPath) {
 			const parentEntry = entryMap.get(entry.parentPath);
 			if (parentEntry && parentEntry.children) {
 				parentEntry.children.push(fileEntry);
@@ -255,70 +263,40 @@ export async function searchEntries(
 	caseSensitive: boolean = false,
 	matchWord: boolean = false
 ): Promise<SearchResultParams[]> {
-	const escapedQuery = query.replace(/'/g, "''");
-	const likeOperator = caseSensitive ? 'LIKE' : 'ILIKE';
-	const wordBoundary = matchWord ? ' ' : '';
-	const searchPattern = `%${wordBoundary}${escapedQuery}${wordBoundary}%`;
-	const sqlQuery = `
-    WITH matched_entries AS (
-      SELECT path, content
-      FROM entry
-      WHERE collection_path = $1
-        AND content ${likeOperator} $2
-    )
-    SELECT path, content
-    FROM matched_entries
-  `;
-	const results = await pgClient.query<{ path: string; content: string }>(sqlQuery, [
-		collectionPath,
-		searchPattern
-	]);
-	const searchResults: SearchResultParams[] = [];
-	results.rows.forEach((row) => {
-		const contexts = extractAllContexts(row.content, escapedQuery, caseSensitive, matchWord);
-		contexts.forEach((context) => {
-			searchResults.push({
-				path: row.path,
-				context_preview: context
-			});
-		});
-	});
-	return searchResults;
-}
+	if (!browser) {
+		throw new Error('searchEntries can only be called from the browser');
+	}
 
-function extractAllContexts(
-	content: string,
-	query: string,
-	caseSensitive: boolean,
-	matchWord: boolean
-): string[] {
-	const lines = content.split('\n');
-	const contexts: string[] = [];
-	lines.forEach((line, index) => {
-		const compareLine = caseSensitive ? line : line.toLowerCase();
-		const compareQuery = caseSensitive ? query : query.toLowerCase();
-		if (matchWord) {
-			const regex = new RegExp(`(^|\\s)${compareQuery}($|\\s)`, caseSensitive ? '' : 'i');
-			if (regex.test(compareLine)) {
-				const startLine = Math.max(0, index - 1);
-				const endLine = Math.min(lines.length - 1, index + 1);
-				contexts.push(lines.slice(startLine, endLine + 1).join('\n'));
-			}
-		} else if (compareLine.includes(compareQuery)) {
-			const startLine = Math.max(0, index - 1);
-			const endLine = Math.min(lines.length - 1, index + 1);
-			contexts.push(lines.slice(startLine, endLine + 1).join('\n'));
-		}
+	const params = new URLSearchParams({
+		collection: collectionPath,
+		query: query,
+		caseSensitive: caseSensitive.toString(),
+		matchWord: matchWord.toString()
 	});
-	return contexts;
+
+	try {
+		const response = await fetch(`/api/search?${params.toString()}`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
+
+		if (!response.ok) {
+			const error = await response.json();
+			throw new Error(error.error || 'Failed to search entries');
+		}
+
+		const results: SearchResultParams[] = await response.json();
+		return results;
+	} catch (error) {
+		console.error('Error searching entries:', error);
+		throw error;
+	}
 }
 
 // Helper function to get the next available untitled name
-export const getNextUntitledName = (
-	files: (typeof entryTable.$inferSelect)[],
-	prefix: string,
-	extension: string = ''
-) => {
+export const getNextUntitledName = (files: EntryData[], prefix: string, extension: string = '') => {
 	const untitledItems = files
 		.filter(
 			(file) =>

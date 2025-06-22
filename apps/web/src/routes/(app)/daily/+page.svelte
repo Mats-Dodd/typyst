@@ -6,7 +6,7 @@
 	import Editor from '@/components/shared/editor/editor.svelte';
 	import Shortcut from '@/components/shared/shortcut.svelte';
 	import { SHORTCUTS } from '@/constants';
-	import { activeFile, collection, collectionSettings } from '@/store';
+	import { activeFile, collection, collectionId, collectionSettings } from '@/store';
 	import { shortcutToString } from '@/utils';
 	import { cn } from '@haptic/ui/lib/utils';
 </script>
@@ -44,10 +44,12 @@
 					<button
 						class="text-sm gap-1.5 flex text-muted-foreground hover:text-secondary-foreground transition-colors items-center justify-center"
 						on:click={() => {
-							createNote(
-								$collection + '/.haptic/daily',
-								new Date().toISOString().split('T')[0] + '.md'
-							);
+							if ($collectionId) {
+								createNote(
+									$collection + '/.haptic/daily',
+									new Date().toISOString().split('T')[0] + '.md'
+								);
+							}
 						}}
 					>
 						<Shortcut options={{ key: 'd', command: true }} />

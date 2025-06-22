@@ -17,6 +17,7 @@ const editorSearchValue = writable<string>('');
 const editorSearchActive = writable<boolean>(false);
 
 const collection = writable<string>();
+const collectionId = writable<string | null>(null);
 const collectionEntries = writable<FileEntry[]>([]);
 
 const tooltipsOpen = writable<number>(0);
@@ -40,6 +41,7 @@ export {
 	activeFile,
 	appSettings,
 	collection,
+	collectionId,
 	collectionEntries,
 	collectionSearchActive,
 	collectionSettings,

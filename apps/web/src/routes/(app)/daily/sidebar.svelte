@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { fetchCollectionEntries } from '@/api/collection';
 	import { createNote, openNote } from '@/api/notes';
-	import { pgClient } from '@/database/client';
+	import { refreshCollection } from '@/api/store-helpers';
 	import {
 		activeFile,
 		collection,
+		collectionId,
 		collectionEntries,
 		editor,
 		isPageSidebarOpen,
@@ -21,40 +22,35 @@
 
 	let calValue = today(getLocalTimeZone());
 	let entries: FileEntry[] = [];
-	let stopWatching: () => void;
-
-	// Watch for changes in the collection
-	async function watchCollection() {
-		const dbWatcher = await pgClient.live.query('SELECT * FROM entry', [], async () => {
-			await fetchCollectionEntries($collection + '/.haptic/daily');
-		});
-
-		return dbWatcher.unsubscribe;
-	}
 
 	const stopWatchingStore = collectionEntries.subscribe((value) => {
 		entries = value;
 	});
 
-	const stopWatchingCollectionStore = collection.subscribe(async (value) => {
-		entries = await fetchCollectionEntries(value + '/.haptic/daily');
+	// Subscribe to collectionId changes instead of collection changes
+	// This ensures the collection ID is available before we try to create notes
+	const stopWatchingCollectionIdStore = collectionId.subscribe(async (id) => {
+		// Only proceed if we have both a collection ID and a collection path
+		if (!id || !$collection) return;
+
+		entries = await fetchCollectionEntries($collection + '/.haptic/daily');
 
 		// Validate if there is a note for today
 		const today = new Date().toISOString().split('T')[0];
 		const dailyExists = entries.some((entry) => entry.path.includes(today));
 
 		if (!dailyExists) {
-			await createNote(value + '/.haptic/daily', today + '.md');
+			await createNote($collection + '/.haptic/daily', today + '.md');
 		}
 
 		// Open today's note
-		openNote(value + '/.haptic/daily/' + today + '.md', true);
-
-		if (value) {
-			if (stopWatching) stopWatching();
-			stopWatching = await watchCollection();
-		}
+		openNote($collection + '/.haptic/daily/' + today + '.md', true);
 	});
+
+	// Refresh collection when it changes
+	$: if ($collection && $collectionId) {
+		refreshCollection($collection + '/.haptic/daily');
+	}
 
 	const handleMouseMove = (e: MouseEvent) => {
 		resizingPageSidebar.set(true);
@@ -116,6 +112,9 @@
 	const handleOpenCalendarDay = async (e: DateValue | undefined) => {
 		if (!e) return;
 
+		// Only proceed if we have a collection ID
+		if (!$collectionId) return;
+
 		// Pad the month and day with a leading zero if they're single digits
 		const paddedMonth = e.month.toString().padStart(2, '0');
 		const paddedDay = e.day.toString().padStart(2, '0');
@@ -171,9 +170,8 @@
 	});
 
 	onDestroy(() => {
-		if (stopWatching) stopWatching();
 		stopWatchingStore();
-		stopWatchingCollectionStore();
+		stopWatchingCollectionIdStore();
 	});
 </script>
 

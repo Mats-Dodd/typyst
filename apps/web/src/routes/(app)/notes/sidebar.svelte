@@ -2,11 +2,11 @@
 	import { fetchCollectionEntries } from '@/api/collection';
 	import { createFolder } from '@/api/folders';
 	import { createNote, openNote } from '@/api/notes';
+	import { refreshCollection } from '@/api/store-helpers';
 	import Icon from '@/components/shared/icon.svelte';
 	import Shortcut from '@/components/shared/shortcut.svelte';
 	import Tooltip from '@/components/shared/tooltip.svelte';
 	import { SHORTCUTS } from '@/constants';
-	import { pgClient } from '@/database/client';
 	import {
 		activeFile,
 		collection,
@@ -37,22 +37,17 @@
 	let entries: FileEntry[] = [];
 	let folderToggleState: 'collapse' | 'expand';
 	let toggleFolderStates: () => void;
-	let stopWatching: () => void;
-
-	// Watch for changes in the collection
-	async function watchCollection() {
-		const dbWatcher = await pgClient.live.query(`SELECT * FROM entry`, [], async () => {
-			await fetchCollectionEntries($collection);
-		});
-
-		return dbWatcher.unsubscribe;
-	}
 
 	const stopWatchingStore = collectionEntries.subscribe((value) => {
 		entries = value;
 	});
 
 	const stopWatchingCollectionStore = collection.subscribe(async (value) => {
+		// Only fetch entries if value is defined
+		if (!value) {
+			return;
+		}
+
 		entries = await fetchCollectionEntries(value);
 
 		// Find first item that is a note (entry.children === undefined)
@@ -64,12 +59,12 @@
 		} else {
 			activeFile.set(null);
 		}
-
-		if (value) {
-			if (stopWatching) stopWatching();
-			stopWatching = await watchCollection();
-		}
 	});
+
+	// Refresh collection when it changes
+	$: if ($collection) {
+		refreshCollection($collection);
+	}
 
 	collectionSearchActive.subscribe((value) => {
 		// Should focus inputs when search is active
@@ -167,7 +162,6 @@
 	}
 
 	onDestroy(() => {
-		if (stopWatching) stopWatching();
 		stopWatchingStore();
 		stopWatchingCollectionStore();
 	});

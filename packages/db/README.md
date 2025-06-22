@@ -10,6 +10,22 @@ Make sure you have the environment variables set in your app:
 DATABASE_URL=postgresql://postgres:your_password@db.your_project_ref.supabase.co:5432/postgres
 ```
 
+## Migration Setup (Supabase)
+
+When using Supabase, we use two different database URLs to avoid migration issues:
+
+```bash
+# In your .env file at project root:
+
+# Pooled connection URL - used for all app queries (better performance)
+DATABASE_URL=postgresql://postgres.your_project_ref:password@aws-0-region.pooler.supabase.com:6543/postgres?pgbouncer=true
+
+# Direct connection URL - used only for migrations (avoids drizzle-kit introspection issues)
+SUPABASE_DIRECT_URL=postgresql://postgres.your_project_ref:password@aws-0-region.supabase.co:5432/postgres
+```
+
+The migration scripts (`migrate:generate` and `migrate:push`) automatically use the direct URL to avoid connection pooler issues with drizzle-kit. Regular database queries use the pooled connection for better performance.
+
 ## Usage
 
 ### Basic Import

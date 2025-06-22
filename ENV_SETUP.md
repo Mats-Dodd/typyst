@@ -20,12 +20,23 @@ To fix the authentication and database errors, you need to set the DATABASE_URL 
    - Navigate to Settings > Database
    - Copy the connection string (URI)
 
-3. For local development with a local PostgreSQL instance:
+3. For Supabase projects, also add the direct connection URL for migrations:
+   ```
+   # Pooled connection (for app queries)
+   DATABASE_URL=postgresql://postgres.[YOUR-PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true
+   
+   # Direct connection (for migrations only - avoids drizzle-kit issues)
+   SUPABASE_DIRECT_URL=postgresql://postgres.[YOUR-PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].supabase.co:5432/postgres
+   ```
+   
+   Note: The pooled URL uses port 6543 and includes `?pgbouncer=true`, while the direct URL uses port 5432.
+
+4. For local development with a local PostgreSQL instance:
    ```
    DATABASE_URL=postgresql://postgres:postgres@localhost:5432/haptic
    ```
 
-4. Optional: Add additional environment variables for auth:
+5. Optional: Add additional environment variables for auth:
    ```
    AUTH_SECRET=your-random-secret-here
    PUBLIC_APP_URL=http://localhost:5173
