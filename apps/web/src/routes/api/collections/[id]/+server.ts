@@ -78,11 +78,10 @@ export const PUT = async (event: RequestEvent) => {
 			updateData.path = body.path.trim();
 		}
 
+		// Allow empty updates to just update the lastOpened timestamp
+		// This is useful for tracking when collections are accessed
 		if (Object.keys(updateData).length === 0) {
-			return json(
-				{ error: 'No valid fields to update', code: 'VALIDATION_ERROR' },
-				{ status: 400 }
-			);
+			// Empty update is allowed - will just update lastOpened timestamp
 		}
 
 		const [updatedCollection] = await db
