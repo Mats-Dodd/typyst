@@ -7,6 +7,7 @@
 	import { formatTimeAgo } from '$lib/utils';
 
 	export let collectionId: string | null = null;
+	export let collectionName: string | null = null;
 
 	let open = false;
 	let search = '';
@@ -16,6 +17,7 @@
 	$: items = $displayedItems;
 	$: isLoading = $fileSearchStore.isLoading;
 	$: error = $fileSearchStore.error;
+	$: placeholder = collectionName ? `Search in ${collectionName}...` : 'Search files...';
 
 	// Sync with store
 	$: if (open && !$fileSearchStore.isOpen) {
@@ -101,7 +103,7 @@
 
 	// Keyboard shortcut handler
 	function handleKeydown(e: KeyboardEvent) {
-		if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+		if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
 			e.preventDefault();
 			open = !open;
 		}
@@ -138,7 +140,7 @@
 		}
 	}}
 >
-	<Command.Input bind:value={search} placeholder="Search files..." />
+	<Command.Input bind:value={search} {placeholder} />
 	<Command.List>
 		{#if error}
 			<Command.Empty class="text-foreground/60 font-light">
