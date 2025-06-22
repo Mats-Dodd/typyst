@@ -37,7 +37,7 @@
 				</Button>
 			</a>
 		</Tooltip>
-		<Tooltip text="Daily desk" side="right">
+		<Tooltip text="Daily Desk" side="right">
 			<a href="/daily">
 				<Button
 					size="icon"

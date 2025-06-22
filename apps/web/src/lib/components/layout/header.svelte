@@ -30,7 +30,13 @@
 
 	<div class="flex-1 flex justify-end gap-1">
 		<a href="/auth/signout">
-			<Button size="sm" scale="sm" class="rounded-full h-[27px] px-2.5">Sign Out</Button>
+			<Button
+				size="sm"
+				variant="ghost"
+				class="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+			>
+				Sign Out
+			</Button>
 		</a>
 	</div>
 </header>
