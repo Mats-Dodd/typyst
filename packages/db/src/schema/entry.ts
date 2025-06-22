@@ -1,4 +1,13 @@
-import { pgTable, uuid, text, timestamp, boolean, bigint, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  text,
+  timestamp,
+  boolean,
+  bigint,
+  uniqueIndex,
+  index
+} from 'drizzle-orm/pg-core';
 import { user } from './user';
 import { collection } from './collection';
 
@@ -26,6 +35,10 @@ export const entry = pgTable(
   },
   (table) => [
     uniqueIndex('entry_user_path_idx').on(table.userId, table.path),
-    uniqueIndex('entry_collection_path_idx').on(table.collectionId, table.path)
+    uniqueIndex('entry_collection_path_idx').on(table.collectionId, table.path),
+    index('entry_updated_at_idx').on(table.updatedAt),
+    index('entry_name_idx').on(table.name),
+    index('entry_user_updated_idx').on(table.userId, table.updatedAt),
+    index('entry_collection_updated_idx').on(table.collectionId, table.updatedAt)
   ]
 );
