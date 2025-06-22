@@ -78,7 +78,10 @@
 		if (value) {
 			const input = document.querySelector('#editorSearch') as HTMLInputElement;
 			if (input) {
-				input.focus();
+				// Wait for the search bar to be visible due to CSS transition
+				setTimeout(() => {
+					input.focus();
+				}, 100);
 			}
 		}
 	});
