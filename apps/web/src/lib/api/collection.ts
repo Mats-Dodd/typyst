@@ -1,10 +1,9 @@
-import { db } from '@/database/client';
-import { collection as collectionTable, entry as entryTable } from '@/database/schema';
 import { activeFile, collection, collectionEntries, noteHistory } from '@/store';
 import type { FileEntry } from '@/types';
 import { buildFileTree, sortFileEntry } from '@/utils';
-import { and, eq } from 'drizzle-orm';
 import { get } from 'svelte/store';
+import { apiClient } from './client';
+import type { Entry, Collection, CreateCollectionRequest } from './types';
 
 // Fetch the collection entries
 export const fetchCollectionEntries = async (
@@ -15,65 +14,56 @@ export const fetchCollectionEntries = async (
 	dirPath = dirPath || get(collection);
 	if (!dirPath) throw new Error('No directory path provided');
 
-	// Get collection by path
-	const collectionObj = await db
-		.select()
-		.from(collectionTable)
-		.where(eq(collectionTable.path, get(collection)));
-
-	if (collectionObj.length === 0) throw new Error('Collection not found');
-
-	// Read all entries linked to the collection
-	const entries = await db
-		.select()
-		.from(entryTable)
-		.where(
-			and(
-				eq(entryTable.collectionPath, get(collection)),
-				dirPath !== get(collection) ? eq(entryTable.parentPath, dirPath) : undefined
-			)
+	try {
+		// Fetch entries from API
+		const entries = await apiClient.request<Entry[]>(
+			`/api/entries/by-parent?path=${encodeURIComponent(dirPath)}`
 		);
 
-	// Convert entries to FileEntry[] format with recursive children
-	const fileEntries = buildFileTree(entries, dirPath);
+		// Convert entries to FileEntry[] format with recursive children
+		const fileEntries = buildFileTree(entries, dirPath);
 
-	// Sort entries recursively
-	const sortEntries = (entries: FileEntry[]) => {
-		entries.sort((a, b) => {
-			if (sort === 'name' && a.name && b.name) {
-				return sortFileEntry(a, b);
-			} else if (sort === 'date') {
-				console.warn('Sorting by date is not implemented yet');
-			}
-			return 0;
-		});
+		// Sort entries recursively
+		const sortEntries = (entries: FileEntry[]) => {
+			entries.sort((a, b) => {
+				if (sort === 'name' && a.name && b.name) {
+					return sortFileEntry(a, b);
+				} else if (sort === 'date') {
+					console.warn('Sorting by date is not implemented yet');
+				}
+				return 0;
+			});
 
-		entries.forEach((entry) => {
-			if (entry.children) {
-				sortEntries(entry.children);
-			}
-		});
-	};
+			entries.forEach((entry) => {
+				if (entry.children) {
+					sortEntries(entry.children);
+				}
+			});
+		};
 
-	sortEntries(fileEntries);
+		sortEntries(fileEntries);
 
-	// Hide dotfiles recursively
-	const filterDotfiles = (entries: FileEntry[]): FileEntry[] => {
-		return entries.filter((entry) => {
-			if (!showDotfiles && entry.name?.startsWith('.')) {
-				return false;
-			}
-			if (entry.children) {
-				entry.children = filterDotfiles(entry.children);
-			}
-			return true;
-		});
-	};
+		// Hide dotfiles recursively
+		const filterDotfiles = (entries: FileEntry[]): FileEntry[] => {
+			return entries.filter((entry) => {
+				if (!showDotfiles && entry.name?.startsWith('.')) {
+					return false;
+				}
+				if (entry.children) {
+					entry.children = filterDotfiles(entry.children);
+				}
+				return true;
+			});
+		};
 
-	// Set collectionEntries if length is different
-	collectionEntries.set(showDotfiles ? fileEntries : filterDotfiles(fileEntries));
+		// Set collectionEntries if length is different
+		collectionEntries.set(showDotfiles ? fileEntries : filterDotfiles(fileEntries));
 
-	return showDotfiles ? fileEntries : filterDotfiles(fileEntries);
+		return showDotfiles ? fileEntries : filterDotfiles(fileEntries);
+	} catch (error) {
+		console.error('Error fetching collection entries:', error);
+		throw error;
+	}
 };
 
 export const loadCollection = async (path?: string | undefined) => {
@@ -87,31 +77,46 @@ export const loadCollection = async (path?: string | undefined) => {
 	noteHistory.set([]);
 	activeFile.set(null);
 
-	// Add collection to collections data
-	const collectionObj = {
-		path: path,
-		name: path.split('/').pop()!,
-		lastOpened: new Date()
-	};
+	try {
+		// Check if collection exists by fetching it
+		const response = await fetch(`/api/collections/${encodeURIComponent(path)}`);
 
-	// Check if collection already exists
-	const collections = await db.select().from(collectionTable).where(eq(collectionTable.path, path));
+		if (!response.ok && response.status === 404) {
+			// Collection doesn't exist, create it
+			const createRequest: CreateCollectionRequest = {
+				path: path,
+				name: path.split('/').pop()!
+			};
 
-	if (collections && collections.length > 0) {
-		// Update collection
-		await db
-			.update(collectionTable)
-			.set({ lastOpened: new Date() })
-			.where(eq(collectionTable.path, path));
-	} else {
-		// Insert collection
-		await db.insert(collectionTable).values(collectionObj);
+			await apiClient.request('/api/collections', {
+				method: 'POST',
+				body: JSON.stringify(createRequest)
+			});
+		} else if (response.ok) {
+			// Collection exists, update last accessed time
+			const collectionData = await response.json();
+			await apiClient.request(`/api/collections/${collectionData.id}`, {
+				method: 'PATCH',
+				body: JSON.stringify({
+					lastAccessedAt: new Date().toISOString()
+				})
+			});
+		} else {
+			throw new Error('Failed to load collection');
+		}
+	} catch (error) {
+		console.error('Error loading collection:', error);
+		throw error;
 	}
 };
 
 // Get all collections
-export const getCollections = async (): Promise<(typeof collectionTable.$inferSelect)[]> => {
-	const collections = await db.select().from(collectionTable);
-
-	return collections;
+export const getCollections = async (): Promise<Collection[]> => {
+	try {
+		const collections = await apiClient.request<Collection[]>('/api/collections');
+		return collections;
+	} catch (error) {
+		console.error('Error fetching collections:', error);
+		throw error;
+	}
 };

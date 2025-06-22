@@ -1,5 +1,4 @@
 import { browser } from '$app/environment';
-import { entry as entryTable } from '@haptic/db';
 import { EditorState } from '@tiptap/pm/state';
 import { clsx, type ClassValue } from 'clsx';
 import { setMode, userPrefersMode } from 'mode-watcher';
@@ -9,6 +8,19 @@ import type { TransitionConfig } from 'svelte/transition';
 import { twMerge } from 'tailwind-merge';
 import { collection, editor } from './store';
 import type { FileEntry, SearchResultParams, ShortcutParams } from './types';
+
+// Type for entry data (matching the database schema)
+interface EntryData {
+	path: string;
+	name?: string | null;
+	isFolder?: boolean | null;
+	parentPath?: string | null;
+	content?: string | null;
+	size?: number | null;
+	createdAt?: Date;
+	updatedAt?: Date;
+	[key: string]: unknown;
+}
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -214,10 +226,7 @@ export function toggleTheme() {
 	setMode(nextTheme);
 }
 
-export function buildFileTree(
-	entries: (typeof entryTable.$inferSelect)[],
-	rootPath?: string
-): FileEntry[] {
+export function buildFileTree(entries: EntryData[], rootPath?: string): FileEntry[] {
 	const entryMap = new Map<string, FileEntry>();
 
 	// First pass: create FileEntry objects for all entries
@@ -237,7 +246,7 @@ export function buildFileTree(
 		// If it's a root entry, add it to rootEntries
 		if (entry.parentPath === get(collection) || entry.parentPath === rootPath) {
 			rootEntries.push(fileEntry);
-		} else {
+		} else if (entry.parentPath) {
 			const parentEntry = entryMap.get(entry.parentPath);
 			if (parentEntry && parentEntry.children) {
 				parentEntry.children.push(fileEntry);
@@ -287,11 +296,7 @@ export async function searchEntries(
 }
 
 // Helper function to get the next available untitled name
-export const getNextUntitledName = (
-	files: (typeof entryTable.$inferSelect)[],
-	prefix: string,
-	extension: string = ''
-) => {
+export const getNextUntitledName = (files: EntryData[], prefix: string, extension: string = '') => {
 	const untitledItems = files
 		.filter(
 			(file) =>

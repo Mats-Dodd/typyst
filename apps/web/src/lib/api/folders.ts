@@ -1,98 +1,141 @@
-import { db } from '@/database/client';
-import { entry as entryTable } from '@/database/schema';
 import { collection } from '@/store';
 import { getNextUntitledName } from '@/utils';
-import { and, eq } from 'drizzle-orm';
 import { get } from 'svelte/store';
 import { moveNote } from './notes';
+import { apiClient } from './client';
+import type { Entry, CreateEntryRequest, UpdateEntryRequest } from './types';
 
 // Create a new folder
 export const createFolder = async (dirPath: string) => {
-	// Get the entry matching the path
-	const entry = await db.select().from(entryTable).where(eq(entryTable.path, dirPath));
+	try {
+		// Get entries in the directory
+		const files = await apiClient.request<Entry[]>(
+			`/api/entries/by-parent?path=${encodeURIComponent(dirPath)}`
+		);
 
-	let files = [];
-	if (entry.length === 0) {
-		files = await db
-			.select()
-			.from(entryTable)
-			.where(eq(entryTable.collectionPath, get(collection)));
-	} else {
-		files = await db
-			.select()
-			.from(entryTable)
-			.where(
-				and(eq(entryTable.parentPath, dirPath), eq(entryTable.collectionPath, get(collection)))
-			);
+		// Generate a new name (Untitled, if there are any existing Untitled folders, increment the number by 1)
+		const name = getNextUntitledName(files, 'Untitled');
+
+		// Create the new folder via API
+		const createRequest: CreateEntryRequest = {
+			name,
+			path: `${dirPath}/${name}`.replace('//', '/'),
+			parentPath: dirPath,
+			collectionPath: get(collection),
+			isFolder: true
+		};
+
+		const newFolder = await apiClient.request<{ path: string }>('/api/entries', {
+			method: 'POST',
+			body: JSON.stringify(createRequest)
+		});
+
+		return newFolder.path;
+	} catch (error) {
+		console.error('Error creating folder:', error);
+		throw error;
 	}
-
-	// Generate a new name (Untitled, if there are any exiting Untitled folders, increment the number by 1)
-	const name = getNextUntitledName(files, 'Untitled');
-
-	// Save the new folder
-	await db.insert(entryTable).values({
-		name,
-		path: `${dirPath}/${name}`.replace('//', '/'),
-		parentPath: dirPath,
-		collectionPath: get(collection),
-		isFolder: true
-	});
-
-	return `${dirPath}/${name}`.replace('//', '/');
 };
 
 // Delete a folder
 export const deleteFolder = async (path: string, recursive = false) => {
-	if (!recursive) {
-		let children = await db.select().from(entryTable).where(eq(entryTable.parentPath, path));
+	try {
+		if (!recursive) {
+			// Get children to check if folder is empty
+			const children = await apiClient.request<Entry[]>(
+				`/api/entries/by-parent?path=${encodeURIComponent(path)}`
+			);
 
-		// Remove .DS_Store files from the children
-		children = children.filter((child) => child.name !== '.DS_Store');
+			// Filter out .DS_Store files and the folder itself
+			const actualChildren = children.filter(
+				(child) => child.name !== '.DS_Store' && child.path !== path
+			);
 
-		// TODO: implement empty children check
-
-		if (children.length > 0) {
-			throw new Error('Folder is not empty');
+			if (actualChildren.length > 0) {
+				throw new Error('Folder is not empty');
+			}
 		}
-	}
 
-	await db.delete(entryTable).where(eq(entryTable.path, path));
+		// Resolve path to ID
+		const id = await apiClient.resolvePath(path);
+
+		// Delete the folder via API
+		await apiClient.request(`/api/entries/${id}`, {
+			method: 'DELETE'
+		});
+	} catch (error) {
+		console.error('Error deleting folder:', error);
+		throw error;
+	}
 };
 
 // Rename a folder
 export const renameFolder = async (path: string, name: string) => {
-	await db
-		.update(entryTable)
-		.set({ name, path: `${path.split('/').slice(0, -1).join('/')}/${name}` })
-		.where(eq(entryTable.path, path));
+	try {
+		// Resolve path to ID
+		const id = await apiClient.resolvePath(path);
+
+		// Update folder name via API
+		await apiClient.request(`/api/entries/${id}`, {
+			method: 'PATCH',
+			body: JSON.stringify({
+				name,
+				path: `${path.split('/').slice(0, -1).join('/')}/${name}`
+			})
+		});
+	} catch (error) {
+		console.error('Error renaming folder:', error);
+		throw error;
+	}
 };
 
 // Move a folder
 export const moveFolder = async (source: string, target: string) => {
-	// Get target directory
-	const targetFiles = await db.select().from(entryTable).where(eq(entryTable.parentPath, target));
+	try {
+		// Get target directory entries to check for conflicts
+		const targetFiles = await apiClient.request<Entry[]>(
+			`/api/entries/by-parent?path=${encodeURIComponent(target)}`
+		);
 
-	// Make sure there are no name conflicts
-	const folderName = source.split('/').pop()!;
+		// Make sure there are no name conflicts
+		const folderName = source.split('/').pop()!;
 
-	if (targetFiles.some((file) => file.name === folderName && file.isFolder)) {
-		throw new Error('Name conflict');
-	}
-
-	// Get all source children
-	const sourceFiles = await db.select().from(entryTable).where(eq(entryTable.parentPath, source));
-
-	// Move all children
-	for (const file of sourceFiles) {
-		if (file.isFolder) {
-			await moveFolder(file.path, `${target}/${folderName}`);
-		} else {
-			await moveNote(file.path, `${target}/${folderName}`);
+		if (targetFiles.some((file) => file.name === folderName && file.isFolder)) {
+			throw new Error('Name conflict');
 		}
-	}
 
-	await db
-		.update(entryTable)
-		.set({ path: `${target}/${folderName}`, parentPath: target })
-		.where(eq(entryTable.path, source));
+		// Get all source children
+		const sourceFiles = await apiClient.request<Entry[]>(
+			`/api/entries/by-parent?path=${encodeURIComponent(source)}`
+		);
+
+		// Filter out the source folder itself
+		const children = sourceFiles.filter((file) => file.path !== source);
+
+		// Move all children recursively
+		for (const file of children) {
+			if (file.isFolder) {
+				await moveFolder(file.path, `${target}/${folderName}`);
+			} else {
+				await moveNote(file.path, `${target}/${folderName}`);
+			}
+		}
+
+		// Resolve source path to ID
+		const sourceId = await apiClient.resolvePath(source);
+
+		// Move the folder itself
+		const updateRequest: UpdateEntryRequest = {
+			path: `${target}/${folderName}`,
+			parentPath: target
+		};
+
+		await apiClient.request(`/api/entries/${sourceId}`, {
+			method: 'PATCH',
+			body: JSON.stringify(updateRequest)
+		});
+	} catch (error) {
+		console.error('Error moving folder:', error);
+		throw error;
+	}
 };

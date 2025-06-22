@@ -1,9 +1,7 @@
-import { db } from '@/database/client';
-import { collectionSettings as collectionSettingsTable } from '@/database/schema';
 import { appSettings, collection, collectionSettings } from '@/store';
 import type { AppSettingsParams, CollectionSettingsParams } from '@/types';
-import { eq } from 'drizzle-orm';
 import { get } from 'svelte/store';
+import { apiClient } from './client';
 
 export const loadSettings = async (loadApp: boolean, loadCollection: boolean) => {
 	if (loadApp) {
@@ -17,17 +15,28 @@ export const loadSettings = async (loadApp: boolean, loadCollection: boolean) =>
 	}
 
 	if (loadCollection) {
-		const collectionSettingsData = await db
-			.select()
-			.from(collectionSettingsTable)
-			.where(eq(collectionSettingsTable.collectionPath, get(collection)));
-		if (!collectionSettingsData || collectionSettingsData.length === 0) {
+		try {
+			// Fetch collection settings from API
+			const response = await fetch(
+				`/api/collections/${encodeURIComponent(get(collection))}/settings`
+			);
+
+			if (response.ok) {
+				const collectionSettingsData = await response.json();
+				collectionSettings.set({
+					editor: collectionSettingsData.editor as CollectionSettingsParams['editor'],
+					notes: collectionSettingsData.notes as CollectionSettingsParams['notes']
+				});
+			} else if (response.status === 404) {
+				// No settings exist yet, use defaults
+				setSettings('collection');
+			} else {
+				throw new Error('Failed to load collection settings');
+			}
+		} catch (error) {
+			console.error('Error loading collection settings:', error);
+			// Use defaults on error
 			setSettings('collection');
-		} else {
-			collectionSettings.set({
-				editor: collectionSettingsData[0].editor as CollectionSettingsParams['editor'],
-				notes: collectionSettingsData[0].notes as CollectionSettingsParams['notes']
-			});
 		}
 	}
 };
@@ -40,21 +49,23 @@ export const setSettings = async (
 		appSettings.set((value ?? get(appSettings)) as AppSettingsParams);
 		window.localStorage.setItem('appSettings', JSON.stringify(value ?? get(appSettings)));
 	}
+
 	if (settingsType === 'collection') {
-		collectionSettings.set((value ?? get(collectionSettings)) as CollectionSettingsParams);
-		await db
-			.insert(collectionSettingsTable)
-			.values({
-				collectionPath: get(collection),
-				editor: ((value ?? get(collectionSettings)) as CollectionSettingsParams).editor,
-				notes: ((value ?? get(collectionSettings)) as CollectionSettingsParams).notes
-			})
-			.onConflictDoUpdate({
-				target: collectionSettingsTable.collectionPath,
-				set: {
-					editor: ((value ?? get(collectionSettings)) as CollectionSettingsParams).editor,
-					notes: ((value ?? get(collectionSettings)) as CollectionSettingsParams).notes
-				}
+		const settings = (value ?? get(collectionSettings)) as CollectionSettingsParams;
+		collectionSettings.set(settings);
+
+		try {
+			// Save collection settings via API
+			await apiClient.request(`/api/collections/${encodeURIComponent(get(collection))}/settings`, {
+				method: 'PUT',
+				body: JSON.stringify({
+					editor: settings.editor,
+					notes: settings.notes
+				})
 			});
+		} catch (error) {
+			console.error('Error saving collection settings:', error);
+			throw error;
+		}
 	}
 };

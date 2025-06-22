@@ -1,204 +1,284 @@
-import { db } from '@/database/client';
-import { entry as entryTable } from '@/database/schema';
 import { activeFile, collection, editor, noteHistory } from '@/store';
 import type { NoteMetadataParams } from '@/types';
 import { calculateReadingTime, getNextUntitledName, setEditorContent } from '@/utils';
-import { eq, and } from 'drizzle-orm';
 import { get } from 'svelte/store';
+import { apiClient } from './client';
+import type { Entry, CreateEntryRequest, UpdateEntryRequest, EntryWithMetadata } from './types';
 
 // Create a new note
 export const createNote = async (dirPath: string, name?: string) => {
-	// Read the directory
-	const dirEntry = await db.select().from(entryTable).where(eq(entryTable.path, dirPath));
+	try {
+		// Get entries in the directory
+		const files = await apiClient.request<Entry[]>(
+			`/api/entries/by-parent?path=${encodeURIComponent(dirPath)}`
+		);
 
-	let files = [];
-	if (dirEntry.length === 0) {
-		files = await db
-			.select()
-			.from(entryTable)
-			.where(eq(entryTable.collectionPath, get(collection)));
-	} else {
-		files = await db
-			.select()
-			.from(entryTable)
-			.where(
-				and(eq(entryTable.parentPath, dirPath), eq(entryTable.collectionPath, get(collection)))
-			);
+		// Generate a new name if not provided
+		if (!name) {
+			name = getNextUntitledName(files, 'Untitled', '.md');
+		}
+
+		// Create the new note via API
+		const createRequest: CreateEntryRequest = {
+			name,
+			path: `${dirPath}/${name}`.replace('//', '/'),
+			content: '',
+			parentPath: dirPath,
+			collectionPath: get(collection),
+			isFolder: false
+		};
+
+		await apiClient.request('/api/entries', {
+			method: 'POST',
+			body: JSON.stringify(createRequest)
+		});
+
+		// Open the note
+		openNote(`${dirPath}/${name}`.replace('//', '/'));
+	} catch (error) {
+		console.error('Error creating note:', error);
+		throw error;
 	}
-
-	// Generate a new name (Untitled.md, if there are any exiting Untitled notes, increment the number by 1)
-	if (!name) {
-		name = getNextUntitledName(files, 'Untitled', '.md');
-	}
-
-	// Save the new note
-	await db.insert(entryTable).values({
-		name,
-		path: `${dirPath}/${name}`.replace('//', '/'),
-		content: '',
-		parentPath: dirPath,
-		collectionPath: get(collection)
-	});
-
-	// Open the note
-	openNote(`${dirPath}/${name}`.replace('//', '/'));
 };
 
 // Open a note
 export async function openNote(path: string, skipHistory = false) {
-	const file = await db.select().from(entryTable).where(eq(entryTable.path, path));
-	setEditorContent(file[0].content ?? '');
-	activeFile.set(path);
-	if (!skipHistory) {
-		noteHistory.update((history) => {
-			if (history[history.length - 1] !== path) {
-				return [...history, path];
-			}
-			return history;
-		});
+	try {
+		// Resolve path to ID
+		const id = await apiClient.resolvePath(path);
+
+		// Get note content
+		const file = await apiClient.request<{ content?: string }>(`/api/entries/${id}`);
+
+		setEditorContent(file.content ?? '');
+		activeFile.set(path);
+
+		if (!skipHistory) {
+			noteHistory.update((history) => {
+				if (history[history.length - 1] !== path) {
+					return [...history, path];
+				}
+				return history;
+			});
+		}
+	} catch (error) {
+		console.error('Error opening note:', error);
+		throw error;
 	}
 }
 
 // Delete a note
 export const deleteNote = async (path: string) => {
-	await db.delete(entryTable).where(eq(entryTable.path, path));
-	activeFile.set(null);
+	try {
+		// Resolve path to ID
+		const id = await apiClient.resolvePath(path);
+
+		// Delete the note via API
+		await apiClient.request(`/api/entries/${id}`, {
+			method: 'DELETE'
+		});
+
+		activeFile.set(null);
+	} catch (error) {
+		console.error('Error deleting note:', error);
+		throw error;
+	}
 };
 
 // Rename a note
 export const renameNote = async (path: string, name: string) => {
-	// Make sure file extension is included
-	if (!name.endsWith('.md')) {
-		name += '.md';
+	try {
+		// Make sure file extension is included
+		if (!name.endsWith('.md')) {
+			name += '.md';
+		}
+
+		// Remove breaking characters
+		name = name.replace(/[/\\?%*:|"<>]/g, '');
+
+		// Get the parent directory
+		const parentPath = path.split('/').slice(0, -1).join('/');
+
+		// Get all files in the directory to check for conflicts
+		const files = await apiClient.request<Entry[]>(
+			`/api/entries/by-parent?path=${encodeURIComponent(parentPath)}`
+		);
+
+		// Make sure there are no name conflicts
+		if (
+			files.some(
+				(file) =>
+					file.name?.toLowerCase() === name.toLowerCase() && !file.isFolder && file.path !== path
+			)
+		) {
+			throw new Error('Name conflict');
+		}
+
+		// Resolve path to ID
+		const id = await apiClient.resolvePath(path);
+
+		// Rename the file via API
+		await apiClient.request(`/api/entries/${id}`, {
+			method: 'PATCH',
+			body: JSON.stringify({
+				name,
+				path: `${parentPath}/${name}`
+			})
+		});
+
+		activeFile.set(`${parentPath}/${name}`);
+	} catch (error) {
+		console.error('Error renaming note:', error);
+		throw error;
 	}
-
-	// Remove breaking characters
-	name = name.replace(/[/\\?%*:|"<>]/g, '');
-
-	// Get the note
-	const entry = await db.select().from(entryTable).where(eq(entryTable.path, path));
-
-	// Get all files in the directory
-	const files = await db
-		.select()
-		.from(entryTable)
-		.where(eq(entryTable.parentPath, entry[0].parentPath!));
-
-	// Make sure there are no name conflicts
-	if (files.some((file) => file.name?.toLowerCase() === name.toLowerCase() && !file.isFolder)) {
-		throw new Error('Name conflict');
-	}
-
-	// Rename the file
-	await db
-		.update(entryTable)
-		.set({ name, path: `${path.split('/').slice(0, -1).join('/')}/${name}` })
-		.where(eq(entryTable.path, path));
-	activeFile.set(`${path.split('/').slice(0, -1).join('/')}/${name}`);
 };
 
 // Save active note
 export const saveNote = async (path: string) => {
-	// Get note content
-	let content = get(editor).storage.markdown.getMarkdown();
+	try {
+		// Get note content
+		let content = get(editor).storage.markdown.getMarkdown();
 
-	// Remove the first heading title
-	content = content.replace(/^# .*\n/, '');
+		// Remove the first heading title
+		content = content.replace(/^# .*\n/, '');
 
-	// Calculate file size in bytes
-	const size = new TextEncoder().encode(content).length;
+		// Calculate file size in bytes
+		const size = new TextEncoder().encode(content).length;
 
-	await db
-		.update(entryTable)
-		.set({ content, updatedAt: new Date(), size })
-		.where(eq(entryTable.path, path));
+		// Resolve path to ID
+		const id = await apiClient.resolvePath(path);
+
+		// Update note content via API
+		const updateRequest: UpdateEntryRequest = {
+			content,
+			updatedAt: new Date().toISOString(),
+			size
+		};
+
+		await apiClient.request(`/api/entries/${id}`, {
+			method: 'PATCH',
+			body: JSON.stringify(updateRequest)
+		});
+	} catch (error) {
+		console.error('Error saving note:', error);
+		throw error;
+	}
 };
 
 export const moveNote = async (source: string, target: string) => {
-	// Get target directory
-	const targetDir = await db.select().from(entryTable).where(eq(entryTable.path, target));
+	try {
+		// Get target directory entries to check for conflicts
+		const targetFiles = await apiClient.request<Entry[]>(
+			`/api/entries/by-parent?path=${encodeURIComponent(target)}`
+		);
 
-	let targetFiles = [];
-	if (targetDir.length === 0) {
-		targetFiles = await db.select().from(entryTable);
-	} else {
-		targetFiles = await db
-			.select()
-			.from(entryTable)
-			.where(eq(entryTable.parentPath, targetDir[0].path));
+		// Make sure there are no name conflicts
+		const noteName = source.split('/').pop()!;
+
+		if (
+			targetFiles.some(
+				(file) => file.name === noteName && !file.isFolder && file.parentPath === target
+			)
+		) {
+			throw new Error('Name conflict');
+		}
+
+		// Resolve source path to ID
+		const sourceId = await apiClient.resolvePath(source);
+
+		// Update the note location via API
+		const updateRequest: UpdateEntryRequest = {
+			path: `${target}/${noteName}`.replace('//', '/'),
+			parentPath: target
+		};
+
+		await apiClient.request(`/api/entries/${sourceId}`, {
+			method: 'PATCH',
+			body: JSON.stringify(updateRequest)
+		});
+
+		// Open the note at new location
+		openNote(`${target}/${noteName}`);
+	} catch (error) {
+		console.error('Error moving note:', error);
+		throw error;
 	}
-
-	// Make sure there are no name conflicts
-	const noteName = source.split('/').pop()!;
-
-	if (
-		targetFiles.some(
-			(file) => file.name === noteName && !file.isFolder && file.parentPath === target
-		)
-	) {
-		throw new Error('Name conflict');
-	}
-
-	// Update the note
-	await db
-		.update(entryTable)
-		.set({ path: `${target}/${noteName}`.replace('//', '/'), parentPath: target })
-		.where(eq(entryTable.path, source));
-
-	// Open the note
-	openNote(target + '/' + noteName);
 };
 
-// Duplicate a note (format: "<name> (<number>).<ext>") - <number> is incremented if there are any existing notes with the same name
+// Duplicate a note
 export const duplicateNote = async (path: string) => {
-	// Fetch the content of the note
-	const entry = await db.select().from(entryTable).where(eq(entryTable.path, path));
+	try {
+		// Resolve path to ID and fetch content
+		const id = await apiClient.resolvePath(path);
+		const entry = await apiClient.request<EntryWithMetadata>(`/api/entries/${id}`);
 
-	// Extract the name and extension of the note
-	const ext = path.split('.').pop()!;
+		// Extract the name and extension of the note
+		const ext = path.split('.').pop()!;
+		const parentPath = path.split('/').slice(0, -1).join('/');
 
-	// Get current index of the note
-	const files = await db
-		.select()
-		.from(entryTable)
-		.where(eq(entryTable.parentPath, entry[0].parentPath!));
-	const notes = files.filter((file) => file.name?.startsWith(entry[0].name!) && !file.isFolder);
+		// Get files in parent directory
+		const files = await apiClient.request<Entry[]>(
+			`/api/entries/by-parent?path=${encodeURIComponent(parentPath)}`
+		);
 
-	// Write the new note
-	const newName = `${entry[0].name?.replace(`.${ext}`, '')} (${notes.length}).${ext}`;
-	await db.insert(entryTable).values({
-		name: newName,
-		path: `${path.split('/').slice(0, -1).join('/')}/${newName}`,
-		parentPath: entry[0].parentPath,
-		collectionPath: entry[0].collectionPath,
-		content: entry[0].content
-	});
+		// Filter notes with similar names
+		const notes = files.filter(
+			(file) => file.name?.startsWith(entry.name!.replace(`.${ext}`, '')) && !file.isFolder
+		);
 
-	// Open the new note
-	openNote(`${path.split('/').slice(0, -1).join('/')}/${newName}`);
+		// Create new name
+		const newName = `${entry.name!.replace(`.${ext}`, '')} (${notes.length}).${ext}`;
+
+		// Create duplicate note via API
+		const createRequest: CreateEntryRequest = {
+			name: newName,
+			path: `${parentPath}/${newName}`,
+			parentPath: parentPath,
+			collectionPath: entry.collectionPath || get(collection),
+			content: entry.content || '',
+			isFolder: false
+		};
+
+		await apiClient.request('/api/entries', {
+			method: 'POST',
+			body: JSON.stringify(createRequest)
+		});
+
+		// Open the new note
+		openNote(`${parentPath}/${newName}`);
+	} catch (error) {
+		console.error('Error duplicating note:', error);
+		throw error;
+	}
 };
 
 export const getNoteMetadataParams = async (path: string): Promise<NoteMetadataParams> => {
-	// General file metadata
-	const fileMetadata = await db.select().from(entryTable).where(eq(entryTable.path, path));
+	try {
+		// Resolve path to ID and fetch metadata
+		const id = await apiClient.resolvePath(path);
+		const fileMetadata = await apiClient.request<Entry>(`/api/entries/${id}`);
 
-	// Get editor metadata
-	const editorWordCount = get(editor).storage.characterCount.words();
-	const editorCharacterCount = get(editor).storage.characterCount.characters();
+		// Get editor metadata
+		const editorWordCount = get(editor).storage.characterCount.words();
+		const editorCharacterCount = get(editor).storage.characterCount.characters();
 
-	// Calculate average reading time (in seconds if < 1min and in minutes if >= 1min)
-	const avgReadingTime = calculateReadingTime(editorWordCount);
+		// Calculate average reading time
+		const avgReadingTime = calculateReadingTime(editorWordCount);
 
-	return {
-		fileMetadata: {
-			createdAt: fileMetadata[0].createdAt,
-			modifiedAt: fileMetadata[0].updatedAt,
-			size: fileMetadata[0].size ?? 0
-		},
-		editorMetadata: {
-			words: editorWordCount,
-			characters: editorCharacterCount,
-			avgReadingTime: avgReadingTime
-		}
-	};
+		return {
+			fileMetadata: {
+				createdAt: fileMetadata.createdAt,
+				modifiedAt: fileMetadata.updatedAt,
+				size: fileMetadata.size ?? 0
+			},
+			editorMetadata: {
+				words: editorWordCount,
+				characters: editorCharacterCount,
+				avgReadingTime: avgReadingTime
+			}
+		};
+	} catch (error) {
+		console.error('Error fetching note metadata:', error);
+		throw error;
+	}
 };

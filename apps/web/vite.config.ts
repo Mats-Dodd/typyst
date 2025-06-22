@@ -11,7 +11,7 @@ export default defineConfig({
 		}
 	},
 	optimizeDeps: {
-		exclude: ['@electric-sql/pglite', '@automerge/automerge-wasm']
+		exclude: ['@automerge/automerge-wasm']
 	},
 	ssr: {
 		noExternal: ['radix-icons-svelte']

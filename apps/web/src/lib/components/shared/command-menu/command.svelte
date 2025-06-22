@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import Icon from '$lib/components/shared/icon.svelte';
-	import { db } from '$lib/database/client';
-	import { entry as entryTable } from '$lib/database/schema';
 	import { getCollections, loadCollection } from '@/api/collection';
-	import { moveNote, openNote } from '@/api/notes';
+	import { createFolder } from '@/api/folders';
+	import { createNote, moveNote, openNote } from '@/api/notes';
 	import { activeFile, collection } from '@/store';
 	import { formatTimeAgo, shortcutToString } from '@/utils';
+	import { apiClient } from '@/api/client';
 	import * as Command from '@haptic/ui/components/command';
 	import { Loader, Twitter } from 'lucide-svelte';
 	import { setMode, userPrefersMode } from 'mode-watcher';
@@ -100,6 +100,11 @@
 		}
 	});
 
+	let files: FileList | undefined;
+	$: if (files) {
+		openCollection();
+	}
+
 	async function openCollection() {
 		if (!files || files.length === 0) {
 			return console.error('No files selected');
@@ -140,14 +145,18 @@
 			if (file.name.toLowerCase().endsWith('.md')) {
 				try {
 					const fileText = await file.text();
-					await db.insert(entryTable).values({
-						name: fileName,
-						path: filePath,
-						content: fileText,
-						parentPath: currentPath,
-						collectionPath: `/${collectionName}`,
-						size: file.size,
-						isFolder: false
+					// Create note via API
+					await apiClient.request('/api/entries', {
+						method: 'POST',
+						body: JSON.stringify({
+							name: fileName,
+							path: filePath,
+							content: fileText,
+							parentPath: currentPath,
+							collectionPath: `/${collectionName}`,
+							size: file.size,
+							isFolder: false
+						})
 					});
 					console.log('Inserted file:', fileName);
 				} catch (error) {
@@ -172,23 +181,22 @@
 		const parentPath = '/' + pathParts.slice(0, -1).join('/');
 
 		try {
-			await db.insert(entryTable).values({
-				name: folderName,
-				path: path,
-				content: undefined,
-				parentPath: parentPath,
-				collectionPath: `/${collectionName}`,
-				isFolder: true
+			// Create folder via API
+			await apiClient.request('/api/entries', {
+				method: 'POST',
+				body: JSON.stringify({
+					name: folderName,
+					path: path,
+					content: undefined,
+					parentPath: parentPath,
+					collectionPath: `/${collectionName}`,
+					isFolder: true
+				})
 			});
 			console.log('Created folder entry:', path);
 		} catch (error) {
 			console.error('Error creating folder entry:', path, error);
 		}
-	}
-
-	let files: FileList | undefined;
-	$: if (files) {
-		openCollection();
 	}
 </script>
 
