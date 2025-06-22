@@ -666,6 +666,7 @@ These items enhance performance or UX but are *not* required for the first produ
 5. **Command Menu Improvements** – progress indicators & granular error reporting during import.
 6. Additional Vitest coverage for partial-failure scenarios.
 7. Bundle-size audits & Tailwind pruning.
+8. zod helpers on all endpoints
 
 ---
 
