@@ -62,7 +62,6 @@ export const PUT = async (event: RequestEvent) => {
 		const body = await event.request.json();
 		const updateData: Partial<{ name: string; path: string }> = {};
 
-		// Validate and add name if provided
 		if ('name' in body) {
 			const nameError = validateCollectionName(body.name);
 			if (nameError) {
@@ -71,7 +70,6 @@ export const PUT = async (event: RequestEvent) => {
 			updateData.name = body.name.trim();
 		}
 
-		// Validate and add path if provided
 		if ('path' in body) {
 			const pathError = validateCollectionPath(body.path);
 			if (pathError) {
@@ -80,7 +78,6 @@ export const PUT = async (event: RequestEvent) => {
 			updateData.path = body.path.trim();
 		}
 
-		// Check if there's anything to update
 		if (Object.keys(updateData).length === 0) {
 			return json(
 				{ error: 'No valid fields to update', code: 'VALIDATION_ERROR' },
@@ -88,7 +85,6 @@ export const PUT = async (event: RequestEvent) => {
 			);
 		}
 
-		// Update lastOpened whenever collection is modified
 		const [updatedCollection] = await db
 			.update(schema.collection)
 			.set({
@@ -98,7 +94,6 @@ export const PUT = async (event: RequestEvent) => {
 			.where(eq(schema.collection.id, id))
 			.returning();
 
-		// Fetch the settings as well
 		const [settings] = await db
 			.select()
 			.from(schema.collectionSettings)
@@ -123,7 +118,6 @@ export const PUT = async (event: RequestEvent) => {
 				return json({ error: 'Collection not found', code: 'NOT_FOUND' }, { status: 404 });
 			}
 
-			// Check for unique constraint violation
 			if ('code' in error && error.code === '23505') {
 				return json(
 					{ error: 'A collection with this path already exists', code: 'DUPLICATE_ERROR' },
@@ -147,7 +141,6 @@ export const DELETE = async (event: RequestEvent) => {
 
 		await verifyUserOwnership(userId, id, schema.collection);
 
-		// Settings will be cascade deleted due to foreign key constraint
 		await db.delete(schema.collection).where(eq(schema.collection.id, id));
 
 		return json({ success: true }, { status: 200 });
