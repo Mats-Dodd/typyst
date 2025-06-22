@@ -267,8 +267,8 @@ export const getNoteMetadataParams = async (path: string): Promise<NoteMetadataP
 
 		return {
 			fileMetadata: {
-				createdAt: fileMetadata.createdAt,
-				modifiedAt: fileMetadata.updatedAt,
+				createdAt: new Date(fileMetadata.createdAt),
+				modifiedAt: new Date(fileMetadata.updatedAt),
 				size: fileMetadata.size ?? 0
 			},
 			editorMetadata: {
