@@ -4,7 +4,7 @@
 	import { getCollections, loadCollection } from '@/api/collection';
 	import { createFolder } from '@/api/folders';
 	import { createNote, moveNote, openNote } from '@/api/notes';
-	import { activeFile, collection } from '@/store';
+	import { activeFile, collection, collectionId } from '@/store';
 	import { formatTimeAgo, shortcutToString } from '@/utils';
 	import { apiClient } from '@/api/client';
 	import * as Command from '@haptic/ui/components/command';
@@ -13,6 +13,7 @@
 	import { onMount } from 'svelte';
 	import { mainCommands as commands, createNoteCommands } from './commands';
 	import { getAllItems } from './helpers';
+	import { get } from 'svelte/store';
 
 	let open = false;
 	let search = '';
@@ -106,16 +107,41 @@
 	}
 
 	async function openCollection() {
+		console.log('[openCollection] Starting collection import...');
+		console.log('[openCollection] Files selected:', files);
+
 		if (!files || files.length === 0) {
+			console.error('[openCollection] No files selected');
 			return console.error('No files selected');
 		}
 
 		// Set loading state
 		loadingCollection = { loading: true, progress: 0 };
+		console.log('[openCollection] Loading state set:', loadingCollection);
 
 		// Load collection
 		const collectionName = files[0]?.webkitRelativePath.split('/')[0];
-		await loadCollection(`/${collectionName}`);
+		console.log('[openCollection] Collection name:', collectionName);
+		console.log('[openCollection] Calling loadCollection with path:', `/${collectionName}`);
+
+		try {
+			await loadCollection(`/${collectionName}`);
+			console.log('[openCollection] loadCollection completed successfully');
+		} catch (error) {
+			console.error('[openCollection] loadCollection failed:', error);
+			loadingCollection = undefined;
+			return;
+		}
+
+		// Wait for collection ID to be set
+		const currentCollectionId = get(collectionId);
+		console.log('[openCollection] Current collection ID:', currentCollectionId);
+
+		if (!currentCollectionId) {
+			console.error('[openCollection] No collection ID available after loadCollection');
+			loadingCollection = undefined;
+			return;
+		}
 
 		const processedPaths = new Set<string>();
 
@@ -127,6 +153,8 @@
 			const pathParts = file.webkitRelativePath.split('/');
 			const fileName = pathParts[pathParts.length - 1];
 
+			console.log(`[openCollection] Processing file ${i + 1}/${files.length}: ${filePath}`);
+
 			// Log progress
 			let progress = Math.round(((i + 1) / files.length) * 100);
 			loadingCollection = { loading: true, progress };
@@ -136,8 +164,14 @@
 			for (let j = 0; j < pathParts.length - 1; j++) {
 				currentPath += '/' + pathParts[j];
 				if (!processedPaths.has(currentPath)) {
-					await createFolderEntry(currentPath, collectionName);
-					processedPaths.add(currentPath);
+					console.log(`[openCollection] Creating folder entry: ${currentPath}`);
+					try {
+						await createFolderEntry(currentPath, currentCollectionId);
+						processedPaths.add(currentPath);
+						console.log(`[openCollection] Folder entry created successfully: ${currentPath}`);
+					} catch (error) {
+						console.error(`[openCollection] Failed to create folder entry: ${currentPath}`, error);
+					}
 				}
 			}
 
@@ -145,57 +179,80 @@
 			if (file.name.toLowerCase().endsWith('.md')) {
 				try {
 					const fileText = await file.text();
+					console.log(
+						`[openCollection] Creating note entry for: ${fileName}, size: ${file.size} bytes`
+					);
+
 					// Create note via API
-					await apiClient.request('/api/entries', {
+					const response = await apiClient.request('/api/entries', {
 						method: 'POST',
 						body: JSON.stringify({
 							name: fileName,
 							path: filePath,
 							content: fileText,
 							parentPath: currentPath,
-							collectionPath: `/${collectionName}`,
+							collectionId: currentCollectionId,
 							size: file.size,
 							isFolder: false
 						})
 					});
-					console.log('Inserted file:', fileName);
+					console.log(`[openCollection] Note created successfully:`, fileName, response);
 				} catch (error) {
-					console.error('Error processing file:', fileName, error);
+					console.error('[openCollection] Error processing file:', fileName, error);
 				}
 			} else {
-				console.warn('Skipping non-Markdown file:', fileName);
+				console.warn('[openCollection] Skipping non-Markdown file:', fileName);
 			}
 		}
 
 		// Reset loading state
 		loadingCollection = undefined;
+		console.log('[openCollection] Import completed, resetting loading state');
 
 		// Close dialog
+		console.log('[openCollection] Navigating to /notes');
 		await goto('/notes');
 		handlePageState(undefined);
+		console.log('[openCollection] Collection import process finished');
 	}
 
-	async function createFolderEntry(path: string, collectionName: string) {
+	async function createFolderEntry(path: string, collectionIdParam: string) {
+		console.log('[createFolderEntry] Creating folder entry for path:', path);
+		console.log('[createFolderEntry] Collection ID:', collectionIdParam);
+
 		const pathParts = path.split('/').filter(Boolean);
 		const folderName = pathParts[pathParts.length - 1];
 		const parentPath = '/' + pathParts.slice(0, -1).join('/');
 
+		console.log('[createFolderEntry] Folder name:', folderName);
+		console.log('[createFolderEntry] Parent path:', parentPath);
+
 		try {
 			// Create folder via API
-			await apiClient.request('/api/entries', {
+			const requestBody = {
+				name: folderName,
+				path: path,
+				content: undefined,
+				parentPath: parentPath,
+				collectionId: collectionIdParam,
+				isFolder: true
+			};
+
+			console.log('[createFolderEntry] Request body:', requestBody);
+
+			const response = await apiClient.request('/api/entries', {
 				method: 'POST',
-				body: JSON.stringify({
-					name: folderName,
-					path: path,
-					content: undefined,
-					parentPath: parentPath,
-					collectionPath: `/${collectionName}`,
-					isFolder: true
-				})
+				body: JSON.stringify(requestBody)
 			});
-			console.log('Created folder entry:', path);
+
+			console.log('[createFolderEntry] Folder created successfully:', response);
 		} catch (error) {
-			console.error('Error creating folder entry:', path, error);
+			console.error('[createFolderEntry] Failed to create folder entry:', error);
+			if (error instanceof Error) {
+				console.error('[createFolderEntry] Error message:', error.message);
+				console.error('[createFolderEntry] Error stack:', error.stack);
+			}
+			throw error;
 		}
 	}
 </script>
@@ -378,8 +435,7 @@
 							bind:files
 							bind:this={fileInput}
 							class="hidden"
-							webkitdirectory
-							directory
+							{...{ webkitdirectory: true, directory: true }}
 							multiple
 						/>
 						Open new collection
