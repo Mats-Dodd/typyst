@@ -1,6 +1,7 @@
-import { collectionEntries, collection } from '$lib/store';
+import { collectionEntries, collection, collectionId } from '$lib/store';
 import { get } from 'svelte/store';
 import type { FileEntry } from '$lib/types';
+import { buildFileTree } from '$lib/utils';
 
 export function updateCollectionEntries(
 	action: 'add' | 'update' | 'remove',
@@ -37,6 +38,7 @@ interface EntryResponse {
 	path: string;
 	name: string;
 	isFolder: boolean;
+	parentPath?: string;
 	content?: string;
 	[key: string]: unknown;
 }
@@ -46,18 +48,18 @@ export async function refreshCollection(collectionPath?: string) {
 	if (!currentCollection) return;
 
 	try {
-		const response = await fetch(
-			`/api/entries/by-parent?path=${encodeURIComponent(currentCollection)}`
-		);
+		const currentCollectionId = get(collectionId);
+
+		const url = currentCollectionId
+			? `/api/entries/by-parent?collectionId=${currentCollectionId}`
+			: `/api/entries/by-parent?path=${encodeURIComponent(currentCollection)}&recursive=true`;
+
+		const response = await fetch(url);
 		if (!response.ok) throw new Error('Failed to fetch entries');
 
 		const entries: EntryResponse[] = await response.json();
 
-		const treeEntries: FileEntry[] = entries.map((e) => ({
-			path: e.path,
-			name: e.name,
-			children: e.isFolder ? [] : undefined
-		}));
+		const treeEntries = buildFileTree(entries, currentCollection);
 
 		collectionEntries.set(treeEntries);
 	} catch (error) {

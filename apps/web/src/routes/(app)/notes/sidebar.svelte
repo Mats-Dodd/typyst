@@ -43,6 +43,11 @@
 	});
 
 	const stopWatchingCollectionStore = collection.subscribe(async (value) => {
+		// Only fetch entries if value is defined
+		if (!value) {
+			return;
+		}
+
 		entries = await fetchCollectionEntries(value);
 
 		// Find first item that is a note (entry.children === undefined)

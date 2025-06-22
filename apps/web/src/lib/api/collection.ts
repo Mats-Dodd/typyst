@@ -15,9 +15,13 @@ export const fetchCollectionEntries = async (
 	if (!dirPath) throw new Error('No directory path provided');
 
 	try {
-		// Fetch entries from API
+		const currentCollectionId = get(collectionId);
+
+		// Fetch entries from API - use collectionId if available for better performance
 		const entries = await apiClient.request<Entry[]>(
-			`/api/entries/by-parent?path=${encodeURIComponent(dirPath)}`
+			currentCollectionId
+				? `/api/entries/by-parent?collectionId=${currentCollectionId}`
+				: `/api/entries/by-parent?path=${encodeURIComponent(dirPath)}&recursive=true`
 		);
 
 		// Convert entries to FileEntry[] format with recursive children

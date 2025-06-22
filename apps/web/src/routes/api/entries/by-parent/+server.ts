@@ -1,12 +1,21 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { db, getUserId } from '$lib/server/db';
 import { entry } from '@haptic/db';
-import { eq, and, or, desc } from 'drizzle-orm';
+import { eq, and, or, desc, like } from 'drizzle-orm';
 import { z } from 'zod';
 
-const querySchema = z.object({
-	path: z.string().min(1)
-});
+const querySchema = z
+	.object({
+		path: z.string().min(1).optional(),
+		collectionId: z.string().uuid().optional(),
+		recursive: z
+			.string()
+			.optional()
+			.transform((val) => val === 'true')
+	})
+	.refine((data) => data.path || data.collectionId, {
+		message: "Either 'path' or 'collectionId' must be provided"
+	});
 
 export const GET = async (event: RequestEvent) => {
 	const userId = await getUserId(event);
@@ -24,19 +33,45 @@ export const GET = async (event: RequestEvent) => {
 		);
 	}
 
-	const { path: parentPath } = parsed.data;
+	const { path: parentPath, collectionId, recursive } = parsed.data;
 
 	try {
-		const results = await db
-			.select()
-			.from(entry)
-			.where(
-				and(
-					eq(entry.userId, userId),
-					or(eq(entry.parentPath, parentPath), eq(entry.path, parentPath))
-				)
-			)
-			.orderBy(desc(entry.isFolder), entry.name);
+		let results;
+
+		// If collectionId is provided, get all entries for that collection
+		if (collectionId) {
+			results = await db
+				.select()
+				.from(entry)
+				.where(and(eq(entry.userId, userId), eq(entry.collectionId, collectionId)))
+				.orderBy(desc(entry.isFolder), entry.name);
+		} else if (parentPath) {
+			if (recursive) {
+				// For recursive queries, get all entries that start with the path
+				results = await db
+					.select()
+					.from(entry)
+					.where(
+						and(
+							eq(entry.userId, userId),
+							or(eq(entry.path, parentPath), like(entry.path, `${parentPath}/%`))
+						)
+					)
+					.orderBy(desc(entry.isFolder), entry.name);
+			} else {
+				// For non-recursive queries, get only direct children
+				results = await db
+					.select()
+					.from(entry)
+					.where(
+						and(
+							eq(entry.userId, userId),
+							or(eq(entry.parentPath, parentPath), eq(entry.path, parentPath))
+						)
+					)
+					.orderBy(desc(entry.isFolder), entry.name);
+			}
+		}
 
 		return json(results);
 	} catch (error) {
