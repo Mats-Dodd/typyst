@@ -82,14 +82,45 @@ export const renameFolder = async (path: string, name: string) => {
 		// Resolve path to ID
 		const id = await apiClient.resolvePath(path);
 
-		// Update folder name via API
+		// Calculate new path for the folder
+		const parentPath = path.split('/').slice(0, -1).join('/');
+		const newPath = parentPath ? `${parentPath}/${name}` : `/${name}`;
+
+		// Get all entries recursively under this folder (including the folder itself)
+		const allEntries = await apiClient.request<Entry[]>(
+			`/api/entries/by-parent?path=${encodeURIComponent(path)}&recursive=true`
+		);
+
+		// Update the folder itself first
 		await apiClient.request(`/api/entries/${id}`, {
-			method: 'PATCH',
+			method: 'PUT',
 			body: JSON.stringify({
 				name,
-				path: `${path.split('/').slice(0, -1).join('/')}/${name}`
+				path: newPath
 			})
 		});
+
+		// Update all descendant entries
+		// Filter out the folder itself from the results
+		const descendants = allEntries.filter(
+			(entry) => entry.path !== path && entry.path.startsWith(path + '/')
+		);
+
+		for (const descendant of descendants) {
+			// Replace the old path prefix with the new path
+			const updatedPath = descendant.path.replace(path, newPath);
+			const updatedParentPath = descendant.parentPath.replace(path, newPath);
+
+			const descendantId = await apiClient.resolvePath(descendant.path);
+
+			await apiClient.request(`/api/entries/${descendantId}`, {
+				method: 'PUT',
+				body: JSON.stringify({
+					path: updatedPath,
+					parentPath: updatedParentPath
+				})
+			});
+		}
 
 		// Refresh the collection to update the sidebar
 		await refreshCollection();
@@ -141,7 +172,7 @@ export const moveFolder = async (source: string, target: string) => {
 		};
 
 		await apiClient.request(`/api/entries/${sourceId}`, {
-			method: 'PATCH',
+			method: 'PUT',
 			body: JSON.stringify(updateRequest)
 		});
 
