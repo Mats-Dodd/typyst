@@ -101,7 +101,7 @@
 		const activeFileInResults = tasks.find((task) => task.path === $activeFile);
 		if (activeFileInResults) {
 			openNote(activeFileInResults.path, true);
-		} else if ($activeFile !== tasks[0]?.path) {
+		} else if (tasks.length > 0 && $activeFile !== tasks[0].path) {
 			openNote(tasks[0].path, true);
 		}
 	});
