@@ -331,6 +331,9 @@ importers:
       tiptap-markdown:
         specifier: ^0.8.9
         version: 0.8.10(@tiptap/core@2.22.3(@tiptap/pm@2.22.3))
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.67
     devDependencies:
       '@haptic/eslint-config':
         specifier: workspace:*
