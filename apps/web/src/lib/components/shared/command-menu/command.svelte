@@ -8,12 +8,14 @@
 	import { formatTimeAgo, shortcutToString } from '@/utils';
 	import { apiClient } from '@/api/client';
 	import * as Command from '@haptic/ui/components/command';
-	import { Loader, Twitter } from 'lucide-svelte';
+	import * as ContextMenu from '@haptic/ui/components/context-menu';
+	import { Loader, Twitter, Trash2 } from 'lucide-svelte';
 	import { setMode, userPrefersMode } from 'mode-watcher';
 	import { onMount } from 'svelte';
 	import { mainCommands as commands, createNoteCommands } from './commands';
 	import { getAllItems } from './helpers';
 	import { get } from 'svelte/store';
+	import DeleteCollectionDialog from '../delete-collection-dialog.svelte';
 
 	let open = false;
 	let search = '';
@@ -22,6 +24,10 @@
 	let openedWithShortcut = '';
 	let fileInput: HTMLInputElement | null = null;
 	let loadingCollection: { loading: boolean; progress: number } | undefined = undefined;
+	
+	// Delete dialog state
+	let deleteDialogOpen = false;
+	let selectedCollection: { id: string; name: string } | null = null;
 
 	const shortcutKeyMap: Record<string, string | undefined> = {
 		'cmd+k': 'default',
@@ -59,6 +65,25 @@
 
 		page = newPage;
 		search = '';
+	}
+
+	function handleDeleteClick(collection: { id: string; name: string; path: string }) {
+		selectedCollection = { id: collection.id, name: collection.name };
+		deleteDialogOpen = true;
+		// Close command menu when opening delete dialog
+		handlePageState(undefined);
+	}
+
+	async function handleDeleteSuccess() {
+		// Refresh the page if we're still on open_collection page
+		if (page === 'open_collection') {
+			// Force re-render by toggling page
+			const currentPage = page;
+			page = undefined;
+			setTimeout(() => {
+				page = currentPage;
+			}, 0);
+		}
 	}
 
 	onMount(() => {
@@ -448,27 +473,67 @@
 						<Command.Group heading="Browse recent collections">
 							{#each collections
 								.filter((c) => c.path !== $collection)
-								.sort((a, b) => +new Date(b.lastOpened) - +new Date(a.lastOpened)) as collection}
-								<Command.Item
-									class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-									value={collection.path}
-									onSelect={async () => {
-										await goto('/notes');
-										loadCollection(collection.path);
-										handlePageState(undefined);
-									}}
-								>
-									<div class="flex w-full items-center justify-between">
-										<div class="flex items-center gap-1.5">
-											<Icon name="folder" />
-											<span class="text-foreground/80 group:hover:text-foreground/100"></span>
-											{collection.name}
-										</div>
-										<span class="ml-auto text-xs text-muted-foreground h-full"
-											>{formatTimeAgo(new Date(collection.lastOpened))}
-										</span>
-									</div>
-								</Command.Item>
+								.sort((a, b) => +new Date(b.lastOpened) - +new Date(a.lastOpened)) as collectionItem}
+								<ContextMenu.Root>
+									<ContextMenu.Trigger class="w-full">
+										<Command.Item
+											class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
+											value={collectionItem.path}
+											onSelect={async () => {
+												await goto('/notes');
+												loadCollection(collectionItem.path);
+												handlePageState(undefined);
+											}}
+										>
+											<div class="flex w-full items-center justify-between">
+												<div class="flex items-center gap-1.5">
+													<Icon name="folder" />
+													<span class="text-foreground/80 group:hover:text-foreground/100"></span>
+													{collectionItem.name}
+												</div>
+												<div class="flex items-center gap-2">
+													<span class="text-xs text-muted-foreground h-full"
+														>{formatTimeAgo(new Date(collectionItem.lastOpened))}
+													</span>
+													{#if collections.length > 1}
+														<button
+															class="opacity-0 group-hover:opacity-100 transition-opacity"
+															on:click|stopPropagation={(e) => {
+																e.preventDefault();
+																handleDeleteClick(collectionItem);
+															}}
+														>
+															<Trash2 class="w-3 h-3 text-muted-foreground hover:text-destructive" />
+														</button>
+													{/if}
+												</div>
+											</div>
+										</Command.Item>
+									</ContextMenu.Trigger>
+									<ContextMenu.Content class="w-44">
+										<ContextMenu.Item 
+											on:click={async () => {
+												await goto('/notes');
+												loadCollection(collectionItem.path);
+												handlePageState(undefined);
+											}}
+											class="flex items-center gap-2 font-base group"
+										>
+											<Icon name="folder" class="w-3.5 h-3.5" />
+											Open Collection
+										</ContextMenu.Item>
+										{#if collections.length > 1}
+											<ContextMenu.Separator />
+											<ContextMenu.Item
+												on:click={() => handleDeleteClick(collectionItem)}
+												class="flex items-center gap-2 font-base group text-destructive focus:text-destructive"
+											>
+												<Icon name="bin" class="w-3.5 h-3.5" />
+												Delete Collection
+											</ContextMenu.Item>
+										{/if}
+									</ContextMenu.Content>
+								</ContextMenu.Root>
 							{/each}
 						</Command.Group>
 					{/if}
@@ -548,6 +613,15 @@
 		{/if}
 	</Command.List>
 </Command.Dialog>
+
+{#if selectedCollection}
+	<DeleteCollectionDialog
+		bind:open={deleteDialogOpen}
+		collectionId={selectedCollection.id}
+		collectionName={selectedCollection.name}
+		onSuccess={handleDeleteSuccess}
+	/>
+{/if}
 
 <style>
 	:global([data-cmdk-list]) {

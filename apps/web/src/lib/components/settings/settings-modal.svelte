@@ -10,9 +10,10 @@
 	import type { ComponentType } from 'svelte';
 	import Shortcut from '../shared/shortcut.svelte';
 	import Appearance from './appearance.svelte';
-	import Editor from './editor.svelte';
-	import General from './general.svelte';
-	import HapticSync from './haptic-sync.svelte';
+import Editor from './editor.svelte';
+import General from './general.svelte';
+import HapticSync from './haptic-sync.svelte';
+import Collections from './collections.svelte';
 
 	$: ({ isOpen, activePage } = $settingsStore);
 
@@ -32,6 +33,13 @@
 				name: 'Editor',
 				icon: 'editPencilSolid',
 				content: Editor
+			}
+		],
+		Data: [
+			{
+				name: 'Collections',
+				icon: 'folderSolid',
+				content: Collections
 			}
 		],
 		Syncronization: [

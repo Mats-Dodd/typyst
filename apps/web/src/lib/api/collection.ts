@@ -164,3 +164,59 @@ export const getCollections = async (): Promise<Collection[]> => {
 		return [];
 	}
 };
+
+// Delete a collection
+export const deleteCollection = async (collectionId: string): Promise<{
+	success: boolean;
+	deletedCount?: { total: number; folders: number; notes: number };
+}> => {
+	try {
+		const response = await apiClient.request<{
+			success: boolean;
+			deletedCount: { total: number; folders: number; notes: number };
+		}>(`/api/collections/${collectionId}`, {
+			method: 'DELETE'
+		});
+		return response;
+	} catch (error) {
+		console.error('Error deleting collection:', error);
+		throw error;
+	}
+};
+
+// Get collection stats
+export const getCollectionStats = async (collectionId: string): Promise<{
+	collection: {
+		id: string;
+		name: string;
+		path: string;
+		lastOpened: string;
+		createdAt: string;
+	};
+	stats: {
+		total: number;
+		folders: number;
+		notes: number;
+	};
+}> => {
+	try {
+		const response = await apiClient.request<{
+			collection: {
+				id: string;
+				name: string;
+				path: string;
+				lastOpened: string;
+				createdAt: string;
+			};
+			stats: {
+				total: number;
+				folders: number;
+				notes: number;
+			};
+		}>(`/api/collections/${collectionId}/stats`);
+		return response;
+	} catch (error) {
+		console.error('Error fetching collection stats:', error);
+		throw error;
+	}
+};

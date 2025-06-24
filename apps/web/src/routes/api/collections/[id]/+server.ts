@@ -140,9 +140,42 @@ export const DELETE = async (event: RequestEvent) => {
 
 		await verifyUserOwnership(userId, id, schema.collection);
 
+		// Check if this is the user's last collection
+		const userCollections = await db
+			.select({ id: schema.collection.id })
+			.from(schema.collection)
+			.where(eq(schema.collection.userId, userId));
+
+		if (userCollections.length <= 1) {
+			return json(
+				{ error: 'Cannot delete your last collection', code: 'LAST_COLLECTION' },
+				{ status: 400 }
+			);
+		}
+
+		// Get collection stats before deletion
+		const entriesResult = await db
+			.select({ id: schema.entry.id, isFolder: schema.entry.isFolder })
+			.from(schema.entry)
+			.where(eq(schema.entry.collectionId, id));
+
+		const entryStats = {
+			totalEntries: entriesResult.length,
+			folders: entriesResult.filter((e) => e.isFolder === true).length,
+			notes: entriesResult.filter((e) => e.isFolder === false || e.isFolder === null).length
+		};
+
+		// Delete the collection (cascades to entries and settings)
 		await db.delete(schema.collection).where(eq(schema.collection.id, id));
 
-		return json({ success: true }, { status: 200 });
+		return json({ 
+			success: true,
+			deletedCount: {
+				total: entryStats.totalEntries,
+				folders: entryStats.folders,
+				notes: entryStats.notes
+			}
+		}, { status: 200 });
 	} catch (error) {
 		console.error('Failed to delete collection:', error);
 

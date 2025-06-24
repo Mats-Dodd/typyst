@@ -114,6 +114,13 @@ export const mainCommands: CommandGroup[] = [
 				}
 			},
 			{
+				title: 'Manage collections',
+				icon: 'folderSolid',
+				onSelect: () => {
+					settingsStore.update((state) => ({ ...state, isOpen: true, activePage: 'collections' }));
+				}
+			},
+			{
 				title: 'Go to settings',
 				icon: 'settings',
 				shortcut: SHORTCUTS['app:settings'],
