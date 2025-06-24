@@ -5,6 +5,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"dev-web": "dotenv -e .env -- vite dev",
+		"build-web": "dotenv -e .env -- vite build",
 		"build": "vite build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
