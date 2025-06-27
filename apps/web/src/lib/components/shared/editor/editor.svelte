@@ -34,6 +34,7 @@
 	let isCollaborationEnabled = false;
 	let registeredLoroPlugins: any[] = [];
 	let isInitializing = false;
+	let previousActiveFile: string | null = null;  // Track the previous active file
 
 	// Initialize Loro document for collaboration
 	async function initializeLoroDocument(entryId: string) {
@@ -44,17 +45,8 @@
 		isInitializing = true;
 
 		try {
-			// First, unregister any existing Loro plugins
-			if (tiptapEditor && registeredLoroPlugins.length > 0) {
-				registeredLoroPlugins.forEach((plugin) => {
-					try {
-						tiptapEditor.unregisterPlugin(plugin);
-					} catch (e) {
-						console.warn('Failed to unregister plugin:', e);
-					}
-				});
-				registeredLoroPlugins = [];
-			}
+			// Ensure we've cleaned up the previous document first
+			await cleanupLoroDocument();
 
 			// Wait for the editor to be ready
 			if (!tiptapEditor || tiptapEditor.isDestroyed) {
@@ -92,10 +84,6 @@
 
 			// Ensure the editor is still valid before adding plugins
 			if (tiptapEditor && !tiptapEditor.isDestroyed && loroDoc) {
-				// Create a new transaction to ensure clean state
-				const state = tiptapEditor.state;
-				const tr = state.tr;
-				
 				const loroPlugins = [
 					LoroSyncPlugin({ doc: loroDoc as any }),
 					LoroCursorPlugin(awareness!, {
@@ -123,6 +111,29 @@
 		} finally {
 			isInitializing = false;
 		}
+	}
+
+	// Clean up Loro document and plugins
+	async function cleanupLoroDocument() {
+		// Unregister existing plugins
+		if (tiptapEditor && !tiptapEditor.isDestroyed && registeredLoroPlugins.length > 0) {
+			for (const plugin of registeredLoroPlugins) {
+				try {
+					tiptapEditor.unregisterPlugin(plugin);
+				} catch (e) {
+					console.warn('Failed to unregister plugin:', e);
+				}
+			}
+			registeredLoroPlugins = [];
+		}
+
+		// Clean up old document reference
+		loroDoc = null;
+		awareness = null;
+		isCollaborationEnabled = false;
+
+		// Note: We don't remove the document from the store here anymore
+		// It will be managed by the openNote function and on component destroy
 	}
 
 	// Generate consistent color for user
@@ -254,33 +265,34 @@
 		});
 
 		// Watch for active file changes
-		unsubscribe = activeFile.subscribe((entryId) => {
-			// Clean up previous Loro document if switching files
-			if (loroDoc && $activeFile && entryId !== $activeFile) {
-				// Unregister existing plugins before switching
-				if (tiptapEditor && registeredLoroPlugins.length > 0) {
-					registeredLoroPlugins.forEach((plugin) => {
-						try {
-							tiptapEditor.unregisterPlugin(plugin);
-						} catch (e) {
-							console.warn('Failed to unregister plugin during file switch:', e);
-						}
-					});
-					registeredLoroPlugins = [];
-				}
-				
-				// Clean up old document
-				loroDocuments.removeDocument($activeFile);
-				loroDoc = null;
-				awareness = null;
-				isCollaborationEnabled = false;
+		unsubscribe = activeFile.subscribe(async (entryId) => {
+			// Skip if we're switching to the same file
+			if (entryId === previousActiveFile) {
+				return;
 			}
 
+			// Clear the editor content first when switching files
+			if (tiptapEditor && !tiptapEditor.isDestroyed) {
+				// Clear content to avoid confusion during transition
+				tiptapEditor.commands.clearContent();
+			}
+
+			// Clean up previous document if switching files
+			if (previousActiveFile && previousActiveFile !== entryId) {
+				await cleanupLoroDocument();
+			}
+
+			// Update the previous file reference
+			previousActiveFile = entryId;
+
+			// Initialize new document if we have a new file
 			if (entryId && tiptapEditor && !tiptapEditor.isDestroyed) {
-				// Delay Loro initialization to ensure editor content is set first
-				setTimeout(() => {
-					initializeLoroDocument(entryId);
-				}, 100);
+				// Use double requestAnimationFrame to ensure DOM updates have completed
+				requestAnimationFrame(() => {
+					requestAnimationFrame(() => {
+						initializeLoroDocument(entryId);
+					});
+				});
 			}
 		});
 	});
@@ -311,9 +323,9 @@
 			tiptapEditor.destroy();
 		}
 
-		// Clean up Loro resources
-		if ($activeFile) {
-			loroDocuments.removeDocument($activeFile);
+		// Clean up Loro document for the current file
+		if (previousActiveFile) {
+			loroDocuments.removeDocument(previousActiveFile);
 		}
 	});
 </script>

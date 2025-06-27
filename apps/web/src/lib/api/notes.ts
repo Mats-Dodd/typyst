@@ -65,6 +65,11 @@ export const createNote = async (dirPath: string, name?: string) => {
 // Open a note
 export async function openNote(path: string, skipHistory = false) {
 	try {
+		// If we're switching to the same file, just return
+		if (get(activeFile) === path) {
+			return;
+		}
+
 		// Resolve path to ID
 		const id = await apiClient.resolvePath(path);
 
@@ -79,22 +84,20 @@ export async function openNote(path: string, skipHistory = false) {
 				// Create or get the Loro document for this path
 				let docState = loroDocuments.getDocument(path);
 				if (!docState) {
-					// Create new document
-					const result = loroDocuments.createDocument(path);
-					docState = {
-						doc: result.doc,
-						awareness: result.awareness,
-						entryId: path,
-						isDirty: false
-					};
+					// Create new document using the store method
+					loroDocuments.createDocument(path);
+					// Get the document we just created
+					docState = loroDocuments.getDocument(path);
 				}
 				
-				// Convert number array to Uint8Array and import
-				const snapshotBytes = new Uint8Array(file.loroSnapshot);
-				docState.doc.import(snapshotBytes);
-				hasLoroContent = true;
-				
-				console.log('Loaded Loro snapshot for', path);
+				if (docState) {
+					// Convert number array to Uint8Array and import
+					const snapshotBytes = new Uint8Array(file.loroSnapshot);
+					docState.doc.import(snapshotBytes);
+					hasLoroContent = true;
+					
+					console.log('Loaded Loro snapshot for', path);
+				}
 			} catch (error) {
 				console.error('Error loading Loro snapshot:', error);
 			}
@@ -105,21 +108,23 @@ export async function openNote(path: string, skipHistory = false) {
 			// Create a Loro document with the content
 			let docState = loroDocuments.getDocument(path);
 			if (!docState) {
-				const result = loroDocuments.createDocument(path, file.content);
-				docState = {
-					doc: result.doc,
-					awareness: result.awareness,
-					entryId: path,
-					isDirty: true // Mark as dirty to ensure it gets saved with a snapshot
-				};
+				// Use the store method to create the document
+				loroDocuments.createDocument(path, file.content);
+				// Mark as dirty to ensure it gets saved with a snapshot
+				loroDocuments.markDirty(path);
 			}
+			// Wait a bit before setting editor content to avoid race conditions
+			await new Promise(resolve => setTimeout(resolve, 50));
 			// For migration: set editor content for now
 			// This will be removed once all entries have Loro snapshots
 			setEditorContent(file.content);
 		} else if (!hasLoroContent) {
 			// No snapshot and no content - create empty document
-			const result = loroDocuments.createDocument(path, '');
+			loroDocuments.createDocument(path, '');
 		}
+
+		// Small delay to ensure Loro document is ready
+		await new Promise(resolve => requestAnimationFrame(resolve));
 
 		// NOW set active file - the editor will pick up the already-initialized Loro document
 		activeFile.set(path);
