@@ -56,7 +56,7 @@
 				registeredLoroPlugins = [];
 			}
 
-			// Wait for the editor to be ready and have content
+			// Wait for the editor to be ready
 			if (!tiptapEditor || tiptapEditor.isDestroyed) {
 				console.warn('Editor not ready for Loro initialization');
 				return;
@@ -65,19 +65,13 @@
 			// Use requestAnimationFrame to ensure the editor has finished processing
 			await new Promise(resolve => requestAnimationFrame(resolve));
 
-			// Get or create Loro document for this entry
+			// Get existing Loro document for this entry
 			let docState = loroDocuments.getDocument(entryId);
 
 			if (!docState) {
-				// Create new document with initial content from editor
-				const content = tiptapEditor?.getHTML() || '';
-				const result = loroDocuments.createDocument(entryId, content);
-				docState = {
-					doc: result.doc,
-					awareness: result.awareness,
-					entryId,
-					isDirty: false
-				};
+				console.warn('No Loro document found for entry:', entryId);
+				// Don't create a new document here - it should have been created in openNote
+				return;
 			}
 
 			loroDoc = docState.doc;
@@ -122,6 +116,7 @@
 				});
 
 				isCollaborationEnabled = true;
+				console.log('Loro collaboration enabled for', entryId);
 			}
 		} catch (error) {
 			console.error('Error initializing Loro document:', error);

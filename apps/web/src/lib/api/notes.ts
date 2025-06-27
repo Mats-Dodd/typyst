@@ -6,6 +6,7 @@ import { apiClient } from './client';
 import type { Entry, CreateEntryRequest, UpdateEntryRequest, EntryWithMetadata } from './types';
 import { refreshCollection } from './store-helpers';
 import { loroDocuments } from '@/stores/loro-document';
+import { LoroDoc } from 'loro-crdt';
 
 // Create a new note
 export const createNote = async (dirPath: string, name?: string) => {
@@ -20,14 +21,29 @@ export const createNote = async (dirPath: string, name?: string) => {
 			name = getNextUntitledName(files, 'Untitled', '.md');
 		}
 
+		// Create a new Loro document for the note
+		const doc = new LoroDoc();
+		doc.setRecordTimestamp(true);
+		doc.setChangeMergeInterval(10);
+		
+		// Create an empty snapshot
+		const snapshot = doc.export({ mode: 'snapshot' });
+		// Convert Uint8Array to base64 string
+		let binaryString = '';
+		snapshot.forEach((byte: number) => {
+			binaryString += String.fromCharCode(byte);
+		});
+		const loroSnapshot = btoa(binaryString);
+
 		// Create the new note via API
 		const createRequest: CreateEntryRequest = {
 			name,
 			path: `${dirPath}/${name}`.replace('//', '/'),
-			content: '',
+			content: '', // Keep empty content as a fallback
 			parentPath: dirPath,
 			collectionId: get(collectionId) as string,
-			isFolder: false
+			isFolder: false,
+			loroSnapshot
 		};
 
 		await apiClient.request('/api/entries', {
@@ -55,29 +71,58 @@ export async function openNote(path: string, skipHistory = false) {
 		// Get note content and Loro snapshot
 		const file = await apiClient.request<{ content?: string; loroSnapshot?: number[] | null }>(`/api/entries/${id}`);
 
-		// Set active file first to prepare Loro document
-		activeFile.set(path);
-
-		// Small delay to ensure Loro is initialized before setting content
-		await new Promise(resolve => setTimeout(resolve, 50));
-
-		// If there's a Loro snapshot, load it
+		// Initialize Loro document BEFORE setting active file
+		let hasLoroContent = false;
+		
 		if (file.loroSnapshot && Array.isArray(file.loroSnapshot)) {
 			try {
-				const docState = loroDocuments.getDocument(path);
-				if (docState) {
-					// Convert number array to Uint8Array
-					const snapshotBytes = new Uint8Array(file.loroSnapshot);
-					docState.doc.import(snapshotBytes);
+				// Create or get the Loro document for this path
+				let docState = loroDocuments.getDocument(path);
+				if (!docState) {
+					// Create new document
+					const result = loroDocuments.createDocument(path);
+					docState = {
+						doc: result.doc,
+						awareness: result.awareness,
+						entryId: path,
+						isDirty: false
+					};
 				}
+				
+				// Convert number array to Uint8Array and import
+				const snapshotBytes = new Uint8Array(file.loroSnapshot);
+				docState.doc.import(snapshotBytes);
+				hasLoroContent = true;
+				
+				console.log('Loaded Loro snapshot for', path);
 			} catch (error) {
 				console.error('Error loading Loro snapshot:', error);
-				// Continue without snapshot - the editor will sync from content
 			}
 		}
+		
+		// If no Loro snapshot but we have content, we need to initialize from content
+		if (!hasLoroContent && file.content) {
+			// Create a Loro document with the content
+			let docState = loroDocuments.getDocument(path);
+			if (!docState) {
+				const result = loroDocuments.createDocument(path, file.content);
+				docState = {
+					doc: result.doc,
+					awareness: result.awareness,
+					entryId: path,
+					isDirty: true // Mark as dirty to ensure it gets saved with a snapshot
+				};
+			}
+			// For migration: set editor content for now
+			// This will be removed once all entries have Loro snapshots
+			setEditorContent(file.content);
+		} else if (!hasLoroContent) {
+			// No snapshot and no content - create empty document
+			const result = loroDocuments.createDocument(path, '');
+		}
 
-		// Then set the editor content
-		setEditorContent(file.content ?? '');
+		// NOW set active file - the editor will pick up the already-initialized Loro document
+		activeFile.set(path);
 
 		if (!skipHistory) {
 			noteHistory.update((history) => {
