@@ -14,7 +14,7 @@ import { collection } from './collection';
 
 export const bytea = customType<{ data: Buffer | Uint8Array }>({
   dataType() {
-    return 'bytea'; // emitted in CREATE TABLE
+    return 'bytea';
   }
 });
 
