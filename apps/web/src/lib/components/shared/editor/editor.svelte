@@ -15,50 +15,175 @@
 	import Shortcut from '../shortcut.svelte';
 	import { SHORTCUTS } from '@/constants';
 	import { get } from 'svelte/store';
+	import {
+		LoroSyncPlugin,
+		LoroCursorPlugin,
+		LoroUndoPlugin,
+		type CursorAwareness
+	} from 'loro-prosemirror';
+	import { loroDocuments } from '@/stores/loro-document';
+	import type { LoroDoc } from 'loro-crdt';
+	import { getUser } from '@/stores/session';
 
 	let element: HTMLDivElement;
 	let tiptapEditor: Editor;
 	let timeout: NodeJS.Timeout;
+	let loroDoc: LoroDoc | null = null;
+	let awareness: CursorAwareness | null = null;
+	let unsubscribe: (() => void) | null = null;
+	let isCollaborationEnabled = false;
+	let registeredLoroPlugins: any[] = [];
+	let isInitializing = false;
+
+	// Initialize Loro document for collaboration
+	async function initializeLoroDocument(entryId: string) {
+		// Prevent concurrent initializations
+		if (isInitializing) {
+			return;
+		}
+		isInitializing = true;
+
+		try {
+			// First, unregister any existing Loro plugins
+			if (tiptapEditor && registeredLoroPlugins.length > 0) {
+				registeredLoroPlugins.forEach((plugin) => {
+					tiptapEditor.unregisterPlugin(plugin);
+				});
+				registeredLoroPlugins = [];
+			}
+
+			// Get or create Loro document for this entry
+			let docState = loroDocuments.getDocument(entryId);
+
+			if (!docState) {
+				// Create new document with initial content from editor
+				const content = tiptapEditor?.getHTML() || '';
+				const result = loroDocuments.createDocument(entryId, content);
+				docState = {
+					doc: result.doc,
+					awareness: result.awareness,
+					entryId,
+					isDirty: false
+				};
+			}
+
+			loroDoc = docState.doc;
+			awareness = docState.awareness;
+
+			// Set user info for awareness
+			const user = getUser();
+			if (user && awareness) {
+				awareness.setLocalState({
+					user: {
+						name: user.name || user.email || 'Anonymous',
+						color: generateUserColor(user.id)
+					},
+					anchor: null,
+					focus: null
+				});
+			}
+
+			// Add Loro plugins to editor
+			if (tiptapEditor && loroDoc) {
+				const loroPlugins = [
+					LoroSyncPlugin({ doc: loroDoc as any }),
+					LoroCursorPlugin(awareness!, {
+						createCursor: defaultCursorBuilder,
+						createSelection: defaultSelectionBuilder
+					}),
+					LoroUndoPlugin({ doc: loroDoc as any })
+				];
+
+				// Register plugins and keep track of them
+				loroPlugins.forEach((plugin) => {
+					tiptapEditor.registerPlugin(plugin);
+					registeredLoroPlugins.push(plugin);
+				});
+
+				isCollaborationEnabled = true;
+			}
+		} finally {
+			isInitializing = false;
+		}
+	}
+
+	// Generate consistent color for user
+	function generateUserColor(userId: string): string {
+		const colors = [
+			'#FF6B6B',
+			'#4ECDC4',
+			'#45B7D1',
+			'#96CEB4',
+			'#FFEAA7',
+			'#DDA0DD',
+			'#98D8C8',
+			'#F8B500'
+		];
+		const hash = userId.split('').reduce((acc, char) => {
+			return char.charCodeAt(0) + ((acc << 5) - acc);
+		}, 0);
+		return colors[Math.abs(hash) % colors.length];
+	}
+
+	// Default cursor builder for remote cursors
+	function defaultCursorBuilder(user: any) {
+		const cursor = document.createElement('span');
+		cursor.classList.add('remote-cursor');
+		cursor.style.borderLeftColor = user.color;
+		cursor.setAttribute('data-user', user.name);
+		return cursor;
+	}
+
+	// Default selection builder for remote selections
+	function defaultSelectionBuilder(user: any) {
+		return {
+			class: 'remote-selection',
+			style: `background-color: ${user.color}20;`
+		};
+	}
 
 	onMount(() => {
+		// Create base editor configuration
+		const extensions = [
+			StarterKit.configure({
+				document: false,
+				hardBreak: false,
+				paragraph: {
+					HTMLAttributes: {
+						class: 'min-w-[1px] my-1 leading-5'
+					}
+				}
+			}),
+			CharacterCount,
+			Document,
+			SearchAndReplace.configure({
+				searchResultClass: 'search-result',
+				disableRegex: false
+			}),
+			Typography,
+			TaskList,
+			TaskItem.configure({
+				HTMLAttributes: {
+					class:
+						'flex items-start pl-1.5 gap-2 [&>div]:mb-0 [&>label]:mt-0 [&>div]:w-full [&>div>p]:inline-block [&>label]:inline-flex [&>label]:items-center [&>label>input]:rounded-md'
+				},
+				nested: true
+			}),
+			Link.configure({
+				HTMLAttributes: {
+					class:
+						'text-primary underline hover:text-primary/80 transition-all cursor-pointer text-base [&>*]:font-normal'
+				}
+			}),
+			Markdown.configure({
+				linkify: true,
+				transformPastedText: true
+			})
+		];
+
 		tiptapEditor = new Editor({
 			element: element,
-			extensions: [
-				StarterKit.configure({
-					document: false,
-					hardBreak: false,
-					paragraph: {
-						HTMLAttributes: {
-							class: 'min-w-[1px] my-1 leading-5'
-						}
-					}
-				}),
-				CharacterCount,
-				Document,
-				SearchAndReplace.configure({
-					searchResultClass: 'search-result',
-					disableRegex: false
-				}),
-				Typography,
-				TaskList,
-				TaskItem.configure({
-					HTMLAttributes: {
-						class:
-							'flex items-start pl-1.5 gap-2 [&>div]:mb-0 [&>label]:mt-0 [&>div]:w-full [&>div>p]:inline-block [&>label]:inline-flex [&>label]:items-center [&>label>input]:rounded-md'
-					},
-					nested: true
-				}),
-				Link.configure({
-					HTMLAttributes: {
-						class:
-							'text-primary underline hover:text-primary/80 transition-all cursor-pointer text-base [&>*]:font-normal'
-					}
-				}),
-				Markdown.configure({
-					linkify: true,
-					transformPastedText: true
-				})
-			],
+			extensions,
 			editorProps: {
 				attributes: {
 					class: 'prose prose-theme mx-auto focus:outline-none min-h-full pb-6 select-text'
@@ -70,6 +195,11 @@
 				editor.set(tiptapEditor);
 			},
 			onUpdate: async () => {
+				// Mark Loro document as dirty when content changes
+				if (loroDoc && $activeFile) {
+					loroDocuments.markDirty($activeFile);
+				}
+
 				// If timeout before 500ms, clear it
 				if (timeout) {
 					clearTimeout(timeout);
@@ -82,6 +212,10 @@
 						saveNote($activeFile!)
 							.then(() => {
 								editor.notifySaveEvent();
+								// Mark Loro document as clean after successful save
+								if ($activeFile) {
+									loroDocuments.markClean($activeFile, loroDoc?.version().toString());
+								}
 							})
 							.catch((error) => {
 								console.error('Error saving note:', error);
@@ -90,11 +224,36 @@
 				}, $collectionSettings.editor.auto_save_debounce);
 			}
 		});
+
+		// Watch for active file changes
+		unsubscribe = activeFile.subscribe((entryId) => {
+			if (entryId && tiptapEditor) {
+				// Initialize Loro for the new active file
+				initializeLoroDocument(entryId);
+			}
+		});
 	});
 
 	onDestroy(() => {
-		if (editor) {
+		if (unsubscribe) {
+			unsubscribe();
+		}
+
+		// Unregister Loro plugins before destroying editor
+		if (tiptapEditor && registeredLoroPlugins.length > 0) {
+			registeredLoroPlugins.forEach((plugin) => {
+				tiptapEditor.unregisterPlugin(plugin);
+			});
+			registeredLoroPlugins = [];
+		}
+
+		if (tiptapEditor) {
 			tiptapEditor.destroy();
+		}
+
+		// Clean up Loro resources
+		if ($activeFile) {
+			loroDocuments.removeDocument($activeFile);
 		}
 	});
 </script>
@@ -177,5 +336,42 @@
 
 	div :global(.search-result-current) {
 		background-color: rgba(248, 160, 30, 0.5);
+	}
+
+	/* Remote cursor styles */
+	div :global(.remote-cursor) {
+		position: absolute;
+		border-left: 2px solid;
+		height: 1.2em;
+		pointer-events: none;
+		margin-left: -1px;
+		margin-top: -1px;
+	}
+
+	div :global(.remote-cursor::before) {
+		content: attr(data-user);
+		position: absolute;
+		top: -1.4em;
+		left: -1px;
+		font-size: 12px;
+		padding: 2px 6px;
+		background-color: inherit;
+		border-color: inherit;
+		border: 1px solid;
+		border-radius: 3px 3px 3px 0;
+		white-space: nowrap;
+		opacity: 0;
+		transition: opacity 0.3s;
+	}
+
+	div :global(.remote-cursor:hover::before) {
+		opacity: 1;
+	}
+
+	/* Remote selection styles */
+	div :global(.remote-selection) {
+		position: relative;
+		pointer-events: none;
+		opacity: 0.7;
 	}
 </style>

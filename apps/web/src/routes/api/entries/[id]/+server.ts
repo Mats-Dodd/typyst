@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { db, getUserId, schema, verifyUserOwnership } from '$lib/server/db';
 import { eq, and } from 'drizzle-orm';
+import base64 from 'base64-js';
 
 const validateEntryPath = (path: string): string | null => {
 	if (!path || typeof path !== 'string') {
@@ -46,7 +47,13 @@ export const GET = async (event: RequestEvent) => {
 			return json({ error: 'Entry not found', code: 'NOT_FOUND' }, { status: 404 });
 		}
 
-		return json(entry, { status: 200 });
+		// Convert loroSnapshot Buffer to array for JSON serialization
+		const response = {
+			...entry,
+			loroSnapshot: entry.loroSnapshot ? Array.from(entry.loroSnapshot as Buffer) : null
+		};
+
+		return json(response, { status: 200 });
 	} catch (error) {
 		console.error('Failed to fetch entry:', error);
 
@@ -84,6 +91,7 @@ export const PUT = async (event: RequestEvent) => {
 			content: string | null;
 			isFolder: boolean;
 			size: number | null;
+			loroSnapshot: Buffer | null;
 		}> = {};
 
 		if ('path' in body) {
@@ -136,6 +144,24 @@ export const PUT = async (event: RequestEvent) => {
 			updateData.size = body.size;
 		}
 
+		if ('loroSnapshot' in body) {
+			if (!body.loroSnapshot || typeof body.loroSnapshot !== 'string') {
+				return json(
+					{ error: 'loroSnapshot must be a base64 encoded string', code: 'VALIDATION_ERROR' },
+					{ status: 400 }
+				);
+			}
+			try {
+				const snapshot = base64.toByteArray(body.loroSnapshot);
+				updateData.loroSnapshot = Buffer.from(snapshot);
+			} catch (error) {
+				return json(
+					{ error: 'Invalid base64 encoding for loroSnapshot', code: 'VALIDATION_ERROR' },
+					{ status: 400 }
+				);
+			}
+		}
+
 		if (Object.keys(updateData).length === 0) {
 			return json(
 				{ error: 'No valid fields to update', code: 'VALIDATION_ERROR' },
@@ -149,7 +175,13 @@ export const PUT = async (event: RequestEvent) => {
 			.where(eq(schema.entry.id, id))
 			.returning();
 
-		return json(updatedEntry, { status: 200 });
+		// Convert loroSnapshot Buffer to array for JSON serialization
+		const response = {
+			...updatedEntry,
+			loroSnapshot: updatedEntry.loroSnapshot ? Array.from(updatedEntry.loroSnapshot as Buffer) : null
+		};
+
+		return json(response, { status: 200 });
 	} catch (error) {
 		console.error('Failed to update entry:', error);
 

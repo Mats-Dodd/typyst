@@ -12,6 +12,7 @@ export interface CreateEntryRequest {
 	name?: string;
 	path: string;
 	content?: string;
+	loroSnapshot?: string;
 	parentPath: string;
 	collectionId: string;
 	isFolder: boolean;
@@ -23,6 +24,7 @@ export interface UpdateEntryRequest {
 	path?: string;
 	parentPath?: string;
 	content?: string;
+	loroSnapshot?: string;
 	updatedAt?: string;
 	size?: number;
 }

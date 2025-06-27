@@ -36,6 +36,7 @@ export const settingsStore = writable<SettingsStateParams>({
 
 const appSettings = writable<AppSettingsParams>(BASE_APP_SETTINGS);
 const collectionSettings = writable<CollectionSettingsParams>(BASE_COLLECTION_SETTINGS);
+export const currentEntryId = writable<string | null>(null);
 
 export {
 	activeFile,

@@ -1,8 +1,14 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
+import wasm from 'vite-plugin-wasm';
+import topLevelAwait from 'vite-plugin-top-level-await';
 
 export default defineConfig({
-	plugins: [sveltekit()],
+	plugins: [
+		wasm(),
+		topLevelAwait(),
+		sveltekit()
+	],
 	server: {
 		port: 5173,
 		strictPort: true,
@@ -10,11 +16,20 @@ export default defineConfig({
 			allow: ['..']
 		}
 	},
+	build: {
+		target: 'esnext'
+	},
 	optimizeDeps: {
-		exclude: ['@automerge/automerge-wasm']
+		exclude: ['@automerge/automerge-wasm', 'loro-crdt', 'loro-prosemirror'],
+		esbuildOptions: {
+			target: 'esnext'
+		}
 	},
 	ssr: {
 		noExternal: ['radix-icons-svelte']
 	},
-	assetsInclude: ['**/*.wasm']
+	assetsInclude: ['**/*.wasm'],
+	worker: {
+		format: 'es'
+	}
 });
