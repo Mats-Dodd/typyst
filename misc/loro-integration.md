@@ -413,14 +413,12 @@ Update `apps/web/src/lib/api/types.ts`:
 ```typescript
 export interface CreateEntryRequest {
   // ... existing fields
-  loroSnapshot?: string; // base64 encoded
+  loroSnapshot: string; // base64 encoded
 }
 
 export interface UpdateEntryRequest {
   // ... existing fields
-  loroSnapshot?: string; // base64 encoded
-  loroDelta?: string; // base64 encoded
-  loroMode?: 'snapshot' | 'update';
+  loroSnapshot: string; // base64 encoded
 }
 ```
 
@@ -429,7 +427,7 @@ export interface UpdateEntryRequest {
 Update `apps/web/src/routes/api/entries/[id]/+server.ts` PUT method:
 
 ```typescript
-// Add to imports
+// src/routes/api/entries/[id]/+server.ts
 import base64 from 'base64-js';
 
 // In PUT handler, add Loro handling
@@ -568,17 +566,7 @@ Create `apps/web/src/lib/components/shared/editor/editor-container.svelte`:
 {/if}
 ```
 
-#### Step 2.4: Update Main Editor Usage
-
-Replace editor usage in routes:
-
-```typescript
-// In apps/web/src/routes/(app)/notes/+page.svelte
-// Replace: <Editor />
-// With: <EditorContainer />
-```
-
-#### Step 2.5: Add Current Entry ID Store
+#### Step 2.4: Add Current Entry ID Store
 
 Update `apps/web/src/lib/store.ts`:
 
@@ -586,7 +574,7 @@ Update `apps/web/src/lib/store.ts`:
 export const currentEntryId = writable<string | null>(null);
 ```
 
-#### Step 2.6: Handle Entry Creation
+#### Step 2.5: Handle Entry Creation
 
 Update `apps/web/src/lib/api/notes.ts`:
 
@@ -650,3 +638,410 @@ export const createNote = async (dirPath: string, name?: string) => {
 ---
 
 © 2025 Weird Inc. MIT License
+
+---
+
+## 12  Refined Web Integration Plan - Working with Existing Editor
+
+This section provides a refined approach to integrate Loro CRDT into Haptic's existing Tiptap editor.
+
+### Overview
+
+We'll integrate Loro by:
+1. Adding Loro as a plugin to the existing Tiptap setup
+2. Keeping all current extensions and functionality
+3. Using Loro for all document storage from the start
+
+### Phase 1: Enhanced Loro Document Store
+
+#### Step 1.1: Update Loro Document Store
+
+The existing `apps/web/src/lib/stores/loro-document.ts` is good, but needs a few enhancements:
+
+```typescript
+import { writable, derived, get } from 'svelte/store';
+import { LoroDoc } from 'loro-crdt';
+import { CursorAwareness } from 'loro-prosemirror';
+
+interface LoroDocumentState {
+  doc: LoroDoc;
+  awareness: CursorAwareness;
+  entryId: string;
+  lastSyncedVersion?: string; // Track version for sync
+  isDirty: boolean;
+}
+
+function createLoroDocumentStore() {
+  const documents = writable<Map<string, LoroDocumentState>>(new Map());
+  
+  return {
+    subscribe: documents.subscribe,
+    
+    createDocument: (entryId: string, initialContent?: string) => {
+      const doc = new LoroDoc();
+      doc.setRecordTimestamp(true);
+      doc.setChangeMergeInterval(10);
+      
+      // Initialize with content if provided
+      if (initialContent) {
+        const text = doc.getText('content');
+        text.insert(0, initialContent);
+      }
+      
+      const awareness = new CursorAwareness(doc.peerIdStr);
+      
+      documents.update(docs => {
+        docs.set(entryId, { 
+          doc, 
+          awareness, 
+          entryId,
+          isDirty: false
+        });
+        return docs;
+      });
+      
+      return { doc, awareness };
+    },
+    
+    getDocument: (entryId: string) => {
+      const currentDocs = get(documents);
+      return currentDocs.get(entryId);
+    },
+    
+    markDirty: (entryId: string) => {
+      documents.update(docs => {
+        const state = docs.get(entryId);
+        if (state) {
+          state.isDirty = true;
+        }
+        return docs;
+      });
+    },
+    
+    markClean: (entryId: string, version?: string) => {
+      documents.update(docs => {
+        const state = docs.get(entryId);
+        if (state) {
+          state.isDirty = false;
+          state.lastSyncedVersion = version;
+        }
+        return docs;
+      });
+    },
+    
+    removeDocument: (entryId: string) => {
+      documents.update(docs => {
+        docs.delete(entryId);
+        return docs;
+      });
+    }
+  };
+}
+
+export const loroDocuments = createLoroDocumentStore();
+```
+
+### Phase 2: Modify Existing Editor Component
+
+#### Step 2.1: Enhanced Editor with Loro Support
+
+Update `apps/web/src/lib/components/shared/editor/editor.svelte`:
+
+```svelte
+<script lang="ts">
+	import { onMount, onDestroy } from 'svelte';
+	import { Editor } from '@tiptap/core';
+	import { editor, activeFile, collectionSettings, currentEntryId } from '@/store';
+	import { loroDocuments } from '@/stores/loro-document';
+	import { LoroSyncPlugin, LoroUndoPlugin, undo, redo } from 'loro-prosemirror';
+	import { keymap } from '@tiptap/pm/keymap';
+	import StarterKit from '@tiptap/starter-kit';
+	// ... other existing imports
+	
+	let element: HTMLDivElement;
+	let tiptapEditor: Editor;
+	let timeout: NodeJS.Timeout;
+	let loroDoc = null;
+	let loroUnsubscribe: (() => void) | null = null;
+	
+	// Get or create Loro document when entryId changes
+	$: if ($currentEntryId) {
+		let state = loroDocuments.getDocument($currentEntryId);
+		if (!state) {
+			// Will be initialized when content is loaded
+			state = loroDocuments.createDocument($currentEntryId);
+		}
+		loroDoc = state.doc;
+	}
+
+	onMount(() => {
+		const extensions = [
+			StarterKit.configure({
+				document: false,
+				hardBreak: false,
+				history: false, // Disable native history, Loro handles it
+				paragraph: {
+					HTMLAttributes: {
+						class: 'min-w-[1px] my-1 leading-5'
+					}
+				}
+			}),
+			// ... all other existing extensions
+		];
+		
+		const plugins = [];
+		
+		// Add Loro plugins
+		if (loroDoc) {
+			plugins.push(
+				LoroSyncPlugin({ doc: loroDoc }),
+				LoroUndoPlugin({ doc: loroDoc }),
+				keymap({ 
+					'Mod-z': undo, 
+					'Mod-Shift-z': redo, 
+					'Mod-y': redo 
+				})
+			);
+		}
+		
+		tiptapEditor = new Editor({
+			element: element,
+			extensions,
+			editorProps: {
+				attributes: {
+					class: 'prose prose-theme mx-auto focus:outline-none min-h-full pb-6 select-text'
+				},
+				plugins
+			},
+			onTransaction: () => {
+				tiptapEditor = tiptapEditor;
+				editor.set(tiptapEditor);
+			},
+			onUpdate: async () => {
+				// Mark document as dirty
+				if ($currentEntryId) {
+					loroDocuments.markDirty($currentEntryId);
+				}
+				
+				// Auto-save logic
+				if (timeout) {
+					clearTimeout(timeout);
+				}
+
+				timeout = setTimeout(async () => {
+					if ($collectionSettings.editor.auto_save) {
+						console.log('Saving note...');
+						saveNote($activeFile!)
+							.then(() => {
+								editor.notifySaveEvent();
+								// Mark Loro document as clean after save
+								if ($currentEntryId) {
+									loroDocuments.markClean($currentEntryId);
+								}
+							})
+							.catch((error) => {
+								console.error('Error saving note:', error);
+							});
+					}
+				}, $collectionSettings.editor.auto_save_debounce);
+			}
+		});
+		
+		// Subscribe to Loro changes
+		if (loroDoc) {
+			loroUnsubscribe = loroDoc.subscribe(() => {
+				// Loro state changed
+				if ($currentEntryId) {
+					loroDocuments.markDirty($currentEntryId);
+				}
+			});
+		}
+	});
+
+	onDestroy(() => {
+		if (tiptapEditor) {
+			tiptapEditor.destroy();
+		}
+		if (loroUnsubscribe) {
+			loroUnsubscribe();
+		}
+	});
+</script>
+
+<!-- Rest of template remains the same -->
+```
+
+### Phase 3: Update Data Flow
+
+#### Step 3.1: Add Loro Support to Note Operations
+
+Update `apps/web/src/lib/api/notes.ts`:
+
+```typescript
+import { loroDocuments } from '@/stores/loro-document';
+import base64 from 'base64-js';
+import { LoroDoc } from 'loro-crdt';
+
+// Update openNote function
+export async function openNote(path: string, skipHistory = false) {
+	try {
+		const id = await apiClient.resolvePath(path);
+		const file = await apiClient.request<Entry>(`/api/entries/${id}`);
+		
+		// Get or create Loro document
+		let loroState = loroDocuments.getDocument(id);
+		if (!loroState) {
+			loroState = loroDocuments.createDocument(id);
+		}
+		
+		// Import the snapshot
+		const snapshot = new Uint8Array(file.loroSnapshot);
+		loroState.doc.import(snapshot);
+		
+		// Set editor content from Loro
+		const text = loroState.doc.getText('content');
+		setEditorContent(text.toString());
+		
+		activeFile.set(path);
+		currentEntryId.set(id);
+		
+		// ... rest of existing logic
+	} catch (error) {
+		console.error('Error opening note:', error);
+		throw error;
+	}
+}
+
+// Update save function
+export const saveNote = async (path: string) => {
+	try {
+		const id = await apiClient.resolvePath(path);
+		const loroState = loroDocuments.getDocument(id);
+		
+		if (!loroState) {
+			throw new Error('No Loro document found for entry');
+		}
+		
+		// Save Loro snapshot
+		const snapshot = loroState.doc.export({ mode: 'snapshot' });
+		const size = snapshot.length;
+		
+		const updateRequest: UpdateEntryRequest = {
+			loroSnapshot: base64.fromByteArray(snapshot),
+			updatedAt: new Date().toISOString(),
+			size
+		};
+		
+		await apiClient.request(`/api/entries/${id}`, {
+			method: 'PUT',
+			body: JSON.stringify(updateRequest)
+		});
+		
+		// Mark Loro as clean
+		loroDocuments.markClean(id);
+	} catch (error) {
+		console.error('Error saving note:', error);
+		throw error;
+	}
+};
+
+// Update createNote function
+export const createNote = async (dirPath: string, name?: string) => {
+	try {
+		// ... existing logic for name generation
+		
+		// Create new Loro document
+		const doc = new LoroDoc();
+		doc.setRecordTimestamp(true);
+		const text = doc.getText('content');
+		text.insert(0, ''); // Initialize empty
+		
+		const snapshot = doc.export({ mode: 'snapshot' });
+		const snapshotBase64 = base64.fromByteArray(snapshot);
+		
+		const createRequest: CreateEntryRequest = {
+			name,
+			path: `${dirPath}/${name}`.replace('//', '/'),
+			parentPath: dirPath,
+			collectionId: get(collectionId) as string,
+			isFolder: false,
+			loroSnapshot: snapshotBase64
+		};
+		
+		const response = await apiClient.request('/api/entries', {
+			method: 'POST',
+			body: JSON.stringify(createRequest)
+		});
+		
+		// ... rest of logic
+	} catch (error) {
+		console.error('Error creating note:', error);
+		throw error;
+	}
+};
+```
+
+#### Step 3.2: Add Store for Current Entry
+
+Update `apps/web/src/lib/store.ts`:
+
+```typescript
+export const currentEntryId = writable<string | null>(null);
+```
+
+### Phase 4: Backend Updates
+
+#### Step 4.1: Update Entry Schema
+
+Already exists in `packages/db/src/schema/entry.ts` with `loroSnapshot: bytea('loro_snapshot')`
+
+#### Step 4.2: Update API Types
+
+Add to `apps/web/src/lib/api/types.ts`:
+
+```typescript
+export interface Entry {
+	// ... existing fields
+	loroSnapshot: Uint8Array;
+}
+
+export interface UpdateEntryRequest {
+	// ... existing fields
+	loroSnapshot: string; // base64 encoded
+}
+```
+
+#### Step 4.3: Update API Endpoints
+
+Update `apps/web/src/routes/api/entries/[id]/+server.ts`:
+
+```typescript
+import base64 from 'base64-js';
+
+// In PUT handler
+const snapshot = base64.toByteArray(body.loroSnapshot);
+updateData.loroSnapshot = Buffer.from(snapshot);
+
+// In GET handler
+return json({
+	...result,
+	loroSnapshot: result.loroSnapshot ? Array.from(result.loroSnapshot) : null
+});
+```
+
+### Phase 5: Advanced Features (Future)
+
+1. **Collaboration Ready**: The architecture supports real-time collaboration
+2. **History Visualization**: Can add DAG view component later
+3. **Conflict Resolution**: Loro handles this automatically
+4. **Offline Support**: Loro documents can be synced when back online
+
+
+
+### Benefits of This Approach
+
+1. **Clean Architecture**: Loro integrated directly into existing editor
+2. **Performance**: Loro's B-tree structure handles large documents efficiently
+3. **Future-Proof**: Sets foundation for collaboration features
+4. **History Tracking**: Full version history from day one
+5. **Conflict-Free**: CRDT ensures no merge conflicts
