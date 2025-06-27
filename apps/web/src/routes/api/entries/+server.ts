@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { db, getUserId, schema, verifyUserOwnership } from '$lib/server/db';
 import { eq, and, desc } from 'drizzle-orm';
+import base64 from 'base64-js';
 
 const validateEntryPath = (path: string): string | null => {
 	if (!path || typeof path !== 'string') {
@@ -68,7 +69,7 @@ export const GET = async (event: RequestEvent) => {
 export const POST = async (event: RequestEvent) => {
 	try {
 		const userId = await getUserId(event);
-		const { collectionId, path, name, parentPath, content, isFolder, size } =
+		const { collectionId, path, name, parentPath, content, loroSnapshot, isFolder, size } =
 			await event.request.json();
 
 		if (!collectionId) {
@@ -108,6 +109,26 @@ export const POST = async (event: RequestEvent) => {
 			);
 		}
 
+		// Process loroSnapshot if provided
+		let loroSnapshotBuffer: Buffer | null = null;
+		if (loroSnapshot) {
+			if (typeof loroSnapshot !== 'string') {
+				return json(
+					{ error: 'loroSnapshot must be a base64 encoded string', code: 'VALIDATION_ERROR' },
+					{ status: 400 }
+				);
+			}
+			try {
+				const snapshot = base64.toByteArray(loroSnapshot);
+				loroSnapshotBuffer = Buffer.from(snapshot);
+			} catch (error) {
+				return json(
+					{ error: 'Invalid base64 encoding for loroSnapshot', code: 'VALIDATION_ERROR' },
+					{ status: 400 }
+				);
+			}
+		}
+
 		const [newEntry] = await db
 			.insert(schema.entry)
 			.values({
@@ -117,12 +138,19 @@ export const POST = async (event: RequestEvent) => {
 				name: name?.trim() || null,
 				parentPath: parentPath.trim(),
 				content: content || null,
+				loroSnapshot: loroSnapshotBuffer,
 				isFolder: isFolder || false,
 				size: size || null
 			})
 			.returning();
 
-		return json(newEntry, { status: 201 });
+		// Convert loroSnapshot Buffer to array for JSON serialization
+		const response = {
+			...newEntry,
+			loroSnapshot: newEntry.loroSnapshot ? Array.from(newEntry.loroSnapshot as Buffer) : null
+		};
+
+		return json(response, { status: 201 });
 	} catch (error) {
 		console.error('Failed to create entry:', error);
 

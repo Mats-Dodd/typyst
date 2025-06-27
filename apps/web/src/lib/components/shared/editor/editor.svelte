@@ -47,10 +47,23 @@
 			// First, unregister any existing Loro plugins
 			if (tiptapEditor && registeredLoroPlugins.length > 0) {
 				registeredLoroPlugins.forEach((plugin) => {
-					tiptapEditor.unregisterPlugin(plugin);
+					try {
+						tiptapEditor.unregisterPlugin(plugin);
+					} catch (e) {
+						console.warn('Failed to unregister plugin:', e);
+					}
 				});
 				registeredLoroPlugins = [];
 			}
+
+			// Wait for the editor to be ready and have content
+			if (!tiptapEditor || tiptapEditor.isDestroyed) {
+				console.warn('Editor not ready for Loro initialization');
+				return;
+			}
+
+			// Use requestAnimationFrame to ensure the editor has finished processing
+			await new Promise(resolve => requestAnimationFrame(resolve));
 
 			// Get or create Loro document for this entry
 			let docState = loroDocuments.getDocument(entryId);
@@ -83,8 +96,12 @@
 				});
 			}
 
-			// Add Loro plugins to editor
-			if (tiptapEditor && loroDoc) {
+			// Ensure the editor is still valid before adding plugins
+			if (tiptapEditor && !tiptapEditor.isDestroyed && loroDoc) {
+				// Create a new transaction to ensure clean state
+				const state = tiptapEditor.state;
+				const tr = state.tr;
+				
 				const loroPlugins = [
 					LoroSyncPlugin({ doc: loroDoc as any }),
 					LoroCursorPlugin(awareness!, {
@@ -96,12 +113,18 @@
 
 				// Register plugins and keep track of them
 				loroPlugins.forEach((plugin) => {
-					tiptapEditor.registerPlugin(plugin);
-					registeredLoroPlugins.push(plugin);
+					try {
+						tiptapEditor.registerPlugin(plugin);
+						registeredLoroPlugins.push(plugin);
+					} catch (e) {
+						console.error('Failed to register Loro plugin:', e);
+					}
 				});
 
 				isCollaborationEnabled = true;
 			}
+		} catch (error) {
+			console.error('Error initializing Loro document:', error);
 		} finally {
 			isInitializing = false;
 		}
@@ -194,6 +217,16 @@
 				tiptapEditor = tiptapEditor;
 				editor.set(tiptapEditor);
 			},
+			onCreate: ({ editor: createdEditor }) => {
+				// Initialize Loro if we already have an active file when editor is created
+				const currentFile = get(activeFile);
+				if (currentFile) {
+					// Delay initialization to ensure editor is fully ready
+					setTimeout(() => {
+						initializeLoroDocument(currentFile);
+					}, 100);
+				}
+			},
 			onUpdate: async () => {
 				// Mark Loro document as dirty when content changes
 				if (loroDoc && $activeFile) {
@@ -227,9 +260,32 @@
 
 		// Watch for active file changes
 		unsubscribe = activeFile.subscribe((entryId) => {
-			if (entryId && tiptapEditor) {
-				// Initialize Loro for the new active file
-				initializeLoroDocument(entryId);
+			// Clean up previous Loro document if switching files
+			if (loroDoc && $activeFile && entryId !== $activeFile) {
+				// Unregister existing plugins before switching
+				if (tiptapEditor && registeredLoroPlugins.length > 0) {
+					registeredLoroPlugins.forEach((plugin) => {
+						try {
+							tiptapEditor.unregisterPlugin(plugin);
+						} catch (e) {
+							console.warn('Failed to unregister plugin during file switch:', e);
+						}
+					});
+					registeredLoroPlugins = [];
+				}
+				
+				// Clean up old document
+				loroDocuments.removeDocument($activeFile);
+				loroDoc = null;
+				awareness = null;
+				isCollaborationEnabled = false;
+			}
+
+			if (entryId && tiptapEditor && !tiptapEditor.isDestroyed) {
+				// Delay Loro initialization to ensure editor content is set first
+				setTimeout(() => {
+					initializeLoroDocument(entryId);
+				}, 100);
 			}
 		});
 	});
@@ -239,10 +295,19 @@
 			unsubscribe();
 		}
 
+		// Clear any pending timeouts
+		if (timeout) {
+			clearTimeout(timeout);
+		}
+
 		// Unregister Loro plugins before destroying editor
 		if (tiptapEditor && registeredLoroPlugins.length > 0) {
 			registeredLoroPlugins.forEach((plugin) => {
-				tiptapEditor.unregisterPlugin(plugin);
+				try {
+					tiptapEditor.unregisterPlugin(plugin);
+				} catch (e) {
+					console.warn('Failed to unregister plugin during destroy:', e);
+				}
 			});
 			registeredLoroPlugins = [];
 		}

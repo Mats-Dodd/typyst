@@ -5,6 +5,7 @@ import { get } from 'svelte/store';
 import { apiClient } from './client';
 import type { Entry, CreateEntryRequest, UpdateEntryRequest, EntryWithMetadata } from './types';
 import { refreshCollection } from './store-helpers';
+import { loroDocuments } from '@/stores/loro-document';
 
 // Create a new note
 export const createNote = async (dirPath: string, name?: string) => {
@@ -51,11 +52,32 @@ export async function openNote(path: string, skipHistory = false) {
 		// Resolve path to ID
 		const id = await apiClient.resolvePath(path);
 
-		// Get note content
-		const file = await apiClient.request<{ content?: string }>(`/api/entries/${id}`);
+		// Get note content and Loro snapshot
+		const file = await apiClient.request<{ content?: string; loroSnapshot?: number[] | null }>(`/api/entries/${id}`);
 
-		setEditorContent(file.content ?? '');
+		// Set active file first to prepare Loro document
 		activeFile.set(path);
+
+		// Small delay to ensure Loro is initialized before setting content
+		await new Promise(resolve => setTimeout(resolve, 50));
+
+		// If there's a Loro snapshot, load it
+		if (file.loroSnapshot && Array.isArray(file.loroSnapshot)) {
+			try {
+				const docState = loroDocuments.getDocument(path);
+				if (docState) {
+					// Convert number array to Uint8Array
+					const snapshotBytes = new Uint8Array(file.loroSnapshot);
+					docState.doc.import(snapshotBytes);
+				}
+			} catch (error) {
+				console.error('Error loading Loro snapshot:', error);
+				// Continue without snapshot - the editor will sync from content
+			}
+		}
+
+		// Then set the editor content
+		setEditorContent(file.content ?? '');
 
 		if (!skipHistory) {
 			noteHistory.update((history) => {
@@ -155,12 +177,31 @@ export const saveNote = async (path: string) => {
 		// Calculate file size in bytes
 		const size = new TextEncoder().encode(content).length;
 
+		// Get Loro snapshot if available
+		let loroSnapshot: string | undefined;
+		const docState = loroDocuments.getDocument(path);
+		if (docState && docState.doc) {
+			try {
+				// Export the Loro document as a snapshot
+				const snapshot = docState.doc.export({ mode: 'snapshot' });
+				// Convert Uint8Array to base64 string
+				let binaryString = '';
+				snapshot.forEach((byte) => {
+					binaryString += String.fromCharCode(byte);
+				});
+				loroSnapshot = btoa(binaryString);
+			} catch (error) {
+				console.error('Error exporting Loro snapshot:', error);
+			}
+		}
+
 		// Resolve path to ID
 		const id = await apiClient.resolvePath(path);
 
 		// Update note content via API
 		const updateRequest: UpdateEntryRequest = {
 			content,
+			loroSnapshot,
 			updatedAt: new Date().toISOString(),
 			size
 		};
@@ -223,7 +264,7 @@ export const duplicateNote = async (path: string) => {
 	try {
 		// Resolve path to ID and fetch content
 		const id = await apiClient.resolvePath(path);
-		const entry = await apiClient.request<EntryWithMetadata>(`/api/entries/${id}`);
+		const entry = await apiClient.request<EntryWithMetadata & { loroSnapshot?: number[] | null }>(`/api/entries/${id}`);
 
 		// Extract the name and extension of the note
 		const ext = path.split('.').pop()!;
@@ -242,6 +283,21 @@ export const duplicateNote = async (path: string) => {
 		// Create new name
 		const newName = `${entry.name!.replace(`.${ext}`, '')} (${notes.length}).${ext}`;
 
+		// Convert loroSnapshot from array to base64 string if it exists
+		let loroSnapshot: string | undefined;
+		if (entry.loroSnapshot && Array.isArray(entry.loroSnapshot)) {
+			try {
+				const snapshotBytes = new Uint8Array(entry.loroSnapshot);
+				let binaryString = '';
+				snapshotBytes.forEach((byte) => {
+					binaryString += String.fromCharCode(byte);
+				});
+				loroSnapshot = btoa(binaryString);
+			} catch (error) {
+				console.error('Error converting Loro snapshot:', error);
+			}
+		}
+
 		// Create duplicate note via API
 		const createRequest: CreateEntryRequest = {
 			name: newName,
@@ -249,6 +305,7 @@ export const duplicateNote = async (path: string) => {
 			parentPath: parentPath,
 			collectionId: entry.collectionId || (get(collectionId) as string),
 			content: entry.content || '',
+			loroSnapshot,
 			isFolder: false
 		};
 

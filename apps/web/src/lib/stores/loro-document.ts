@@ -21,10 +21,9 @@ function createLoroDocumentStore() {
 			doc.setRecordTimestamp(true);
 			doc.setChangeMergeInterval(10);
 
-			if (initialContent) {
-				const text = doc.getText('content');
-				text.insert(0, initialContent);
-			}
+			// The loro-prosemirror plugin will handle the document structure
+			// We don't need to pre-create containers as the plugin will do this
+			// when it syncs with the editor state
 
 			const awareness = new CursorAwareness(doc.peerIdStr);
 
