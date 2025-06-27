@@ -15,6 +15,13 @@
       "when": 1750629239352,
       "tag": "0001_odd_scourge",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1751000534040,
+      "tag": "0002_natural_shape",
+      "breakpoints": true
     }
   ]
 }
