@@ -6,10 +6,17 @@ import {
   boolean,
   bigint,
   uniqueIndex,
-  index
+  index,
+  customType
 } from 'drizzle-orm/pg-core';
 import { user } from './user';
 import { collection } from './collection';
+
+export const bytea = customType<{ data: Buffer | Uint8Array }>({
+  dataType() {
+    return 'bytea'; // emitted in CREATE TABLE
+  }
+});
 
 export const entry = pgTable(
   'entry',
@@ -25,6 +32,7 @@ export const entry = pgTable(
     name: text('name'),
     parentPath: text('parent_path').notNull(),
     content: text('content'),
+    loroSnapshot: bytea('loro_snapshot'),
     isFolder: boolean('is_folder').default(false),
     size: bigint('size', { mode: 'number' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
