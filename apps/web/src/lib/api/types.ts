@@ -16,6 +16,7 @@ export interface CreateEntryRequest {
 	collectionId: string;
 	isFolder: boolean;
 	size?: number;
+	loroSnapshot?: number[];
 }
 
 export interface UpdateEntryRequest {

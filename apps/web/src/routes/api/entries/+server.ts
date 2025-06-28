@@ -68,7 +68,7 @@ export const GET = async (event: RequestEvent) => {
 export const POST = async (event: RequestEvent) => {
 	try {
 		const userId = await getUserId(event);
-		const { collectionId, path, name, parentPath, content, isFolder, size } =
+		const { collectionId, path, name, parentPath, content, isFolder, size, loroSnapshot } =
 			await event.request.json();
 
 		if (!collectionId) {
@@ -118,7 +118,8 @@ export const POST = async (event: RequestEvent) => {
 				parentPath: parentPath.trim(),
 				content: content || null,
 				isFolder: isFolder || false,
-				size: size || null
+				size: size || null,
+				loroSnapshot: loroSnapshot ? Buffer.from(loroSnapshot) : null
 			})
 			.returning();
 

@@ -14,6 +14,7 @@
 	import { mainCommands as commands, createNoteCommands } from './commands';
 	import { getAllItems } from './helpers';
 	import { get } from 'svelte/store';
+	import { LoroDoc } from 'loro-crdt';
 
 	let open = false;
 	let search = '';
@@ -183,6 +184,15 @@
 						`[openCollection] Creating note entry for: ${fileName}, size: ${file.size} bytes`
 					);
 
+					// Create LoroDoc and convert content to snapshot
+					const loroDoc = new LoroDoc();
+					const text = loroDoc.getText('content');
+					text.insert(0, fileText);
+					const snapshot = loroDoc.export({ mode: 'snapshot' });
+					console.log(
+						`[openCollection] Created Loro snapshot for: ${fileName}, snapshot size: ${snapshot.length} bytes`
+					);
+
 					// Create note via API
 					const response = await apiClient.request('/api/entries', {
 						method: 'POST',
@@ -193,7 +203,8 @@
 							parentPath: currentPath,
 							collectionId: currentCollectionId,
 							size: file.size,
-							isFolder: false
+							isFolder: false,
+							loroSnapshot: Array.from(snapshot)
 						})
 					});
 					console.log(`[openCollection] Note created successfully:`, fileName, response);

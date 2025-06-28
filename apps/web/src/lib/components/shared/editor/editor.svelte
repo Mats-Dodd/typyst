@@ -28,7 +28,9 @@
 	onMount(() => {
 		// Initialize Loro if we have a snapshot
 		const initializeLoro = async () => {
+			console.log('Initializing Loro...');
 			if ($activeFile) {
+				console.log('Active file:', $activeFile);
 				try {
 					const id = await apiClient.resolvePath($activeFile);
 					const entry = await apiClient.request<Entry>(`/api/entries/${id}`);
@@ -46,6 +48,8 @@
 				} catch (error) {
 					console.error('Failed to initialize Loro:', error);
 				}
+			} else {
+				console.log('No active file');
 			}
 		};
 
@@ -101,7 +105,7 @@
 								// eslint-disable-next-line @typescript-eslint/no-explicit-any
 								doc: loroDoc as any
 							}),
-							 
+
 							LoroUndoPlugin({ doc: loroDoc as LoroDoc })
 						];
 					},
