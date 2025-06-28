@@ -35,16 +35,13 @@
 					const id = await apiClient.resolvePath($activeFile);
 					const entry = await apiClient.request<Entry>(`/api/entries/${id}`);
 
-					loroDoc = new LoroDoc();
-
-					if (entry.loroSnapshot) {
-						// Load from snapshot
-						loroDoc.import(new Uint8Array(entry.loroSnapshot));
-					} else if (entry.content) {
-						// Initialize from existing content
-						const text = loroDoc.getText('content');
-						text.insert(0, entry.content);
+					if (!entry.loroSnapshot) {
+						throw new Error('Entry does not have a Loro snapshot');
 					}
+
+					loroDoc = new LoroDoc();
+					// Load from snapshot
+					loroDoc.import(new Uint8Array(entry.loroSnapshot));
 				} catch (error) {
 					console.error('Failed to initialize Loro:', error);
 				}
