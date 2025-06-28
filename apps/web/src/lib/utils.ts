@@ -8,6 +8,8 @@ import type { TransitionConfig } from 'svelte/transition';
 import { twMerge } from 'tailwind-merge';
 import { collection, editor } from './store';
 import type { FileEntry, SearchResultParams, ShortcutParams } from './types';
+import { extensions } from './components/shared/editor/extensions/editor-extensions';
+import { Editor } from '@tiptap/core';
 
 // Type for entry data (matching the database schema)
 interface EntryData {
@@ -410,4 +412,16 @@ export const sortFileEntry = (a: FileEntry, b: FileEntry): number => {
 
 const naturalSort = (a: string, b: string): number => {
 	return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+};
+
+export const convertMarkdownToProseMirror = async (markdown: string) => {
+	const tempEditor = new Editor({
+		extensions: extensions,
+		content: markdown
+	});
+
+	const prosemirrorContent = JSON.stringify(tempEditor.getJSON());
+	tempEditor.destroy();
+
+	return prosemirrorContent;
 };

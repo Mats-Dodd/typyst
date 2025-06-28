@@ -5,6 +5,7 @@ import { get } from 'svelte/store';
 import { apiClient } from './client';
 import type { Entry, CreateEntryRequest, UpdateEntryRequest, EntryWithMetadata } from './types';
 import { refreshCollection } from './store-helpers';
+import { convertMarkdownToProseMirror } from '@/utils';
 
 // Create a new note
 export const createNote = async (dirPath: string, name?: string) => {
@@ -151,6 +152,9 @@ export const saveNote = async (path: string) => {
 
 		// Remove the first heading title
 		content = content.replace(/^# .*\n/, '');
+
+		const prosemirrorContent = await convertMarkdownToProseMirror(content);
+		console.log(prosemirrorContent);
 
 		// Calculate file size in bytes
 		const size = new TextEncoder().encode(content).length;
