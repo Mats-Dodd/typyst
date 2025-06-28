@@ -325,6 +325,9 @@ importers:
       postgres:
         specifier: ^3.4.5
         version: 3.4.7
+      prosemirror-keymap:
+        specifier: ^1.2.3
+        version: 1.2.3
       tailwind-merge:
         specifier: ^2.2.1
         version: 2.6.0
@@ -368,6 +371,9 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.15.32
+      '@types/prosemirror-keymap':
+        specifier: ^1.2.0
+        version: 1.2.0
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.0.0
         version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)
@@ -1795,6 +1801,10 @@ packages:
 
   '@types/node@22.15.32':
     resolution: {integrity: sha512-3jigKqgSjsH6gYZv2nEsqdXfZqIFGAV36XYYjf9KGZ3PSG+IhLecqPnI310RvjutyMwifE2hhhNEklOUrvx/wA==}
+
+  '@types/prosemirror-keymap@1.2.0':
+    resolution: {integrity: sha512-Vv/hOlNsDBOkqmxWUjgK7Ch5mFNRnvG88mfl2WhLFp4awdg3oQiZeTPN0wosWSO4mpK9aAWtZEhvJ/639HTLTQ==}
+    deprecated: This is a stub types definition. prosemirror-keymap provides its own type definitions, so you do not need this installed.
 
   '@types/pug@2.0.10':
     resolution: {integrity: sha512-Sk/uYFOBAB7mb74XcpizmH0KOR2Pv3D2Hmrh1Dmy5BmK3MpdSa5kqZcg6EKBdklU0bFXX9gCfzvpnyUehrPIuA==}
@@ -4686,6 +4696,10 @@ snapshots:
   '@types/node@22.15.32':
     dependencies:
       undici-types: 6.21.0
+
+  '@types/prosemirror-keymap@1.2.0':
+    dependencies:
+      prosemirror-keymap: 1.2.3
 
   '@types/pug@2.0.10': {}
 

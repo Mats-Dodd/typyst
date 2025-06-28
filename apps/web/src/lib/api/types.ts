@@ -25,6 +25,7 @@ export interface UpdateEntryRequest {
 	content?: string;
 	updatedAt?: string;
 	size?: number;
+	loroSnapshot?: number[];
 }
 
 export interface CreateCollectionRequest {

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { Editor } from '@tiptap/core';
+	import { Editor, Extension } from '@tiptap/core';
+	import { LoroDoc } from 'loro-crdt';
+	import { LoroSyncPlugin, LoroUndoPlugin, undo, redo } from 'loro-prosemirror';
 	import { editor, activeFile, collectionSettings } from '@/store';
 	import StarterKit from '@tiptap/starter-kit';
 	import Document from '@tiptap/extension-document';
@@ -15,18 +17,45 @@
 	import Shortcut from '../shortcut.svelte';
 	import { SHORTCUTS } from '@/constants';
 	import { get } from 'svelte/store';
+	import { apiClient } from '@/api/client';
+	import type { Entry } from '@/api/types';
 
 	let element: HTMLDivElement;
 	let tiptapEditor: Editor;
+	let loroDoc: LoroDoc | null = null;
 	let timeout: NodeJS.Timeout;
 
 	onMount(() => {
-		tiptapEditor = new Editor({
-			element: element,
-			extensions: [
+		// Initialize Loro if we have a snapshot
+		const initializeLoro = async () => {
+			if ($activeFile) {
+				try {
+					const id = await apiClient.resolvePath($activeFile);
+					const entry = await apiClient.request<Entry>(`/api/entries/${id}`);
+
+					loroDoc = new LoroDoc();
+
+					if (entry.loroSnapshot) {
+						// Load from snapshot
+						loroDoc.import(new Uint8Array(entry.loroSnapshot));
+					} else if (entry.content) {
+						// Initialize from existing content
+						const text = loroDoc.getText('content');
+						text.insert(0, entry.content);
+					}
+				} catch (error) {
+					console.error('Failed to initialize Loro:', error);
+				}
+			}
+		};
+
+		initializeLoro().then(() => {
+			// Create editor with or without Loro
+			const extensions = [
 				StarterKit.configure({
 					document: false,
 					hardBreak: false,
+					history: loroDoc ? false : undefined, // Disable only if using Loro
 					paragraph: {
 						HTMLAttributes: {
 							class: 'min-w-[1px] my-1 leading-5'
@@ -58,44 +87,88 @@
 					linkify: true,
 					transformPastedText: true
 				})
-			],
-			editorProps: {
-				attributes: {
-					class: 'prose prose-theme mx-auto focus:outline-none min-h-full pb-6 select-text'
-				}
-			},
-			onTransaction: () => {
-				// force re-render so `editor.isActive` works as expected
-				tiptapEditor = tiptapEditor;
-				editor.set(tiptapEditor);
-			},
-			onUpdate: async () => {
-				// If timeout before 500ms, clear it
-				if (timeout) {
-					clearTimeout(timeout);
-				}
+			];
 
-				// Set timeout to update the store
-				timeout = setTimeout(async () => {
-					if ($collectionSettings.editor.auto_save) {
-						console.log('Saving note...');
-						saveNote($activeFile!)
-							.then(() => {
-								editor.notifySaveEvent();
-							})
-							.catch((error) => {
-								console.error('Error saving note:', error);
-							});
+			// Add Loro plugins if document exists
+			if (loroDoc) {
+				// Create a custom extension for Loro integration
+				const LoroExtension = Extension.create({
+					name: 'loro',
+
+					addProseMirrorPlugins() {
+						return [
+							LoroSyncPlugin({
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								doc: loroDoc as any
+							}),
+							 
+							LoroUndoPlugin({ doc: loroDoc as LoroDoc })
+						];
+					},
+
+					addKeyboardShortcuts() {
+						return {
+							'Mod-z': () => {
+								undo(this.editor.view.state, this.editor.view.dispatch);
+								return true;
+							},
+							'Mod-y': () => {
+								redo(this.editor.view.state, this.editor.view.dispatch);
+								return true;
+							},
+							'Mod-Shift-z': () => {
+								redo(this.editor.view.state, this.editor.view.dispatch);
+								return true;
+							}
+						};
 					}
-				}, $collectionSettings.editor.auto_save_debounce);
+				});
+
+				extensions.push(LoroExtension);
 			}
+
+			tiptapEditor = new Editor({
+				element: element,
+				extensions,
+				editorProps: {
+					attributes: {
+						class: 'prose prose-theme mx-auto focus:outline-none min-h-full pb-6 select-text'
+					}
+				},
+				onTransaction: () => {
+					// force re-render so `editor.isActive` works as expected
+					tiptapEditor = tiptapEditor;
+					editor.set(tiptapEditor);
+				},
+				onUpdate: async () => {
+					// If timeout before 500ms, clear it
+					if (timeout) {
+						clearTimeout(timeout);
+					}
+
+					// Set timeout to update the store
+					timeout = setTimeout(async () => {
+						if ($collectionSettings.editor.auto_save) {
+							console.log('Saving note...');
+							saveNote($activeFile!, loroDoc)
+								.then(() => {
+									editor.notifySaveEvent();
+								})
+								.catch((error) => {
+									console.error('Error saving note:', error);
+								});
+						}
+					}, $collectionSettings.editor.auto_save_debounce);
+				}
+			});
 		});
 	});
 
 	onDestroy(() => {
-		if (editor) {
+		if (tiptapEditor) {
 			tiptapEditor.destroy();
 		}
+		loroDoc = null;
 	});
 </script>
 
@@ -106,7 +179,10 @@
 	autocorrect={$collectionSettings.editor.auto_correct.toString()}
 	class="w-full h-[calc(100%-97px)] px-8"
 >
-	<Shortcut options={SHORTCUTS['note:save']} callback={() => saveNote(get(activeFile) ?? '')} />
+	<Shortcut
+		options={SHORTCUTS['note:save']}
+		callback={() => saveNote(get(activeFile) ?? '', loroDoc)}
+	/>
 	<Shortcut
 		options={SHORTCUTS['note:copy-path']}
 		callback={() => navigator.clipboard.writeText(get(activeFile) ?? '')}

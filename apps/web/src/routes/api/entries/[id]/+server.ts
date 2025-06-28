@@ -46,6 +46,17 @@ export const GET = async (event: RequestEvent) => {
 			return json({ error: 'Entry not found', code: 'NOT_FOUND' }, { status: 404 });
 		}
 
+		// Convert loroSnapshot to array if it exists
+		if (entry.loroSnapshot) {
+			return json(
+				{
+					...entry,
+					loroSnapshot: Array.from(entry.loroSnapshot)
+				},
+				{ status: 200 }
+			);
+		}
+
 		return json(entry, { status: 200 });
 	} catch (error) {
 		console.error('Failed to fetch entry:', error);
@@ -84,6 +95,7 @@ export const PUT = async (event: RequestEvent) => {
 			content: string | null;
 			isFolder: boolean;
 			size: number | null;
+			loroSnapshot: Buffer | null;
 		}> = {};
 
 		if ('path' in body) {
@@ -134,6 +146,11 @@ export const PUT = async (event: RequestEvent) => {
 				);
 			}
 			updateData.size = body.size;
+		}
+
+		// Handle Loro snapshot
+		if ('loroSnapshot' in body && Array.isArray(body.loroSnapshot)) {
+			updateData.loroSnapshot = Buffer.from(body.loroSnapshot);
 		}
 
 		if (Object.keys(updateData).length === 0) {

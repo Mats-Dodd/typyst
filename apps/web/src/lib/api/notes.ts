@@ -5,6 +5,7 @@ import { get } from 'svelte/store';
 import { apiClient } from './client';
 import type { Entry, CreateEntryRequest, UpdateEntryRequest, EntryWithMetadata } from './types';
 import { refreshCollection } from './store-helpers';
+import type { LoroDoc } from 'loro-crdt';
 
 // Create a new note
 export const createNote = async (dirPath: string, name?: string) => {
@@ -143,8 +144,8 @@ export const renameNote = async (path: string, name: string) => {
 	}
 };
 
-// Save active note
-export const saveNote = async (path: string) => {
+// Save active note with optional Loro snapshot
+export const saveNote = async (path: string, loroDoc?: LoroDoc | null) => {
 	try {
 		// Get note content
 		let content = get(editor).storage.markdown.getMarkdown();
@@ -158,12 +159,19 @@ export const saveNote = async (path: string) => {
 		// Resolve path to ID
 		const id = await apiClient.resolvePath(path);
 
-		// Update note content via API
+		// Prepare update request
 		const updateRequest: UpdateEntryRequest = {
 			content,
 			updatedAt: new Date().toISOString(),
 			size
 		};
+
+		// Add Loro snapshot if available
+		if (loroDoc) {
+			console.log('Saving Loro snapshot...');
+			const snapshot = loroDoc.export({ mode: 'snapshot' });
+			updateRequest.loroSnapshot = Array.from(snapshot);
+		}
 
 		await apiClient.request(`/api/entries/${id}`, {
 			method: 'PUT',
