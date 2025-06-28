@@ -1,3 +1,1 @@
-import { SearchAndReplace } from './searchAndReplace';
-export * from './searchAndReplace';
-export default SearchAndReplace;
+export * from './editor-extensions';
